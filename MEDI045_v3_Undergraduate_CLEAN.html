@@ -2385,6 +2385,16 @@
       <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
       <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
     </div>
+
+    <!-- Data Management -->
+    <div id="dash-admin-data" style="display:none;background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px;border:2px solid #e63946">
+      <div style="font-size:14px;font-weight:800;color:#e63946;margin-bottom:12px">⚠️ Data Management</div>
+      <button onclick="clearStudentCases()" style="width:100%;background:#c67a00;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Student Cases (keep evaluations)</button>
+      <button onclick="clearEvaluations()" style="width:100%;background:#e63946;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Evaluations (keep cases)</button>
+      <button onclick="clearSurveys()" style="width:100%;background:#6c757d;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Survey Responses</button>
+      <button onclick="resetEntireApp()" style="width:100%;background:#1a1a2e;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:800;cursor:pointer">🔴 Reset Entire App (delete everything)</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">These actions cannot be undone. Export your data first.</div>
+    </div>
   </div>
 
   <div class="bottom-nav">
@@ -2687,6 +2697,39 @@ function emailReport(evalId){
     'TOTAL: '+(r.total||0)+'/100\nFINAL MARK: '+(r.finalMark||0)+'/10'+(r.overridden?' (Override)':'')+'\n\nFeedback: '+(r.feedback||'');
   shareOrCopy('MEDI 045 Evaluation - '+r.student, text);
 }
+// ==================== DATA MANAGEMENT ====================
+function clearStudentCases() {
+  var cases = records.filter(function(r){ return r.type === 'case'; });
+  if (!cases.length) { showToast('No cases to clear'); return; }
+  if (!confirm('Delete ALL ' + cases.length + ' student cases?\n\nEvaluations will be kept.\nThis cannot be undone.')) return;
+  records = records.filter(function(r){ return r.type !== 'case'; });
+  Store.set('medi045_records', JSON.stringify(records));
+  updateStats(); renderRecords(); renderDashboard(); renderResults();
+  showToast(cases.length + ' cases deleted');
+}
+function clearEvaluations() {
+  var evals = records.filter(function(r){ return r.type === 'evaluation'; });
+  if (!evals.length) { showToast('No evaluations to clear'); return; }
+  if (!confirm('Delete ALL ' + evals.length + ' evaluations?\n\nStudent cases will be kept.\nThis cannot be undone.')) return;
+  records = records.filter(function(r){ return r.type !== 'evaluation'; });
+  Store.set('medi045_records', JSON.stringify(records));
+  updateStats(); renderRecords(); renderDashboard(); renderResults();
+  showToast(evals.length + ' evaluations deleted');
+}
+function clearSurveys() {
+  if (!confirm('Delete ALL survey responses?\n\nThis cannot be undone.')) return;
+  Store.set('medi045_surveys', '[]');
+  showToast('Survey data cleared');
+}
+function resetEntireApp() {
+  if (!confirm('DELETE EVERYTHING?\n\nAll cases, evaluations, surveys, and settings will be permanently erased.\n\nThis cannot be undone.')) return;
+  if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
+  try { localStorage.clear(); } catch(e) {}
+  records = [];
+  showToast('App reset complete');
+  setTimeout(function(){ location.reload(); }, 500);
+}
+
 function renderAdminResults() {
   var wrap=document.getElementById('admin-results-wrap');
   if(!wrap) return;
@@ -3333,6 +3376,8 @@ function submitAdminAuth() {
   if (entered === correct) {
     document.getElementById('dash-admin-auth').style.display = 'none';
     document.getElementById('dash-admin-settings').style.display = 'block';
+    var dataPanel = document.getElementById('dash-admin-data');
+    if (dataPanel) dataPanel.style.display = 'block';
     document.getElementById('new-eval-pwd').value = '';
     document.getElementById('new-admin-pwd').value = '';
     document.getElementById('pd-email-input').value = Store.get('medi045_pd_email') || '';
@@ -3352,6 +3397,8 @@ function submitAdminAuth() {
 function lockAdminPanel() {
   document.getElementById('dash-admin-auth').style.display = 'block';
   document.getElementById('dash-admin-settings').style.display = 'none';
+  var dataPanel = document.getElementById('dash-admin-data');
+  if (dataPanel) dataPanel.style.display = 'none';
   document.getElementById('admin-password-input').value = '';
   showToast('🔒 Admin panel locked');
 }
