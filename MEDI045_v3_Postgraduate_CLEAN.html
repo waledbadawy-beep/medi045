@@ -2418,6 +2418,37 @@ const Store = (() => {
   };
 })();
 
+// ==================== CLOUD SYNC ====================
+const APPS_SCRIPT_URL = 'PASTE_YOUR_SCRIPT_URL_HERE';
+
+function postToCloud(record) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(record)
+  }).catch(function() {});
+}
+
+function syncFromCloud(callback) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) { if (callback) callback(); return; }
+  var el = document.getElementById('dash-list');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:#2a5298;font-size:14px">\u23F3 Syncing student submissions...</div>';
+  fetch(APPS_SCRIPT_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(cloudRecords) {
+      if (!Array.isArray(cloudRecords)) { if (callback) callback(); return; }
+      cloudRecords.forEach(function(cr) {
+        var idx = records.findIndex(function(r) { return String(r.id) === String(cr.id); });
+        if (idx >= 0) { records[idx] = cr; }
+        else { records.push(cr); }
+      });
+      Store.set('medi045_records', JSON.stringify(records));
+      if (callback) callback();
+    })
+    .catch(function() { if (callback) callback(); });
+}
+
 // ==================== DATA ====================
 let records = JSON.parse(Store.get('medi045_records') || '[]');
 let evalUnlocked = false;
@@ -2430,7 +2461,7 @@ function pwdDel() { pwdVal = pwdVal.slice(0,-1); updatePwdDots(); document.getEl
 function updatePwdDots() { for(let i=0;i<4;i++) document.getElementById('pwd-dots').children[i].classList.toggle('filled', i < pwdVal.length); }
 function checkEvalPin() {
   const correct = Store.get('medi045_eval_pwd') || '1234';
-  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); renderDashboard(); goto('screen-dashboard'); setTimeout(()=>evalUnlocked=false,30*60*1000); }
+  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); setTimeout(()=>evalUnlocked=false,30*60*1000); }
   else { document.getElementById('pwd-error').style.display='block'; pwdVal=''; updatePwdDots(); }
 }
 function closePasswordModal() { document.getElementById('pwd-modal').style.display='none'; pwdVal=''; updatePwdDots(); }
@@ -2508,7 +2539,7 @@ function saveAirway() {
     sternomentalDistance: document.getElementById('aw-smd').value, neckCircumference: document.getElementById('aw-neck-circ').value,
     mouthOpeningCm: document.getElementById('aw-mouth-opening').value, ulbt: document.getElementById('aw-ulbt').value,
   };
-  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); showToast('Airway assessment saved'); goto('screen-records');
+  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); postToCloud(entry); showToast('Airway assessment saved'); goto('screen-records');
 }
 function updateLEMON() {
   let lookFlags = []; document.querySelectorAll('#lemon-look .check-option.selected').forEach(opt => lookFlags.push(opt.textContent.trim()));
@@ -2591,7 +2622,7 @@ function submitCase() {
     aldrete: document.getElementById('c-aldrete').value || '',
     postopComp: document.getElementById('c-postop-comp').value || ''
   };
-  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); renderDashboard(); showToast('✅ Case submitted for evaluation!'); currentCasePage = 0; showCasePage(0); setTimeout(() => { goto('screen-records'); }, 1400);
+  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); renderDashboard(); postToCloud(entry); showToast('✅ Case submitted for evaluation!'); currentCasePage = 0; showCasePage(0); setTimeout(() => { goto('screen-records'); }, 1400);
 }
 
 // ==================== EVALUATION ====================
@@ -3548,7 +3579,7 @@ function submitEvaluation() {
   if (!confirm(`Submit for review: ${student}?\n\nCase 1: ${entry.c1Score}/50\nCase 2: ${entry.c2Score}/50\nTotal: ${entry.total}/100\nFinal Mark: ${entry.finalMark}/10\n\nThe supervisor/PD must approve before the grade is final.`)) return;
   const draftIdx = records.findIndex(r => r.type === 'evaluation' && r.status === 'draft' && r.student === student);
   if (draftIdx >= 0) records.splice(draftIdx, 1);
-  records.push(entry); Store.set('medi045_records', JSON.stringify(records));
+  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); postToCloud(entry);
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast('Submitted for review — awaiting approval'); goto('screen-dashboard');
 }
@@ -3798,7 +3829,7 @@ function dmApprove() {
   r.status = 'approved';
   if (!r.changeLog) r.changeLog = [];
   r.changeLog.push({date: new Date().toLocaleString('en-SA'), by: r.supervisor||'PD', field:'Status', oldVal:'pending_review', newVal:'approved'});
-  Store.set('medi045_records', JSON.stringify(records));
+  Store.set('medi045_records', JSON.stringify(records)); postToCloud(r);
   renderDashboard(); renderResults(); renderGradeChart();
   showToast('Grade approved ✅');
   openDetailModal(window._detailId);
