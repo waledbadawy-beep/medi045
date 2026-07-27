@@ -2460,6 +2460,30 @@ function syncFromCloud(callback) {
     .catch(function() { if (callback) callback(); });
 }
 
+function autoSyncToCloud() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return;
+  var unsynced = records.filter(function(r) {
+    return !r._cloudSynced && (r.status === 'submitted' || r.type === 'evaluation' || r.type === 'airway');
+  });
+  if (!unsynced.length) return;
+  unsynced.forEach(function(record) {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(record)
+    }).then(function(res) {
+      return res.json();
+    }).then(function(result) {
+      if (result && result.success) {
+        var idx = records.findIndex(function(r) { return String(r.id) === String(record.id); });
+        if (idx >= 0) { records[idx]._cloudSynced = true; }
+        Store.set('medi045_records', JSON.stringify(records));
+      }
+    }).catch(function() {});
+  });
+}
+setTimeout(autoSyncToCloud, 3000);
+
 // ==================== DATA ====================
 let records = JSON.parse(Store.get('medi045_records') || '[]');
 let evalUnlocked = false;
