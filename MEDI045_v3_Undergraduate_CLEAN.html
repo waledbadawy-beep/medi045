@@ -2752,6 +2752,15 @@ function emailReport(evalId){
     'TOTAL: '+(r.total||0)+'/100\nFINAL MARK: '+(r.finalMark||0)+'/10'+(r.overridden?' (Override)':'')+'\n\nFeedback: '+(r.feedback||'');
   shareOrCopy('MEDI 045 Evaluation - '+r.student, text);
 }
+function deleteFromCloud(type) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ _action: 'delete', type: type })
+  }).catch(function() {});
+}
+
 // ==================== DATA MANAGEMENT ====================
 function clearStudentCases() {
   var cases = records.filter(function(r){ return r.type === 'case'; });
@@ -2759,6 +2768,7 @@ function clearStudentCases() {
   if (!confirm('Delete ALL ' + cases.length + ' student cases?\n\nEvaluations will be kept.\nThis cannot be undone.')) return;
   records = records.filter(function(r){ return r.type !== 'case'; });
   Store.set('medi045_records', JSON.stringify(records));
+  deleteFromCloud('case');
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast(cases.length + ' cases deleted');
 }
@@ -2768,17 +2778,20 @@ function clearEvaluations() {
   if (!confirm('Delete ALL ' + evals.length + ' evaluations?\n\nStudent cases will be kept.\nThis cannot be undone.')) return;
   records = records.filter(function(r){ return r.type !== 'evaluation'; });
   Store.set('medi045_records', JSON.stringify(records));
+  deleteFromCloud('evaluation');
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast(evals.length + ' evaluations deleted');
 }
 function clearSurveys() {
   if (!confirm('Delete ALL survey responses?\n\nThis cannot be undone.')) return;
   Store.set('medi045_surveys', '[]');
+  deleteFromCloud('survey');
   showToast('Survey data cleared');
 }
 function resetEntireApp() {
   if (!confirm('DELETE EVERYTHING?\n\nAll cases, evaluations, surveys, and settings will be permanently erased.\n\nThis cannot be undone.')) return;
   if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
+  deleteFromCloud('all');
   try { localStorage.clear(); } catch(e) {}
   records = [];
   showToast('App reset complete');
