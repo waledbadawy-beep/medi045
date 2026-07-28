@@ -1039,11 +1039,15 @@
   <div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>New Case Record</h1><p>Postgraduate · 45+ Cases Required</p></div><button class="save-btn" onclick="submitCase()">Submit ✓</button></div>
   
   <div class="progress-bar"><div class="progress-fill" id="case-progress" style="width:10%"></div></div>
-  <div class="page-indicator" id="page-indicator">Page 1 of 5</div>
+  <div class="page-indicator" id="page-indicator">Page 1 of 4</div>
   <div class="form-body" id="case-wizard-container">
-    <!-- Page 1: Preoperative Assessment + Medical History (unchanged) -->
+    <!-- PAGE 1: ANESTHESIA CLINIC -->
     <div class="case-page active-page" id="case-page-1">
-      <div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
+      <div style="background:linear-gradient(135deg,#1a3a5c,#2a5298);color:white;padding:12px 16px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:700">
+        🏥 Cases Recorded in Anesthesia Clinic for Preoperative Assessment
+        <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">Preoperative history · Physical examination · Airway assessment · LEMON · Investigations · Anaesthetic plan</div>
+      </div>
+<div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
         <div class="form-row two-col"><div><label>Case No.</label><input type="text" id="c-case" placeholder="e.g. 1" oninput="updateProgress()"></div><div><label>Date</label><input type="date" id="c-date" oninput="updateProgress()"></div></div>
         <div class="form-row two-col"><div><label>Patient Name</label><input type="text" id="c-name" placeholder="Full name" oninput="updateProgress()"></div><div><label>Hospital ID</label><input type="text" id="c-id" placeholder="ID" oninput="updateProgress()"></div></div>
         <div class="form-row three-col"><div><label>Age</label><input type="number" id="c-age" placeholder="yrs"></div><div><label>Sex</label><select id="c-sex"><option value="">--</option><option>Male</option><option>Female</option></select></div><div><label>Weight (kg)</label><input type="number" id="c-weight" placeholder="kg"></div></div>
@@ -1061,10 +1065,7 @@
         <div class="form-row"><label>💊 Current Medications</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="Search drug name..." oninput="filterChips(this,'meds-list','c-meds')"><button class="chip-add-btn" onclick="addCustomChip(this,'meds-list','c-meds')">+ Add</button></div><div class="chip-list" id="meds-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-meds')">No Current Medications</span><span class="chip" onclick="toggleChip(this,'c-meds')">Aspirin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Warfarin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Metformin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Insulin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Salbutamol</span><span class="chip" onclick="toggleChip(this,'c-meds')">Amlodipine</span><span class="chip" onclick="toggleChip(this,'c-meds')">Atorvastatin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Omeprazole</span></div><div class="chip-selected-label">Selected: <span id="c-meds-display">None</span></div><input type="hidden" id="c-meds" value=""></div></div>
       </div>
     </div>
-
-    <!-- Page 2: Physical Exam, Airway, Investigations (ENHANCED with CVS/Resp chips) -->
-    <div class="case-page" id="case-page-2">
-      <div class="form-section"><div class="form-section-header">🩺 Physical Examination</div>
+<div class="form-section"><div class="form-section-header">🩺 Physical Examination</div>
         <div class="form-row four-col"><div><label>HR (bpm)</label><input type="number" id="c-hr" placeholder="e.g., 80"></div><div><label>SpO₂ (%)</label><input type="number" id="c-spo2" placeholder="e.g., 98"></div><div><label>Temp (°C)</label><input type="number" id="c-temp" step="0.1" placeholder="e.g., 36.5"></div><div><label>BP (mmHg)</label><input type="text" id="c-bp" placeholder="e.g., 120/80"></div></div>
         <div class="form-row"><label>❤️ CVS Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'cvs-exam-list','c-cvs-ex')"><button class="chip-add-btn" onclick="addCustomChip(this,'cvs-exam-list','c-cvs-ex')">+ Add</button></div><div class="chip-list" id="cvs-exam-list"><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Normal</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (systolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (diastolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Raised JVP</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Peripheral edema</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pleural effusion</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Crackles (pulmonary edema)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Hepatomegaly</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Carotid bruit</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pulsus paradoxus</span></div><div class="chip-selected-label">Selected: <span id="c-cvs-ex-display">None</span></div><input type="hidden" id="c-cvs-ex" value=""></div></div>
         <div class="form-row"><label>🫁 Respiratory Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'resp-exam-list','c-resp-ex')"><button class="chip-add-btn" onclick="addCustomChip(this,'resp-exam-list','c-resp-ex')">+ Add</button></div><div class="chip-list" id="resp-exam-list"><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Clear</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Wheeze</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (coarse)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (fine)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Reduced breath sounds</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Bronchial breathing</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Stridor</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Pleural rub</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Prolonged expiration</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Dullness to percussion</span></div><div class="chip-selected-label">Selected: <span id="c-resp-ex-display">None</span></div><input type="hidden" id="c-resp-ex" value=""></div></div>
@@ -1072,10 +1073,79 @@
       <div class="form-section"><div class="form-section-header">🫁 Airway Assessment</div><div class="form-row two-col"><div><label>Mallampati</label><select id="c-mallampati"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div><label>Thyromental Dist.</label><select id="c-thyromental"><option>≥6.5 cm</option><option>6–6.5 cm</option><option>&lt;6 cm</option></select></div></div><div class="form-row two-col"><div><label>TMJ Mobility</label><select id="c-tmj"><option>Normal</option><option>Reduced</option></select></div><div><label>Neck Extension</label><select id="c-neck-ext"><option>Normal</option><option>Limited</option></select></div></div><div class="form-row two-col"><div><label>Mouth Opening</label><select id="c-mouth"><option>≥3 fingers</option><option>&lt;3 fingers</option></select></div><div><label>Teeth</label><select id="c-teeth"><option>Normal</option><option>Missing/Loose</option><option>Dentures</option></select></div></div></div>
       <div class="form-section"><div class="form-section-header">🧪 Investigations</div><div class="form-row four-col"><div><label>Hb</label><input type="number" id="c-hb" step="0.1"></div><div><label>WBC</label><input type="number" id="c-wbc"></div><div><label>Plt</label><input type="number" id="c-plt"></div><div><label>Na</label><input type="number" id="c-na"></div></div><div class="form-row four-col"><div><label>K</label><input type="number" id="c-k" step="0.1"></div><div><label>Urea</label><input type="number" id="c-ur"></div><div><label>Creatinine</label><input type="number" id="c-cr"></div><div><label>Glucose</label><input type="number" id="c-glucose" step="0.1"></div></div><div class="form-row four-col"><div><label>PT</label><input type="number" id="c-pt"></div><div><label>aPTT</label><input type="number" id="c-aptt"></div><div><label>INR</label><input type="number" id="c-inr" step="0.1"></div><div><label>ASA Class</label><select id="c-asa"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div></div><div class="form-row two-col"><div><label>ECG</label><select id="c-ecg"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div><div><label>Chest X-Ray</label><select id="c-cxr"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div></div></div>
     </div>
-
-    <!-- Page 3: Anaesthetic Plan + Intraoperative (unchanged) -->
-    <div class="case-page" id="case-page-3">
-      <div class="form-section"><div class="form-section-header">📝 Anaesthetic Plan</div>
+<!-- History of Difficult Airway -->
+    <div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
+      <div class="form-row"><label>Previous difficult intubation?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-prev-int" value="No"><input type="text" id="aw-prev-int-c" placeholder="If yes, describe details" style="margin-top:6px"></div>
+      <div class="form-row"><label>Known obstructive sleep apnea (OSA)?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-osa" value="No"><input type="text" id="aw-osa-c" placeholder="If yes, CPAP use? AHI?" style="margin-top:6px"></div>
+      <div class="form-row"><label>Unstable cervical spine or previous surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-cspine" value="No"><input type="text" id="aw-cspine-c" placeholder="If yes, specify" style="margin-top:6px"></div>
+      <div class="form-row"><label>History of head/neck radiation or surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-rad'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-rad'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-rad" value="No"><input type="text" id="aw-rad-c" placeholder="If yes, details" style="margin-top:6px"></div>
+      <div class="form-row"><label>History of burns to face/neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-burns" value="No"></div>
+    </div>
+    <!-- L – Look Externally -->
+    <div class="form-section"><div class="form-section-header">🍋 L – Look Externally</div>
+      <div class="form-row"><label>Look for external features that may predict difficult intubation (check all that apply):</label>
+        <div class="check-group" id="lemon-look">
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Obesity (BMI >30)</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Thick neck / short neck</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Beard / facial hair</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Prominent incisors / buck teeth</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Receding chin / micrognathia</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Edentulous / missing teeth</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Facial trauma / deformity</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> High arched palate</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Large tongue / macroglossia</label>
+        </div>
+        <input type="text" id="aw-look-other" placeholder="Other findings" oninput="updateLEMON()" style="margin-top:8px">
+      </div>
+    </div>
+    <!-- E – Evaluate 3-3-2 Rule -->
+    <div class="form-section"><div class="form-section-header">📏 E – Evaluate 3-3-2 Rule</div>
+      <div class="form-row"><label>Inter‑incisor distance (mouth opening)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-1','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-1','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-1"></div>
+      <div class="form-row"><label>Hyoid‑mental distance (chin to hyoid)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-2','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-2','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-2"></div>
+      <div class="form-row"><label>Thyroid‑mouth distance (thyroid notch to floor of mouth)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-3','≥2 fingers'); updateLEMON()">≥2 fingers (≥4 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-3','<2 fingers'); updateLEMON()">&lt;2 fingers (&lt;4 cm) – inadequate</label></div><input type="hidden" id="aw-332-3"></div>
+      <div class="form-row"><label>Comment on 3-3-2</label><input type="text" id="aw-332-c" placeholder="Any additional notes"></div>
+    </div>
+    <!-- M – Mallampati -->
+    <div class="form-section"><div class="form-section-header">👅 M – Mallampati Classification</div>
+      <div class="form-row"><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','I'); updateLEMON()">Class I – soft palate, uvula, fauces, pillars visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','II'); updateLEMON()">Class II – soft palate, uvula, fauces visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','III'); updateLEMON()">Class III – soft palate, base of uvula visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','IV'); updateLEMON()">Class IV – only hard palate visible</label></div><input type="hidden" id="aw-mallampati" value=""></div>
+    </div>
+    <!-- O – Obstruction -->
+    <div class="form-section"><div class="form-section-header">🔴 O – Obstruction / Pathology</div>
+      <div class="form-row"><label>Any evidence of airway obstruction (check all that apply):</label>
+        <div class="check-group" id="lemon-obstruction">
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Stridor</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Hoarseness</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Dysphagia</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Mass / tumor visible</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Previous tracheostomy</label>
+        </div>
+        <input type="text" id="aw-obstruction-other" placeholder="Other findings" oninput="updateLEMON()" style="margin-top:8px">
+      </div>
+    </div>
+    <!-- N – Neck Mobility -->
+    <div class="form-section"><div class="form-section-header">🔄 N – Neck Mobility</div>
+      <div class="form-row"><label>Can the patient fully flex and extend the neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-neck-mob" value="No"></div>
+      <div class="form-row"><label>Is the patient wearing a cervical collar?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-collar" value="No"></div>
+      <div class="form-row"><label>Congenital or acquired neck deformity?</label>
+        <div class="check-group" id="lemon-congenital">
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Down's syndrome</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Klippel‑Feil syndrome</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Ankylosing spondylitis</label>
+          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Goiter / neck mass</label>
+        </div>
+      </div>
+    </div>
+    <!-- Additional Measurements -->
+    <div class="form-section"><div class="form-section-header">📏 Additional Measurements</div>
+      <div class="form-row two-col"><div><label>Thyromental distance (cm)</label><input type="number" id="aw-tmd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Sternomental distance (cm)</label><input type="number" id="aw-smd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
+      <div class="form-row two-col"><div><label>Neck circumference (cm)</label><input type="number" id="aw-neck-circ" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Mouth opening (cm)</label><input type="number" id="aw-mouth-opening" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
+      <div class="form-row"><label>Upper lip bite test (ULBT)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class I'); updateLEMON()">Class I – lower incisors can bite upper lip</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class II'); updateLEMON()">Class II – upper lip can be bitten but incisors cannot</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class III'); updateLEMON()">Class III – cannot bite upper lip</label></div><input type="hidden" id="aw-ulbt"></div>
+    </div>
+<!-- LEMON Summary -->
+    <div class="form-section"><div class="form-section-header">⚠️ LEMON Summary & Risk</div>
+      <div class="form-row"><div id="lemon-summary" style="background:var(--section-bg); padding:12px; border-radius:8px; font-size:13px; line-height:1.5"></div></div>
+    </div>
+<div class="form-section"><div class="form-section-header">📝 Anaesthetic Plan</div>
         <div class="form-row two-col">
           <div><label>NPO (hours)</label><select id="c-npo"><option value="">-- Select --</option><option>2</option><option>4</option><option>6</option><option>8</option><option>&gt;8</option></select></div>
           <div><label>Pre-medications</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'premed-list','c-premed')"><button class="chip-add-btn" onclick="addCustomChip(this,'premed-list','c-premed')">+ Add</button></div><div class="chip-list" id="premed-list"><span class="chip" onclick="toggleChip(this,'c-premed')">None</span><span class="chip" onclick="toggleChip(this,'c-premed')">Midazolam 1-2mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Midazolam 7.5mg PO</span><span class="chip" onclick="toggleChip(this,'c-premed')">Fentanyl 50-100mcg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Glycopyrrolate 0.2mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Metoclopramide 10mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Ondansetron 4mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Paracetamol 1g PO/IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Ranitidine 50mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Dexamethasone 4-8mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Lorazepam 1-2mg PO</span><span class="chip" onclick="toggleChip(this,'c-premed')">Clonidine 0.1-0.2mg PO</span></div><div class="chip-selected-label">Selected: <span id="c-premed-display">None</span></div><input type="hidden" id="c-premed" value=""></div></div>
@@ -1087,7 +1157,14 @@
           <div><label>Postop Destination</label><select id="c-postop-dest"><option>Ward</option><option>PACU</option><option>HDU</option><option>ICU</option></select></div>
         </div>
       </div>
-      <div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
+    </div>
+    <!-- PAGE 2: INTRAOPERATIVE -->
+    <div class="case-page" id="case-page-2">
+      <div style="background:linear-gradient(135deg,#4a1a5c,#7b2d8b);color:white;padding:12px 16px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:700">
+        ⚕️ Cases Taken Intraoperatively — Operating Room
+        <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">Intraoperative management · Anaesthetic technique · Medications · Fluids · Events</div>
+      </div>
+<div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
         <div class="form-row two-col"><div><label>Type of Surgery</label><input type="text" id="c-surg-type" placeholder="Elective / Emergency"></div><div><label>Operation</label><input type="text" id="c-operation" placeholder="Surgical procedure"></div></div>
         <div class="form-row two-col"><div><label>Patient Position</label><select id="c-position"><option>Supine</option><option>Prone</option><option>Lateral</option><option>Lithotomy</option><option>Trendelenburg</option><option>Sitting</option></select></div><div><label>Standard Monitors</label><input type="text" id="c-monitors" placeholder="ECG, SpO₂, NIBP..."></div></div>
         <div class="form-row"><label>Invasive Monitors</label><input type="text" id="c-inv-monitors" placeholder="Art line, CVP, PA catheter..."></div>
@@ -1102,8 +1179,7 @@
     </div>
 
     <!-- Page 4: Medications (Induction, Maintenance, Fluid) – ENHANCED LISTS -->
-    <div class="case-page" id="case-page-4">
-      <div class="form-section"><div class="form-section-header">💊 Induction Medications</div>
+<div class="form-section"><div class="form-section-header">💊 Induction Medications</div>
         <div class="form-row two-col">
           <div><label>Analgesic</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'ind-analg-list','c-ind-analgesic')"><button class="chip-add-btn" onclick="addCustomChip(this,'ind-analg-list','c-ind-analgesic')">+ Add</button></div><div class="chip-list" id="ind-analg-list"><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Fentanyl 1-2 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Remifentanil 0.5-1 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Morphine 0.1 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Alfentanil 10-20 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Sufentanil 0.2-0.5 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Hydromorphone 0.01-0.02 mg/kg</span></div><div class="chip-selected-label">Selected: <span id="c-ind-analgesic-display">None</span></div><input type="hidden" id="c-ind-analgesic" value=""></div></div>
           <div><label>Hypnotic</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'ind-hyp-list','c-ind-hypnotic')"><button class="chip-add-btn" onclick="addCustomChip(this,'ind-hyp-list','c-ind-hypnotic')">+ Add</button></div><div class="chip-list" id="ind-hyp-list"><span class="chip" onclick="toggleChip(this,'c-ind-hypnotic')">Propofol 2-2.5 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-hypnotic')">Ketamine 1-2 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-hypnotic')">Thiopentone 3-5 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-hypnotic')">Etomidate 0.2-0.3 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-hypnotic')">Midazolam 0.1-0.3 mg/kg (for sedation)</span></div><div class="chip-selected-label">Selected: <span id="c-ind-hypnotic-display">None</span></div><input type="hidden" id="c-ind-hypnotic" value=""></div></div>
@@ -1133,12 +1209,471 @@
         <div class="form-row four-col"><div><label>Urine Out (mL)</label><input type="number" id="c-urine"></div><div><label>Total Out (mL)</label><input type="number" id="c-total-out"></div><div><label>Total In (mL)</label><input type="number" id="c-total-in"></div><div><label>Balance (mL)</label><input type="number" id="c-balance"></div></div>
       </div>
     </div>
+<div class="form-section"><div class="form-section-header">⚠️ Intraoperative Events</div><div class="form-row"><textarea id="c-events" placeholder="Document any significant intraoperative events..."></textarea></div></div>
+    </div>
+    <!-- ============================================================ -->
+    <!-- PAGE 3: POST-ANESTHESIA CARE UNIT (PACU) — RECOVERY ROOM   -->
+    <!-- ============================================================ -->
+    <div class="case-page" id="case-page-3">
 
-    <!-- Page 5: Events, Postoperative, Sign-off -->
-    <div class="case-page" id="case-page-5">
-      <div class="form-section"><div class="form-section-header">⚠️ Intraoperative Events</div><div class="form-row"><textarea id="c-events" placeholder="Document any significant intraoperative events..."></textarea></div></div>
+      <!-- SECTION HEADER -->
+      <div class="form-section">
+        <div class="form-section-header" style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e)">🏥 Post-Anesthesia Care Unit (PACU) — Recovery Room Monitoring</div>
+        <div class="form-row" style="background:#e8f8f0;padding:10px 14px;font-size:11px;color:#1a5c3c;font-weight:600;border-bottom:1px solid #a3e4c1">
+          📋 Systematic PACU Assessment · Document all parameters upon patient arrival and at regular intervals until discharge criteria are met
+        </div>
+        <div class="form-row two-col">
+          <div><label>PACU Arrival Time</label><input type="time" id="c-pacu-arrival-time"></div>
+          <div><label>Discharge Time from PACU</label><input type="time" id="c-pacu-discharge-time"></div>
+        </div>
+      </div>
 
-      <!-- ======= COMPREHENSIVE POSTOPERATIVE SECTION (CLO 23) ======= -->
+      <!-- 1. AIRWAY PATENCY -->
+      <div class="form-section">
+        <div class="form-section-header">🫁 1. Airway Patency</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Ensure the breathing passage is clear, open, and free of obstructions. Listen for stridor, gurgling, snoring. Observe chest rise symmetry. Assess need for airway adjuncts.
+        </div>
+        <div class="form-row">
+          <label>Airway Status on Arrival</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Patent — no intervention needed')"><input type="radio" name="pacuairway"> ✅ Patent — no intervention needed</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Partial obstruction — repositioning required')"><input type="radio" name="pacuairway"> ⚠️ Partial obstruction — repositioning required</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Airway adjunct required')"><input type="radio" name="pacuairway"> 🔴 Airway adjunct required</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','ETT still in situ on arrival')"><input type="radio" name="pacuairway"> 🔵 ETT still in situ on arrival</label>
+          </div>
+          <input type="hidden" id="c-pacu-airway" value="">
+        </div>
+        <div class="form-row">
+          <label>Airway Adjuncts Used (if any)</label>
+          <div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search adjunct..." oninput="filterChips(this,'pacu-adjunct-list','c-pacu-adjunct')"><button class="chip-add-btn" onclick="addCustomChip(this,'pacu-adjunct-list','c-pacu-adjunct')">+ Add</button></div>
+          <div class="chip-list" id="pacu-adjunct-list">
+            <span class="chip chip-nkda" onclick="toggleChip(this,'c-pacu-adjunct')">None required</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Oropharyngeal airway (OPA/Guedel)</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Nasopharyngeal airway (NPA)</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Head tilt–chin lift</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Jaw thrust</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Supplemental O₂ via mask</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Lateral positioning</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-adjunct')">Suction of secretions</span>
+          </div>
+          <div class="chip-selected-label">Selected: <span id="c-pacu-adjunct-display">None</span></div>
+          <input type="hidden" id="c-pacu-adjunct" value=""></div>
+        </div>
+        <div class="form-row"><label>Airway Notes</label><input type="text" id="c-pacu-airway-notes" placeholder="Any airway concerns or interventions..."></div>
+      </div>
+
+      <!-- 2. RESPIRATORY STATUS -->
+      <div class="form-section">
+        <div class="form-section-header">🌬️ 2. Respiratory Status</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Track breathing depth, respiratory rate, and oxygen saturation using pulse oximetry. Note any accessory muscle use, paradoxical breathing, or abnormal breath sounds.
+        </div>
+        <div class="form-row four-col">
+          <div><label>RR (breaths/min)</label><input type="number" id="c-pacu-rr" placeholder="e.g. 14" min="0" max="60"></div>
+          <div><label>SpO₂ (%)</label><input type="number" id="c-pacu-spo2" placeholder="%" min="0" max="100"></div>
+          <div><label>O₂ Requirement</label>
+            <select id="c-pacu-o2-req">
+              <option value="">--</option>
+              <option>Room air</option>
+              <option>2L nasal cannula</option>
+              <option>4L nasal cannula</option>
+              <option>Simple face mask</option>
+              <option>High-flow O₂ mask</option>
+              <option>Non-rebreather mask</option>
+              <option>CPAP / BiPAP</option>
+            </select>
+          </div>
+          <div><label>Breath Sounds</label>
+            <select id="c-pacu-breath">
+              <option value="">--</option>
+              <option>Clear bilaterally</option>
+              <option>Reduced bases</option>
+              <option>Wheeze</option>
+              <option>Crepitations</option>
+              <option>Stridor</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Breathing Pattern</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Regular and adequate')"><input type="radio" name="pacubreath"> ✅ Regular and adequate</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Shallow — stimulation required')"><input type="radio" name="pacubreath"> ⚠️ Shallow — stimulation required</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Irregular / apnoeic episodes')"><input type="radio" name="pacubreath"> 🔴 Irregular / apnoeic episodes</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Mechanically ventilated')"><input type="radio" name="pacubreath"> 🔵 Mechanically ventilated</label>
+          </div>
+          <input type="hidden" id="c-pacu-breathing" value="">
+        </div>
+        <div class="form-row"><label>Respiratory Notes</label><input type="text" id="c-pacu-resp-notes" placeholder="Residual neuromuscular blockade, opioid-induced respiratory depression..."></div>
+      </div>
+
+      <!-- 3. CIRCULATION & VITALS -->
+      <div class="form-section">
+        <div class="form-section-header">❤️ 3. Circulation & Cardiovascular Status</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Frequently check blood pressure, heart rate, and heart rhythm via ECG monitors. BP should remain within 20% of pre-operative baseline. Monitor for hypertension, hypotension, tachycardia, and arrhythmias.
+        </div>
+        <div class="form-row four-col">
+          <div><label>HR (bpm)</label><input type="number" id="c-pacu-hr" placeholder="bpm" min="0" max="300"></div>
+          <div><label>BP (mmHg)</label><input type="text" id="c-pacu-bp" placeholder="SBP/DBP"></div>
+          <div><label>Rhythm</label>
+            <select id="c-pacu-rhythm">
+              <option value="">--</option>
+              <option>Sinus rhythm — regular</option>
+              <option>Sinus tachycardia</option>
+              <option>Sinus bradycardia</option>
+              <option>Atrial fibrillation</option>
+              <option>Ectopics (PVCs)</option>
+              <option>Other arrhythmia</option>
+            </select>
+          </div>
+          <div><label>Capillary Refill</label>
+            <select id="c-pacu-cap-refill">
+              <option value="">--</option>
+              <option>&lt;2 seconds (normal)</option>
+              <option>2–3 seconds</option>
+              <option>&gt;3 seconds (delayed)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Haemodynamic Status vs. Pre-op Baseline</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Stable — within 20% baseline')"><input type="radio" name="pacuhaemo"> ✅ Stable — within 20% baseline</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Mild deviation — 20–30% from baseline')"><input type="radio" name="pacuhaemo"> ⚠️ Mild deviation — 20–30% from baseline</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Significant — >30% deviation, treatment given')"><input type="radio" name="pacuhaemo"> 🔴 Significant — >30% deviation, treatment given</label>
+          </div>
+          <input type="hidden" id="c-pacu-haemo" value="">
+        </div>
+        <div class="form-row"><label>Cardiovascular Interventions Given</label><input type="text" id="c-pacu-cv-tx" placeholder="e.g. IV fluids 500mL, Metaraminol 0.5mg, Atropine 0.6mg..."></div>
+      </div>
+
+      <!-- 4. LEVEL OF CONSCIOUSNESS -->
+      <div class="form-section">
+        <div class="form-section-header">🧠 4. Level of Consciousness</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Evaluate mental status to determine how well the patient is awakening from anaesthesia. Use the AVPU scale and assess orientation, ability to follow commands, and presence of emergence delirium or agitation.
+        </div>
+        <div class="form-row">
+          <label>AVPU Scale — Level of Consciousness</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','A — Alert: fully awake, oriented × 3 (person, place, time)')"><input type="radio" name="pacuavpu"> ✅ <b>A</b> — Alert: fully awake, oriented × 3</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','V — Responds to Voice: arousable, follows commands')"><input type="radio" name="pacuavpu"> 🟡 <b>V</b> — Responds to Voice: arousable, follows commands</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','P — Responds to Pain only: requires stimulation')"><input type="radio" name="pacuavpu"> 🟠 <b>P</b> — Responds to Pain only</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','U — Unresponsive: no response to any stimulus')"><input type="radio" name="pacuavpu"> 🔴 <b>U</b> — Unresponsive</label>
+          </div>
+          <input type="hidden" id="c-pacu-avpu" value="">
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Ramsay Sedation Score</label>
+            <select id="c-pacu-ramsay">
+              <option value="">-- Select --</option>
+              <option>1 — Anxious, agitated, restless</option>
+              <option>2 — Cooperative, oriented, calm</option>
+              <option>3 — Drowsy, responds to commands</option>
+              <option>4 — Asleep, brisk response to light stimulus</option>
+              <option>5 — Asleep, sluggish response</option>
+              <option>6 — No response</option>
+            </select>
+          </div>
+          <div>
+            <label>Orientation Status</label>
+            <select id="c-pacu-orientation">
+              <option value="">-- Select --</option>
+              <option>Oriented × 3 (person, place, time)</option>
+              <option>Oriented × 2</option>
+              <option>Oriented × 1 only</option>
+              <option>Disoriented / confused</option>
+              <option>Unable to assess</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Emergence Complications</label>
+          <div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'pacu-emerge-list','c-pacu-emerge')"><button class="chip-add-btn" onclick="addCustomChip(this,'pacu-emerge-list','c-pacu-emerge')">+ Add</button></div>
+          <div class="chip-list" id="pacu-emerge-list">
+            <span class="chip chip-nkda" onclick="toggleChip(this,'c-pacu-emerge')">Uneventful recovery</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-emerge')">Emergence delirium / agitation</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-emerge')">Prolonged sedation</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-emerge')">Residual neuromuscular blockade</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-emerge')">Paradoxical excitation</span>
+            <span class="chip" onclick="toggleChip(this,'c-pacu-emerge')">Post-operative cognitive dysfunction (POCD)</span>
+          </div>
+          <div class="chip-selected-label">Selected: <span id="c-pacu-emerge-display">None</span></div>
+          <input type="hidden" id="c-pacu-emerge" value=""></div>
+        </div>
+      </div>
+
+      <!-- 5. SURGICAL SITE CHECK -->
+      <div class="form-section">
+        <div class="form-section-header">🩹 5. Surgical Site & Wound Check</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Inspect dressings, incisions, and drains for unexpected bleeding or fluid accumulation. Note any soakage, swelling, or dehiscence. Verify drain patency and output.
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Wound / Dressing Status</label>
+            <select id="c-pacu-wound">
+              <option value="">-- Select --</option>
+              <option>Dry and intact</option>
+              <option>Minimal soakage — expected</option>
+              <option>Moderate soakage — reinforced</option>
+              <option>Heavy soakage — surgical team notified</option>
+              <option>No external wound (laparoscopic)</option>
+            </select>
+          </div>
+          <div>
+            <label>Drain Present?</label>
+            <div class="yn-group">
+              <div class="yn-btn yes" onclick="toggleYN(this,'c-pacu-drain-yn')">✓ Yes</div>
+              <div class="yn-btn no active" onclick="toggleYN(this,'c-pacu-drain-yn')">✗ No</div>
+            </div>
+            <input type="hidden" id="c-pacu-drain-yn" value="No">
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div><label>Drain Output (mL)</label><input type="number" id="c-pacu-drain-out" placeholder="mL" min="0"></div>
+          <div><label>Drain Character</label>
+            <select id="c-pacu-drain-char">
+              <option value="">-- Select --</option>
+              <option>Serosanguinous (expected)</option>
+              <option>Sanguinous — fresh blood</option>
+              <option>Serous</option>
+              <option>Bilious</option>
+              <option>Drain not functioning</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row"><label>Wound Notes</label><input type="text" id="c-pacu-wound-notes" placeholder="Any wound concerns or interventions..."></div>
+      </div>
+
+      <!-- 6. THERMOREGULATION -->
+      <div class="form-section">
+        <div class="form-section-header">🌡️ 6. Thermoregulation</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Measure temperature to monitor for and treat hypothermia (&lt;36°C) or hyperthermia (&gt;38°C). Hypothermia increases bleeding risk, prolongs drug metabolism, and causes patient discomfort. Shivering increases O₂ consumption by 400%.
+        </div>
+        <div class="form-row four-col">
+          <div><label>Temperature (°C)</label><input type="number" id="c-pacu-temp" placeholder="°C" step="0.1" min="30" max="42"></div>
+          <div>
+            <label>Thermal Status</label>
+            <select id="c-pacu-thermal">
+              <option value="">--</option>
+              <option>Normothermic (36–37.5°C)</option>
+              <option>Mild hypothermia (35–36°C)</option>
+              <option>Moderate hypothermia (&lt;35°C)</option>
+              <option>Hyperthermia (&gt;38°C)</option>
+            </select>
+          </div>
+          <div>
+            <label>Shivering</label>
+            <select id="c-pacu-shiver">
+              <option value="">--</option>
+              <option>None</option>
+              <option>Mild (peripheral tremor)</option>
+              <option>Moderate (generalised)</option>
+              <option>Severe (uncontrolled)</option>
+            </select>
+          </div>
+          <div>
+            <label>Warming Measures</label>
+            <select id="c-pacu-warm">
+              <option value="">--</option>
+              <option>Not required</option>
+              <option>Warm blankets applied</option>
+              <option>Forced-air warming blanket</option>
+              <option>Warmed IV fluids</option>
+              <option>Pethidine given for shivering</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. COMFORT — PAIN & PONV -->
+      <div class="form-section">
+        <div class="form-section-header">😊 7. Comfort — Pain & PONV in PACU</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Gauge subjective pain, nausea, and vomiting using standard patient scales to provide targeted medication. Inadequate pain control in PACU predicts chronic pain development.
+        </div>
+        <div class="form-row">
+          <label>Pain Score in PACU (NRS 0–10)</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
+            <button type="button" onclick="selectPACUNRS(0)"  id="pacu-nrs-0"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#1a7a4a">0</button>
+            <button type="button" onclick="selectPACUNRS(1)"  id="pacu-nrs-1"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#1a7a4a">1</button>
+            <button type="button" onclick="selectPACUNRS(2)"  id="pacu-nrs-2"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#1a7a4a">2</button>
+            <button type="button" onclick="selectPACUNRS(3)"  id="pacu-nrs-3"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#1a7a4a">3</button>
+            <button type="button" onclick="selectPACUNRS(4)"  id="pacu-nrs-4"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c67a00">4</button>
+            <button type="button" onclick="selectPACUNRS(5)"  id="pacu-nrs-5"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c67a00">5</button>
+            <button type="button" onclick="selectPACUNRS(6)"  id="pacu-nrs-6"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c67a00">6</button>
+            <button type="button" onclick="selectPACUNRS(7)"  id="pacu-nrs-7"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c0392b">7</button>
+            <button type="button" onclick="selectPACUNRS(8)"  id="pacu-nrs-8"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c0392b">8</button>
+            <button type="button" onclick="selectPACUNRS(9)"  id="pacu-nrs-9"  style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c0392b">9</button>
+            <button type="button" onclick="selectPACUNRS(10)" id="pacu-nrs-10" style="-webkit-appearance:none;min-width:36px;height:42px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;font-weight:700;cursor:pointer;color:#c0392b">10</button>
+          </div>
+          <input type="hidden" id="c-pacu-nrs" value="">
+          <div id="pacu-nrs-label" style="font-size:12px;color:var(--muted);margin-top:6px">Not assessed</div>
+        </div>
+        <div class="form-row"><label>Analgesic Treatment in PACU</label><input type="text" id="c-pacu-analgesic" placeholder="e.g. Morphine 2mg IV, Paracetamol 1g IV, Ketorolac 30mg..."></div>
+        <div class="form-row">
+          <label>PONV Status in PACU</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','None')"><input type="radio" name="pacuponv"> ✅ None</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Nausea only — not treated')"><input type="radio" name="pacuponv"> ⚠️ Nausea only — not treated</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Nausea — antiemetic given')"><input type="radio" name="pacuponv"> 🟡 Nausea — antiemetic given</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Vomiting — treated')"><input type="radio" name="pacuponv"> 🔴 Vomiting — treated</label>
+          </div>
+          <input type="hidden" id="c-pacu-ponv" value="">
+          <input type="text" id="c-pacu-ponv-tx" placeholder="Antiemetic drug + dose given..." style="margin-top:6px">
+        </div>
+      </div>
+
+      <!-- 8. FLUID BALANCE -->
+      <div class="form-section">
+        <div class="form-section-header">💧 8. Fluid Balance in PACU</div>
+        <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
+          <b>Assessment:</b> Calculate overall intravenous fluid intake against urinary and drain output. Positive balance may indicate fluid overload; negative balance may indicate ongoing haemorrhage or inadequate resuscitation.
+        </div>
+        <div class="form-row four-col">
+          <div><label>IV Fluids In (mL)</label><input type="number" id="c-pacu-iv-in" placeholder="mL" min="0"></div>
+          <div><label>Urine Output (mL)</label><input type="number" id="c-pacu-urine" placeholder="mL" min="0"></div>
+          <div><label>Drain Output (mL)</label><input type="number" id="c-pacu-drain-ml" placeholder="mL" min="0"></div>
+          <div><label>Blood Loss (mL)</label><input type="number" id="c-pacu-blood-loss" placeholder="mL" min="0"></div>
+        </div>
+        <div class="form-row">
+          <label>Fluid Balance Assessment</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Balanced — adequate output')"><input type="radio" name="pacufluid"> ✅ Balanced — adequate output</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Positive balance — oliguria / fluid excess')"><input type="radio" name="pacufluid"> ⚠️ Positive balance — oliguria / fluid excess</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Negative balance — ongoing losses')"><input type="radio" name="pacufluid"> 🔴 Negative balance — ongoing losses</label>
+          </div>
+          <input type="hidden" id="c-pacu-fluid-bal" value="">
+        </div>
+      </div>
+
+      <!-- 9. ALDRETE SCORE -->
+      <div class="form-section">
+        <div class="form-section-header" style="background:linear-gradient(135deg,#2a5298,#1a3a5c)">📊 9. Modified Aldrete Scoring System — PACU Discharge Criteria</div>
+        <div class="form-row" style="background:#eaf1fa;padding:10px 14px;font-size:11px;color:#1a3a5c;border-bottom:1px solid #c5d8f0;line-height:1.6">
+          <b>Purpose:</b> An objective scoring tool to determine if a patient is safe to be discharged from PACU to the ward or home. Each of the 5 categories is scored 0–2. A score of <b>9 or 10 out of 10</b> is generally required before discharge.
+        </div>
+
+        <!-- Activity -->
+        <div class="form-row">
+          <label style="color:var(--primary);font-size:12px;font-weight:800">1. Activity — Ability to move limbs voluntarily or on command</label>
+          <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
+            Move all 4 extremities = 2 · Move 2 extremities = 1 · Unable to move extremities = 0
+          </div>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-activity','2'); calcAldreteTotal()"><input type="radio" name="aldact"> <b style="color:#1a7a4a">2</b> — Able to move 4 limbs voluntarily or on command</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-activity','1'); calcAldreteTotal()"><input type="radio" name="aldact"> <b style="color:#c67a00">1</b> — Able to move 2 limbs</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-activity','0'); calcAldreteTotal()"><input type="radio" name="aldact"> <b style="color:#e63946">0</b> — Unable to move extremities</label>
+          </div>
+          <input type="hidden" id="c-ald-activity" value="">
+        </div>
+
+        <!-- Respiration -->
+        <div class="form-row">
+          <label style="color:var(--primary);font-size:12px;font-weight:800">2. Respiration — Capability to breathe deeply and cough freely</label>
+          <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
+            Deep breath &amp; cough freely = 2 · Dyspnoeic / limited breathing = 1 · Apnoeic = 0
+          </div>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-resp','2'); calcAldreteTotal()"><input type="radio" name="aldresp"> <b style="color:#1a7a4a">2</b> — Able to breathe deeply and cough freely</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-resp','1'); calcAldreteTotal()"><input type="radio" name="aldresp"> <b style="color:#c67a00">1</b> — Dyspnoeic, shallow or limited breathing</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-resp','0'); calcAldreteTotal()"><input type="radio" name="aldresp"> <b style="color:#e63946">0</b> — Apnoeic — requires ventilatory support</label>
+          </div>
+          <input type="hidden" id="c-ald-resp" value="">
+        </div>
+
+        <!-- Circulation -->
+        <div class="form-row">
+          <label style="color:var(--primary);font-size:12px;font-weight:800">3. Circulation — Blood pressure stability relative to pre-anaesthetic baseline</label>
+          <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
+            BP within ±20% of pre-op = 2 · BP within ±20–50% = 1 · BP >50% different from baseline = 0
+          </div>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-circ','2'); calcAldreteTotal()"><input type="radio" name="aldcirc"> <b style="color:#1a7a4a">2</b> — BP within ±20% of pre-anaesthetic level</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-circ','1'); calcAldreteTotal()"><input type="radio" name="aldcirc"> <b style="color:#c67a00">1</b> — BP within ±20–50% of pre-anaesthetic level</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-circ','0'); calcAldreteTotal()"><input type="radio" name="aldcirc"> <b style="color:#e63946">0</b> — BP deviates >50% from pre-anaesthetic level</label>
+          </div>
+          <input type="hidden" id="c-ald-circ" value="">
+        </div>
+
+        <!-- Consciousness -->
+        <div class="form-row">
+          <label style="color:var(--primary);font-size:12px;font-weight:800">4. Consciousness — Level of awareness and ability to respond</label>
+          <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
+            Fully awake = 2 · Arousable on calling = 1 · Not responding = 0
+          </div>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','2'); calcAldreteTotal()"><input type="radio" name="aldconsc"> <b style="color:#1a7a4a">2</b> — Fully awake, alert, and oriented</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','1'); calcAldreteTotal()"><input type="radio" name="aldconsc"> <b style="color:#c67a00">1</b> — Arousable on verbal calling</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','0'); calcAldreteTotal()"><input type="radio" name="aldconsc"> <b style="color:#e63946">0</b> — Not responding to stimulation</label>
+          </div>
+          <input type="hidden" id="c-ald-conscious" value="">
+        </div>
+
+        <!-- SpO2 -->
+        <div class="form-row">
+          <label style="color:var(--primary);font-size:12px;font-weight:800">5. Oxygen Saturation — Maintenance of healthy O₂ saturation</label>
+          <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
+            SpO₂ &gt;92% on room air = 2 · SpO₂ &gt;90% with O₂ = 1 · SpO₂ &lt;90% even with O₂ = 0
+          </div>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','2'); calcAldreteTotal()"><input type="radio" name="aldspo2"> <b style="color:#1a7a4a">2</b> — SpO₂ &gt;92% on room air</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','1'); calcAldreteTotal()"><input type="radio" name="aldspo2"> <b style="color:#c67a00">1</b> — SpO₂ &gt;90% with supplemental O₂</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','0'); calcAldreteTotal()"><input type="radio" name="aldspo2"> <b style="color:#e63946">0</b> — SpO₂ &lt;90% despite O₂ supplementation</label>
+          </div>
+          <input type="hidden" id="c-ald-spo2" value="">
+        </div>
+
+        <!-- Aldrete Total Score Display -->
+        <div class="form-row">
+          <div id="aldrete-score-display" style="background:linear-gradient(135deg,#1a3a5c,#2a5298);color:white;border-radius:12px;padding:16px;text-align:center">
+            <div style="font-size:13px;opacity:.85;margin-bottom:6px">Modified Aldrete Total Score</div>
+            <div style="font-size:48px;font-weight:900;line-height:1" id="aldrete-total-display">—</div>
+            <div style="font-size:13px;opacity:.85;margin-top:4px">/ 10</div>
+            <div id="aldrete-verdict" style="margin-top:10px;font-size:13px;font-weight:700;padding:6px 14px;border-radius:8px;background:rgba(255,255,255,0.15);display:inline-block">Score criteria not yet met</div>
+          </div>
+          <input type="hidden" id="c-aldrete" value="">
+        </div>
+
+        <!-- Discharge Decision -->
+        <div class="form-row">
+          <label>PACU Discharge Decision</label>
+          <div class="radio-group">
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Discharged to ward — Aldrete ≥9')"><input type="radio" name="pacudischarge"> ✅ Discharged to ward — Aldrete ≥9</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Discharged home — Day surgery criteria met')"><input type="radio" name="pacudischarge"> 🏠 Discharged home — Day surgery criteria met</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Extended PACU stay — score <9')"><input type="radio" name="pacudischarge"> ⏳ Extended PACU stay — score &lt;9</label>
+            <label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Transferred to HDU/ICU')"><input type="radio" name="pacudischarge"> 🔴 Transferred to HDU/ICU</label>
+          </div>
+          <input type="hidden" id="c-pacu-discharge" value="">
+        </div>
+        <div class="form-row two-col">
+          <div><label>PACU Duration (minutes)</label><input type="number" id="c-pacu-duration" placeholder="min" min="0"></div>
+          <div><label>Discharge Destination</label>
+            <select id="c-discharge-dest">
+              <option value="">--</option>
+              <option>General ward</option>
+              <option>Surgical HDU</option>
+              <option>ICU</option>
+              <option>PACU extended stay</option>
+              <option>Home (Day case)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row"><label>PACU Notes</label><textarea id="c-pacu-notes" placeholder="Any additional PACU observations, interventions, or concerns..."></textarea></div>
+      </div>
+    </div>
+    <!-- PAGE 4: WARD / PAIN ROUND -->
+    <div class="case-page" id="case-page-4">
+      <div style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e);color:white;padding:12px 16px;border-radius:10px;margin-bottom:14px;font-size:13px;font-weight:700">
+        🛏️ Cases Taken in Wards &amp; Pain Round — First-Day Post-operative Evaluation
+        <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">CLO 2.3 · Pain assessment · WHO analgesic ladder · Patient satisfaction · Sign-off</div>
+      </div>
+<!-- ======= COMPREHENSIVE POSTOPERATIVE SECTION (CLO 23) ======= -->
       <div class="form-section">
         <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
         <div class="form-row" style="background:#e8f0fe;padding:10px 14px;font-size:11px;color:#1a3a5c;font-weight:600;border-bottom:1px solid var(--border)">
@@ -1494,6 +2029,7 @@
         <div class="form-row two-col"><div><label>Supervisor / Consultant</label><input type="text" id="c-supervisor"></div><div><label>Student Name & ID</label><input type="text" id="c-student"></div></div>
         <div class="form-row"><label>Supervisor Feedback to Student</label><textarea id="c-feedback" placeholder="Specific feedback on the student's performance during this case..."></textarea></div>
       </div>
+    </div>
     </div>
   </div>
   <div class="wizard-nav">
@@ -2595,7 +3131,7 @@ function updateLEMON() {
 
 // ==================== WIZARD (New Case) ====================
 let currentCasePage = 0;
-const totalCasePages = 5;
+const totalCasePages = 4;
 const casePages = [];
 function initWizard() { for (let i = 1; i <= totalCasePages; i++) { casePages.push(document.getElementById(`case-page-${i}`)); } showCasePage(0); }
 function showCasePage(index) {
@@ -2603,7 +3139,7 @@ function showCasePage(index) {
   const prevBtn = document.getElementById('prev-case-btn'), nextBtn = document.getElementById('next-case-btn'), submitBtn = document.getElementById('submit-case-btn');
   prevBtn.disabled = (index === 0);
   if (index === totalCasePages - 1) { nextBtn.style.display = 'none'; submitBtn.style.display = 'block'; } else { nextBtn.style.display = 'block'; submitBtn.style.display = 'none'; }
-  document.getElementById('page-indicator').textContent = `Page ${index+1} of ${totalCasePages}`;
+  var sectionNames=['🏥 Anesthesia Clinic','⚕️ Intraoperative','🏥 PACU / Recovery','🛏️ Ward / Pain Round']; document.getElementById('page-indicator').textContent = (sectionNames[index]||('Page '+(index+1)))+' · Page '+(index+1)+' of '+totalCasePages;
   document.getElementById('case-progress').style.width = ((index+1)/totalCasePages)*100 + '%';
 }
 function nextCasePage() { if (currentCasePage < totalCasePages - 1) { currentCasePage++; showCasePage(currentCasePage); window.scrollTo(0,0); } }
@@ -2611,6 +3147,26 @@ function prevCasePage() { if (currentCasePage > 0) { currentCasePage--; showCase
 function updateProgress() { /* not needed for progress bar now, but keep for compatibility */ }
 
 // ==================== SUBMIT CASE ====================
+function selectPACUNRS(val) {
+  for (var i=0; i<=10; i++) { var btn=document.getElementById('pacu-nrs-'+i); if(!btn) continue; btn.style.background=(i===val)?(val<=3?'#1a7a4a':val<=6?'#c67a00':'#c0392b'):'var(--bg)'; btn.style.color=(i===val)?'white':(i<=3?'#1a7a4a':i<=6?'#c67a00':'#c0392b'); }
+  document.getElementById('c-pacu-nrs').value=val;
+  var labels=['0 — No pain','1 — Minimal','2 — Mild','3 — Mild-moderate','4 — Moderate','5 — Moderate','6 — Moderate-severe','7 — Severe','8 — Very severe','9 — Excruciating','10 — Worst imaginable'];
+  var el=document.getElementById('pacu-nrs-label'); if(el) el.textContent=labels[val]||'';
+}
+function calcAldreteTotal() {
+  var fields=['c-ald-activity','c-ald-resp','c-ald-circ','c-ald-conscious','c-ald-spo2'];
+  var total=0,filled=0;
+  fields.forEach(function(id){ var v=document.getElementById(id); if(v&&v.value!==''){total+=parseInt(v.value)||0;filled++;} });
+  var disp=document.getElementById('aldrete-total-display'),verdict=document.getElementById('aldrete-verdict'),inp=document.getElementById('c-aldrete');
+  if(filled===5){
+    if(disp) disp.textContent=total; if(inp) inp.value=total;
+    var t=total>=9?'✅ Score '+total+'/10 — Ready for ward discharge':total>=7?'⏳ Score '+total+'/10 — Extended PACU stay required':'🔴 Score '+total+'/10 — HDU/ICU transfer may be needed';
+    var col=total>=9?'#1a7a4a':total>=7?'#c67a00':'#c0392b';
+    if(verdict){verdict.textContent=t;verdict.style.background=col;}
+    var d2=document.getElementById('aldrete-score-display'); if(d2) d2.style.background='linear-gradient(135deg,'+col+','+col+'cc)';
+  } else { if(disp) disp.textContent=filled+'/5 criteria scored'; if(verdict) verdict.textContent='Complete all 5 criteria above'; }
+}
+
 function submitCase() {
   // POSTGRADUATE: no case limit
   const name = document.getElementById('c-name').value.trim();
@@ -2633,6 +3189,23 @@ function submitCase() {
     postopNotes: document.getElementById('c-postop-notes').value || '',
     supervisor: document.getElementById('c-supervisor').value || '',
     feedback: document.getElementById('c-feedback').value || '',
+    pacu: {
+      airway: (document.getElementById('c-pacu-airway')||{}).value||'',
+      rr: (document.getElementById('c-pacu-rr')||{}).value||'',
+      spo2Pacu: (document.getElementById('c-pacu-spo2')||{}).value||'',
+      breathing: (document.getElementById('c-pacu-breathing')||{}).value||'',
+      hr: (document.getElementById('c-pacu-hr')||{}).value||'',
+      bp: (document.getElementById('c-pacu-bp')||{}).value||'',
+      avpu: (document.getElementById('c-pacu-avpu')||{}).value||'',
+      wound: (document.getElementById('c-pacu-wound')||{}).value||'',
+      temp: (document.getElementById('c-pacu-temp')||{}).value||'',
+      nrsPacu: (document.getElementById('c-pacu-nrs')||{}).value||'',
+      ponv: (document.getElementById('c-pacu-ponv')||{}).value||'',
+      ivIn: (document.getElementById('c-pacu-iv-in')||{}).value||'',
+      urine: (document.getElementById('c-pacu-urine')||{}).value||'',
+      aldreteTotal: (document.getElementById('c-aldrete')||{}).value||'',
+      pacuDischarge: (document.getElementById('c-pacu-discharge')||{}).value||''
+    },
     painType: document.getElementById('c-pain-type').value || '',
     painSite: document.getElementById('c-pain-site').value || '',
     nrs: document.getElementById('c-nrs').value || '',
