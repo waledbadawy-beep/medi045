@@ -3769,6 +3769,7 @@ function _initApp() {
   _safe('results', renderResults);
   _safe('supervisors', loadSupervisorDropdown);
   _safe('gradechart', renderGradeChart);
+  checkProfileOnLoad();
 
   // iOS-safe date (no toISOString timezone offset issue)
   _safe('today', () => {
@@ -3816,6 +3817,46 @@ setInterval(() => {
 }, 10000);
 </script>
 
+<div class="screen" id="screen-register">
+  <div class="app-bar" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">
+    <div class="app-bar-title" style="padding-left:16px">
+      <h1>Student Registration</h1>
+      <p>MEDI 045 · Basic Anaesthesia &amp; Resuscitation</p>
+    </div>
+  </div>
+  <div style="padding:24px 16px">
+    <div style="background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:52px;margin-bottom:10px">🎓</div>
+        <h2 style="color:#1a3a5c;font-size:18px;margin:0 0 6px">Welcome to MEDI 045 Logbook</h2>
+        <p style="color:#6c757d;font-size:13px;margin:0">Register once to begin logging your anaesthesia cases</p>
+      </div>
+      <div class="admin-field">
+        <label>Full Name <span style="color:#e63946">*</span></label>
+        <input id="reg-name" placeholder="e.g. Mohammed Al-Otaibi" style="font-size:16px">
+      </div>
+      <div class="admin-field">
+        <label>University ID <span style="color:#e63946">*</span></label>
+        <input id="reg-id" placeholder="e.g. 444012345" style="font-size:16px">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">This ID will index all your cases in the supervisor panel</div>
+      </div>
+      <div class="admin-field">
+        <label>Academic Year</label>
+        <select id="reg-year" style="font-size:16px">
+          <option>2025–2026</option>
+          <option>2026–2027</option>
+          <option>2027–2028</option>
+        </select>
+      </div>
+      <button onclick="saveProfile()" style="width:100%;background:linear-gradient(135deg,#2a5298,#1a3a5c);color:white;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;letter-spacing:.5px">
+        Start Logbook →
+      </button>
+    </div>
+    <div style="text-align:center;font-size:11px;color:#9ca3af;padding:0 16px 8px">
+      © 2026 Dr. Walid Badwi · KSUMC Anaesthesia Training Programme · All rights reserved
+    </div>
+  </div>
+</div>
 <div class="screen" id="screen-pg-clinic">
   <div class="app-bar" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">
     <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
@@ -4899,14 +4940,6 @@ setInterval(() => {
           <input type="hidden" id="c-satisfaction" value="">
         </div>
         <div class="form-row"><label>Patient Comments / Concerns</label><textarea id="c-patient-comments" placeholder="Document any comments or concerns expressed by the patient..."></textarea></div>
-
-        <!-- PACU / Discharge -->
-        <div class="form-row two-col">
-          <div><label>Aldrete Score (PACU Discharge)</label><input type="number" id="c-aldrete" placeholder="/10" min="0" max="10"></div>
-          <div><label>Discharge Destination</label>
-            <select id="c-discharge-dest"><option value="">--</option><option>Ward</option><option>Surgical HDU</option><option>ICU</option><option>PACU extended stay</option><option>Home (Day case)</option></select>
-          </div>
-        </div>
       </div>
 
       <!-- Self-Reflection (required) -->
