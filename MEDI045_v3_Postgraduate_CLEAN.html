@@ -2157,25 +2157,18 @@ function closePasswordModal() { document.getElementById('pwd-modal').style.displ
 function showPasswordModal() { document.getElementById('pwd-modal').style.display='flex'; pwdVal=''; updatePwdDots(); }
 
 // ==================== NAVIGATION ====================
-function goto(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function goto(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
 function gotoProtected(id) { if (evalUnlocked) goto(id); else showPasswordModal(); }
 
 // ==================== HELPER FUNCTIONS ====================
-function updateStats() { document.getElementById('stat-cases').textContent = records.length; document.getElementById('stat-skills').textContent = records.filter(r=>r.type==='airway').length; updateUGBanner(); }
+function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var el=document.getElementById('stat-cases'); if(el) el.textContent=records.filter(function(r){return TYPES.indexOf(r.type)!==-1;}).length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway';}).length; updateUGBanner(); }
 function updateUGBanner() {
-  const el = document.getElementById('ug-case-status');
+  var el = document.getElementById('ug-case-status');
   if (!el) return;
-  const submitted = records.filter(r => r.type === 'case' && r.status === 'submitted').length;
-  const remaining = Math.max(0, 2 - submitted);
-  if (submitted >= 2) {
-    el.innerHTML = '✅ You have submitted both cases. No more submissions allowed.';
-    el.style.color = '#1a7a4a';
-    const btn = document.querySelector('#screen-new-case .save-btn');
-    if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; }
-  } else {
-    el.innerHTML = `📋 Cases submitted: <b>${submitted} / 2</b> — You have <b>${remaining}</b> remaining.`;
-    el.style.color = '#c67a00';
-  }
+  var TYPES = ['clinic','intraop','pacu','ward','case'];
+  var submitted = records.filter(function(r){ return TYPES.indexOf(r.type)!==-1 && r.status==='submitted'; }).length;
+  el.innerHTML = '📋 Cases submitted: <b>' + submitted + '</b>';
+  el.style.color = '#2a5298';
 }
 function toggleSkill(header) { let content=header.nextElementSibling; content.classList.toggle('open'); header.querySelector('span:last-child').textContent=content.classList.contains('open')?'∨':'›'; }
 function toggleYN(btn,fieldId) { let parent=btn.parentElement; parent.querySelectorAll('.yn-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.getElementById(fieldId).value=btn.classList.contains('yes')?'Yes':'No'; if(fieldId.includes('lemon')) updateLEMON(); }
