@@ -1004,95 +1004,6 @@
 </div>
 
 <!-- ===================== AIRWAY SCREEN (comprehensive, unchanged) ===================== -->
-<div class="screen" id="screen-airway">
-  <div class="app-bar">
-    <button class="back-btn" onclick="goto('screen-home')">‹</button>
-    <div class="app-bar-title"><h1>Pre-operative Anaesthesia Clinic</h1><p>Pre-op Assessment & Airway Evaluation</p></div>
-    <button class="save-btn" onclick="saveAirway()">Save Assessment</button>
-  </div>
-  <div class="form-body">
-    <!-- Patient Information -->
-    <div class="form-section"><div class="form-section-header">👤 Patient Information</div>
-      <div class="form-row two-col"><div><label>Case No.</label><input type="text" id="aw-case" placeholder="e.g., 1"></div><div><label>Date</label><input type="date" id="aw-date"></div></div>
-      <div class="form-row"><label>Patient Name & ID</label><input type="text" id="aw-patient" placeholder="Full name and hospital ID"></div>
-    </div>
-    <!-- History of Difficult Airway -->
-    <div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
-      <div class="form-row"><label>Previous difficult intubation?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-prev-int" value="No"><input type="text" id="aw-prev-int-c" placeholder="If yes, describe details" style="margin-top:6px"></div>
-      <div class="form-row"><label>Known obstructive sleep apnea (OSA)?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-osa" value="No"><input type="text" id="aw-osa-c" placeholder="If yes, CPAP use? AHI?" style="margin-top:6px"></div>
-      <div class="form-row"><label>Unstable cervical spine or previous surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-cspine" value="No"><input type="text" id="aw-cspine-c" placeholder="If yes, specify" style="margin-top:6px"></div>
-      <div class="form-row"><label>History of head/neck radiation or surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-rad'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-rad'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-rad" value="No"><input type="text" id="aw-rad-c" placeholder="If yes, details" style="margin-top:6px"></div>
-      <div class="form-row"><label>History of burns to face/neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-burns" value="No"></div>
-    </div>
-    <!-- L – Look Externally -->
-    <div class="form-section"><div class="form-section-header">🍋 L – Look Externally</div>
-      <div class="form-row"><label>Look for external features that may predict difficult intubation (check all that apply):</label>
-        <div class="check-group" id="lemon-look">
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Obesity (BMI >30)</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Thick neck / short neck</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Beard / facial hair</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Prominent incisors / buck teeth</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Receding chin / micrognathia</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Edentulous / missing teeth</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Facial trauma / deformity</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> High arched palate</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Large tongue / macroglossia</label>
-        </div>
-        <input type="text" id="aw-look-other" placeholder="Other findings" oninput="updateLEMON()" style="margin-top:8px">
-      </div>
-    </div>
-    <!-- E – Evaluate 3-3-2 Rule -->
-    <div class="form-section"><div class="form-section-header">📏 E – Evaluate 3-3-2 Rule</div>
-      <div class="form-row"><label>Inter‑incisor distance (mouth opening)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-1','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-1','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-1"></div>
-      <div class="form-row"><label>Hyoid‑mental distance (chin to hyoid)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-2','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-2','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-2"></div>
-      <div class="form-row"><label>Thyroid‑mouth distance (thyroid notch to floor of mouth)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-3','≥2 fingers'); updateLEMON()">≥2 fingers (≥4 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-3','<2 fingers'); updateLEMON()">&lt;2 fingers (&lt;4 cm) – inadequate</label></div><input type="hidden" id="aw-332-3"></div>
-      <div class="form-row"><label>Comment on 3-3-2</label><input type="text" id="aw-332-c" placeholder="Any additional notes"></div>
-    </div>
-    <!-- M – Mallampati -->
-    <div class="form-section"><div class="form-section-header">👅 M – Mallampati Classification</div>
-      <div class="form-row"><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','I'); updateLEMON()">Class I – soft palate, uvula, fauces, pillars visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','II'); updateLEMON()">Class II – soft palate, uvula, fauces visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','III'); updateLEMON()">Class III – soft palate, base of uvula visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','IV'); updateLEMON()">Class IV – only hard palate visible</label></div><input type="hidden" id="aw-mallampati" value=""></div>
-    </div>
-    <!-- O – Obstruction -->
-    <div class="form-section"><div class="form-section-header">🔴 O – Obstruction / Pathology</div>
-      <div class="form-row"><label>Any evidence of airway obstruction (check all that apply):</label>
-        <div class="check-group" id="lemon-obstruction">
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Stridor</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Hoarseness</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Dysphagia</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Mass / tumor visible</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Previous tracheostomy</label>
-        </div>
-        <input type="text" id="aw-obstruction-other" placeholder="Other findings" oninput="updateLEMON()" style="margin-top:8px">
-      </div>
-    </div>
-    <!-- N – Neck Mobility -->
-    <div class="form-section"><div class="form-section-header">🔄 N – Neck Mobility</div>
-      <div class="form-row"><label>Can the patient fully flex and extend the neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-neck-mob" value="No"></div>
-      <div class="form-row"><label>Is the patient wearing a cervical collar?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-collar" value="No"></div>
-      <div class="form-row"><label>Congenital or acquired neck deformity?</label>
-        <div class="check-group" id="lemon-congenital">
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Down's syndrome</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Klippel‑Feil syndrome</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Ankylosing spondylitis</label>
-          <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Goiter / neck mass</label>
-        </div>
-      </div>
-    </div>
-    <!-- Additional Measurements -->
-    <div class="form-section"><div class="form-section-header">📏 Additional Measurements</div>
-      <div class="form-row two-col"><div><label>Thyromental distance (cm)</label><input type="number" id="aw-tmd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Sternomental distance (cm)</label><input type="number" id="aw-smd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
-      <div class="form-row two-col"><div><label>Neck circumference (cm)</label><input type="number" id="aw-neck-circ" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Mouth opening (cm)</label><input type="number" id="aw-mouth-opening" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
-      <div class="form-row"><label>Upper lip bite test (ULBT)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class I'); updateLEMON()">Class I – lower incisors can bite upper lip</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class II'); updateLEMON()">Class II – upper lip can be bitten but incisors cannot</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class III'); updateLEMON()">Class III – cannot bite upper lip</label></div><input type="hidden" id="aw-ulbt"></div>
-    </div>
-    <!-- LEMON Summary -->
-    <div class="form-section"><div class="form-section-header">⚠️ LEMON Summary & Risk</div>
-      <div class="form-row"><div id="lemon-summary" style="background:var(--section-bg); padding:12px; border-radius:8px; font-size:13px; line-height:1.5"></div></div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ===================== EVALUATION SCREEN ===================== -->
 <div class="screen" id="screen-eval">
   <div class="app-bar"><button class="back-btn" onclick="goto('screen-dashboard')">‹</button><div class="app-bar-title"><h1>Case Evaluation</h1><p>Single Case · Score /5</p></div></div>
 
@@ -3940,6 +3851,9 @@ setInterval(() => {
 </script>
 
 <!-- ============================================================ -->
+<div class="screen" id="screen-records"><div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>Student Portfolio</h1><p id="records-count">0 cases saved</p></div></div><div id="records-container" class="records-list"><div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div></div><div class="bottom-nav"><div class="nav-item" onclick="goto('screen-home')"><span class="nav-icon">🏠</span>Home</div><div class="nav-item" onclick="openCaseScreen('screen-clinic','cl')"><span class="nav-icon">➕</span>New Case</div><div class="nav-item active" onclick="goto('screen-records')"><span class="nav-icon">🗂️</span>Portfolio</div></div></div>
+
+<!-- ===================== EVALUATION SCREEN ===================== -->
 <div class="screen" id="screen-clinic">
   <div class="app-bar" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">
     <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
@@ -5063,14 +4977,6 @@ setInterval(() => {
           <input type="hidden" id="c-satisfaction" value="">
         </div>
         <div class="form-row"><label>Patient Comments / Concerns</label><textarea id="c-patient-comments" placeholder="Document any comments or concerns expressed by the patient..."></textarea></div>
-
-        <!-- PACU / Discharge -->
-        <div class="form-row two-col">
-          <div><label>Aldrete Score (PACU Discharge)</label><input type="number" id="c-aldrete" placeholder="/10" min="0" max="10"></div>
-          <div><label>Discharge Destination</label>
-            <select id="c-discharge-dest"><option value="">--</option><option>Ward</option><option>Surgical HDU</option><option>ICU</option><option>PACU extended stay</option><option>Home (Day case)</option></select>
-          </div>
-        </div>
       </div>
 
       <!-- Self-Reflection (required) -->
