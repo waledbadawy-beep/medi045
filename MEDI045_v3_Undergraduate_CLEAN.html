@@ -1986,7 +1986,7 @@ function buildCaseEntry(type, prefix, status) {
 }
 
 // ── CLINIC SUBMIT ────────────────────────────────────────────────────────
-function submit_clinic() {
+function submit_cl() {
   var patient = gv('cl-patient'), caseNo = gv('cl-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
   if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2009,7 +2009,7 @@ function saveDraft_cl() {
 }
 
 // ── INTRAOP SUBMIT ───────────────────────────────────────────────────────
-function submit_intraop() {
+function submit_io() {
   var patient = gv('io-patient'), caseNo = gv('io-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
   if (!confirm('Submit this Intraoperative case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2048,7 +2048,7 @@ function saveDraft_pacu() {
 }
 
 // ── WARD SUBMIT ──────────────────────────────────────────────────────────
-function submit_ward() {
+function submit_wd() {
   var patient = gv('wd-patient'), caseNo = gv('wd-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
   if (!confirm('Submit this Ward/Pain case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
