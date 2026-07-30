@@ -972,6 +972,12 @@
 <div class="stat-card"><div class="num" id="stat-skills">0</div><div class="lbl">Skills</div></div>
 <div class="stat-card"><div class="num">45</div><div class="lbl">Target</div></div>
 </div>
+<div id="ann-banner" style="display:none;margin:0 16px 14px;background:linear-gradient(135deg,#1a5c3c,#2e7d5e);border-radius:12px;padding:14px 16px;cursor:pointer;color:white" onclick="goto('screen-announcements')">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div><div style="font-size:13px;font-weight:800">📢 <span id="ann-banner-title">Announcements</span></div><div style="font-size:11px;opacity:.85;margin-top:2px" id="ann-banner-sub">Tap to view</div></div>
+<div style="font-size:20px">›</div>
+</div>
+</div>
 <div class="section-title">Quick Actions</div>
 <div class="menu-list">
 <div style="font-size:11px;font-weight:800;color:#6c757d;letter-spacing:.8px;margin:4px 0 10px;text-transform:uppercase">📋 New Case Record — Select Type</div>
@@ -993,6 +999,15 @@
 </div>
 </div>
 <!-- ===================== AIRWAY SCREEN (comprehensive, unchanged) ===================== -->
+
+<div class="screen" id="screen-announcements">
+<div class="app-bar" style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e)">
+<button class="back-btn" onclick="goto('screen-home')">‹</button>
+<div class="app-bar-title"><h1>📢 Announcements</h1><p>Memos, regulations &amp; links</p></div>
+</div>
+<div id="ann-list" style="padding:16px 16px calc(100px + env(safe-area-inset-bottom))"></div>
+</div>
+
 <div class="screen" id="screen-records"><div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>Student Portfolio</h1><p id="records-count">0 cases saved</p></div></div><div class="records-list" id="records-container"><div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div></div><div class="bottom-nav"><div class="nav-item" onclick="goto('screen-home')"><span class="nav-icon">🏠</span>Home</div><div class="nav-item" onclick="openCaseScreen('screen-pg-clinic','cl')"><span class="nav-icon">➕</span>New Case</div><div class="nav-item active" onclick="goto('screen-records')"><span class="nav-icon">🗂️</span>Portfolio</div></div></div>
 <!-- ===================== EVALUATION SCREEN ===================== -->
 <div class="screen" id="screen-eval">
@@ -1809,6 +1824,25 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
 <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
 </div>
+<!-- Section: Announcements -->
+<div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
+<div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">📢 Announcements, Memos &amp; Links</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Post a memo, regulation, or link — all students will see it on their Home screen.</div>
+<div class="admin-field">
+<label>Title</label>
+<input id="ann-title" placeholder="e.g. Exam Schedule Update" type="text"/>
+</div>
+<div class="admin-field">
+<label>Message</label>
+<textarea id="ann-message" placeholder="Write the memo or regulation text here..." rows="4" style="font-size:16px"></textarea>
+</div>
+<div class="admin-field">
+<label>Link (optional)</label>
+<input id="ann-link" placeholder="https://..." type="url"/>
+</div>
+<button onclick="postAnnouncement()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px">📢 Post to All Students</button>
+<div id="ann-admin-list" style="margin-top:14px"></div>
+</div>
 <!-- Data Management -->
 <div id="dash-admin-data" style="display:none;background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px;border:2px solid #e63946">
 <div style="font-size:14px;font-weight:800;color:#e63946;margin-bottom:12px">⚠️ Data Management</div>
@@ -1967,12 +2001,7 @@ function openCaseScreen(screenId, prefix) {
 }
 
 function loadSupervisorDropdownFor(prefix) {
-  var sel = document.getElementById(prefix+'-supervisor');
-  if (!sel) return;
-  var mainSel = document.getElementById('c-supervisor');
-  if (mainSel) { sel.innerHTML = mainSel.innerHTML; return; }
-  // Fallback defaults
-  sel.innerHTML = '<option value="">-- Select --</option><option>Dr. Walid Badwi</option><option>Other</option>';
+  // Supervisor is now a free-text input with autocomplete suggestions — nothing to populate.
 }
 
 function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
@@ -2083,6 +2112,89 @@ function _saveDraftEntry(entry) {
   showToast('💾 Draft saved');
 }
 
+// ==================== ANNOUNCEMENTS ====================
+function postAnnouncement() {
+  var title = document.getElementById('ann-title').value.trim();
+  var message = document.getElementById('ann-message').value.trim();
+  var link = document.getElementById('ann-link').value.trim();
+  if (!title || !message) { showToast('⚠️ Please enter a title and message'); return; }
+  var entry = {
+    type: 'announcement', id: Date.now(), status: 'active',
+    title: title, message: message, link: link,
+    postedAt: new Date().toLocaleString('en-SA'),
+    postedBy: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Program Director'
+  };
+  records.push(entry);
+  Store.set('medi045_records', JSON.stringify(records));
+  postToCloud(entry);
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-message').value = '';
+  document.getElementById('ann-link').value = '';
+  showToast('📢 Announcement posted to all students!');
+  renderAdminAnnouncements();
+  renderAnnouncements();
+  updateAnnBanner();
+}
+
+function deleteAnnouncement(id) {
+  if (!confirm('Delete this announcement? Students will no longer see it.')) return;
+  var ann = records.find(function(r){ return r.type==='announcement' && String(r.id)===String(id); });
+  records = records.filter(function(r){ return !(r.type==='announcement' && String(r.id)===String(id)); });
+  Store.set('medi045_records', JSON.stringify(records));
+  if (ann) { ann.status = 'deleted'; postToCloud(ann); } // upsert with deleted status so cloud reflects removal
+  renderAdminAnnouncements();
+  renderAnnouncements();
+  updateAnnBanner();
+  showToast('Announcement deleted');
+}
+
+function renderAdminAnnouncements() {
+  var el = document.getElementById('ann-admin-list');
+  if (!el) return;
+  var anns = records.filter(function(r){ return r.type==='announcement' && r.status!=='deleted'; }).slice().reverse();
+  if (!anns.length) { el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No announcements posted yet</div>'; return; }
+  el.innerHTML = anns.map(function(a) {
+    return '<div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div style="font-weight:700;font-size:13px;color:#1a3a5c">'+_esc(a.title)+'</div>'
+      + '<button onclick="deleteAnnouncement('+a.id+')" style="background:none;border:none;color:#e63946;font-size:16px;cursor:pointer;flex-shrink:0">🗑️</button>'
+      + '</div>'
+      + '<div style="font-size:12px;color:#444;margin-top:4px">'+_esc(a.message)+'</div>'
+      + (a.link ? '<div style="font-size:11px;color:#2a5298;margin-top:4px">🔗 '+_esc(a.link)+'</div>' : '')
+      + '<div style="font-size:10px;color:var(--muted);margin-top:6px">'+_esc(a.postedAt)+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderAnnouncements() {
+  var el = document.getElementById('ann-list');
+  if (!el) return;
+  var anns = records.filter(function(r){ return r.type==='announcement' && r.status!=='deleted'; }).slice().reverse();
+  if (!anns.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">📢</div><h3>No announcements yet</h3><p>Updates from your program director will appear here</p></div>'; return; }
+  el.innerHTML = anns.map(function(a) {
+    return '<div style="background:white;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 2px 14px rgba(26,58,92,0.10);border-left:4px solid #1a5c3c">'
+      + '<div style="font-weight:800;font-size:15px;color:#1a3a5c">'+_esc(a.title)+'</div>'
+      + '<div style="font-size:13px;color:#444;margin-top:6px;line-height:1.5;white-space:pre-wrap">'+_esc(a.message)+'</div>'
+      + (a.link ? '<a href="'+_esc(a.link)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:12px;color:#2a5298;font-weight:700;text-decoration:none">🔗 Open Link →</a>' : '')
+      + '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+_esc(a.postedAt)+(a.postedBy?' · '+_esc(a.postedBy):'')+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function syncAnnouncementsFromCloud() {
+  syncFromCloud(function(){ updateAnnBanner(); renderAnnouncements(); renderAdminAnnouncements(); });
+}
+function updateAnnBanner() {
+  var banner = document.getElementById('ann-banner');
+  if (!banner) return;
+  var anns = records.filter(function(r){ return r.type==='announcement' && r.status!=='deleted'; });
+  if (!anns.length) { banner.style.display='none'; return; }
+  var latest = anns[anns.length-1];
+  document.getElementById('ann-banner-title').textContent = latest.title;
+  document.getElementById('ann-banner-sub').textContent = anns.length + ' announcement' + (anns.length!==1?'s':'') + ' · Tap to view';
+  banner.style.display = 'block';
+}
+
 // ==================== STUDENT PROFILE ====================
 let studentProfile = null;
 function loadStudentProfile() {
@@ -2181,31 +2293,7 @@ function renderRecords() {
   if(myRecords.length===0){ container.innerHTML='<div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div>'; return; }
   container.innerHTML=myRecords.map(r=>`<div class="record-card" style="cursor:pointer" onclick="openCaseDetail('${r.id}')"><div class="rc-top"><div class="rc-name">${r.type==='airway'?'🫁':'📋'} Case #${r.caseNo||'?'} · ${r.patientName||'Unknown'}</div><div class="rc-date">${r.caseDate||r.date}</div></div><div class="rc-tags">${r.type==='airway'?'<span class="tag tag-red">Airway</span>':'<span class="tag tag-blue">Full Case</span>'}${r.status==='submitted'?'<span class="tag" style="background:#e8f8f0;color:#1a7a4a">✓ Submitted</span>':'<span class="tag" style="background:#fff8e8;color:#c67a00">Draft</span>'}${r.dx?`<span class="tag tag-orange">${r.dx}</span>`:''}${r.asa?`<span class="tag tag-green">ASA ${r.asa}</span>`:''}</div></div>`).join('');
 }
-function saveAirway() {
-  const lookSelected = []; document.querySelectorAll('#lemon-look .check-option.selected').forEach(opt => lookSelected.push(opt.textContent.trim()));
-  const lookOther = document.getElementById('aw-look-other').value.trim(); if (lookOther) lookSelected.push(lookOther);
-  const obstructionSelected = []; document.querySelectorAll('#lemon-obstruction .check-option.selected').forEach(opt => obstructionSelected.push(opt.textContent.trim()));
-  const obstructionOther = document.getElementById('aw-obstruction-other').value.trim(); if (obstructionOther) obstructionSelected.push(obstructionOther);
-  const congenitalSelected = []; document.querySelectorAll('#lemon-congenital .check-option.selected').forEach(opt => congenitalSelected.push(opt.textContent.trim()));
-  const entry = {
-    type: 'airway', id: Date.now(), date: new Date().toLocaleDateString('en-SA'),
-    caseNo: document.getElementById('aw-case').value || '?', patientName: document.getElementById('aw-patient').value || 'Unknown',
-    caseDate: document.getElementById('aw-date').value || (() => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })(),
-    prevDifficult: document.getElementById('aw-prev-int').value, prevDifficultDetails: document.getElementById('aw-prev-int-c').value,
-    osa: document.getElementById('aw-osa').value, osaDetails: document.getElementById('aw-osa-c').value,
-    cspine: document.getElementById('aw-cspine').value, cspineDetails: document.getElementById('aw-cspine-c').value,
-    radiation: document.getElementById('aw-rad').value, radiationDetails: document.getElementById('aw-rad-c').value,
-    burns: document.getElementById('aw-burns').value,
-    lookExternal: lookSelected, interIncisor: document.getElementById('aw-332-1').value, hyoidMental: document.getElementById('aw-332-2').value,
-    thyroidMouth: document.getElementById('aw-332-3').value, comment332: document.getElementById('aw-332-c').value,
-    mallampati: document.getElementById('aw-mallampati').value, obstruction: obstructionSelected,
-    neckMobility: document.getElementById('aw-neck-mob').value, cervicalCollar: document.getElementById('aw-collar').value,
-    congenital: congenitalSelected, thyromentalDistance: document.getElementById('aw-tmd').value,
-    sternomentalDistance: document.getElementById('aw-smd').value, neckCircumference: document.getElementById('aw-neck-circ').value,
-    mouthOpeningCm: document.getElementById('aw-mouth-opening').value, ulbt: document.getElementById('aw-ulbt').value,
-  };
-  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); postToCloud(entry); showToast('Airway assessment saved'); goto('screen-records');
-}
+
 function updateLEMON() {
   let lookFlags = []; document.querySelectorAll('#lemon-look .check-option.selected').forEach(opt => lookFlags.push(opt.textContent.trim()));
   const lookOther = document.getElementById('aw-look-other').value.trim(); if (lookOther) lookFlags.push(lookOther);
@@ -2238,17 +2326,10 @@ function updateLEMON() {
 let currentCasePage = 0;
 const totalCasePages = 4;
 const casePages = [];
-function initWizard() { for (let i = 1; i <= totalCasePages; i++) { casePages.push(document.getElementById(`case-page-${i}`)); } showCasePage(0); }
-function showCasePage(index) {
-  casePages.forEach((page, i) => { if (i === index) page.classList.add('active-page'); else page.classList.remove('active-page'); });
-  const prevBtn = document.getElementById('prev-case-btn'), nextBtn = document.getElementById('next-case-btn'), submitBtn = document.getElementById('submit-case-btn');
-  prevBtn.disabled = (index === 0);
-  if (index === totalCasePages - 1) { nextBtn.style.display = 'none'; submitBtn.style.display = 'block'; } else { nextBtn.style.display = 'block'; submitBtn.style.display = 'none'; }
-  var sectionNames=['🏥 Anesthesia Clinic','⚕️ Intraoperative','🏥 PACU / Recovery','🛏️ Ward / Pain Round']; document.getElementById('page-indicator').textContent = (sectionNames[index]||('Page '+(index+1)))+' · Page '+(index+1)+' of '+totalCasePages;
-  document.getElementById('case-progress').style.width = ((index+1)/totalCasePages)*100 + '%';
-}
-function nextCasePage() { if (currentCasePage < totalCasePages - 1) { currentCasePage++; showCasePage(currentCasePage); window.scrollTo(0,0); } }
-function prevCasePage() { if (currentCasePage > 0) { currentCasePage--; showCasePage(currentCasePage); window.scrollTo(0,0); } }
+
+
+
+
 function updateProgress() { /* not needed for progress bar now, but keep for compatibility */ }
 
 // ==================== SUBMIT CASE ====================
@@ -2272,60 +2353,7 @@ function calcAldreteTotal() {
   } else { if(disp) disp.textContent=filled+'/5 criteria scored'; if(verdict) verdict.textContent='Complete all 5 criteria above'; }
 }
 
-function submitCase() {
-  // POSTGRADUATE: no case limit
-  const name = document.getElementById('c-name').value.trim();
-  const caseNo = document.getElementById('c-case').value.trim();
-  if (!name || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!confirm('Submit this case for evaluation?\n\nOnce submitted, it cannot be edited.')) return;
-  const entry = {
-    type: 'case', status: 'submitted', id: Date.now(), date: new Date().toLocaleDateString('en-SA'), submittedAt: new Date().toLocaleString('en-SA'),
-    caseNo, patientName: name, studentName: document.getElementById('c-student').value || '', studentId: document.getElementById('c-id').value || '',
-    caseDate: document.getElementById('c-date').value || '', age: document.getElementById('c-age').value || '', sex: document.getElementById('c-sex').value || '',
-    weight: document.getElementById('c-weight').value || '', dx: document.getElementById('c-dx').value || '', procedure: document.getElementById('c-procedure').value || '',
-    asa: document.getElementById('c-asa').value || '', mallampati: document.getElementById('c-mallampati').value || '', prevAnaes: document.getElementById('c-prev-anaes').value || '',
-    allergy: document.getElementById('c-allergy').value || '', cvs: document.getElementById('c-cvs').value || '', resp: document.getElementById('c-resp').value || '',
-    endo: document.getElementById('c-endo').value || '', renal: document.getElementById('c-renal').value || '', neuro: document.getElementById('c-neuro').value || '',
-    otherHx: document.getElementById('c-other-hx').value || '', meds: document.getElementById('c-meds').value || '', hr: document.getElementById('c-hr').value || '',
-    spo2: document.getElementById('c-spo2').value || '', bp: document.getElementById('c-bp').value || '', temp: document.getElementById('c-temp').value || '',
-    npo: document.getElementById('c-npo').value || '', premed: document.getElementById('c-premed').value || '', operation: document.getElementById('c-operation').value || '',
-    indAnalgesic: document.getElementById('c-ind-analgesic').value || '', indHypnotic: document.getElementById('c-ind-hypnotic').value || '', indNMB: document.getElementById('c-ind-nmb').value || '',
-    airwayDevice: document.getElementById('c-airway-device').value || '', ettSize: document.getElementById('c-ett-size').value || '', events: document.getElementById('c-events').value || '',
-    postopNotes: document.getElementById('c-postop-notes').value || '',
-    supervisor: document.getElementById('c-supervisor').value || '',
-    feedback: document.getElementById('c-feedback').value || '',
-    pacu: {
-      airway: (document.getElementById('c-pacu-airway')||{}).value||'',
-      rr: (document.getElementById('c-pacu-rr')||{}).value||'',
-      spo2Pacu: (document.getElementById('c-pacu-spo2')||{}).value||'',
-      breathing: (document.getElementById('c-pacu-breathing')||{}).value||'',
-      hr: (document.getElementById('c-pacu-hr')||{}).value||'',
-      bp: (document.getElementById('c-pacu-bp')||{}).value||'',
-      avpu: (document.getElementById('c-pacu-avpu')||{}).value||'',
-      wound: (document.getElementById('c-pacu-wound')||{}).value||'',
-      temp: (document.getElementById('c-pacu-temp')||{}).value||'',
-      nrsPacu: (document.getElementById('c-pacu-nrs')||{}).value||'',
-      ponv: (document.getElementById('c-pacu-ponv')||{}).value||'',
-      ivIn: (document.getElementById('c-pacu-iv-in')||{}).value||'',
-      urine: (document.getElementById('c-pacu-urine')||{}).value||'',
-      aldreteTotal: (document.getElementById('c-aldrete')||{}).value||'',
-      pacuDischarge: (document.getElementById('c-pacu-discharge')||{}).value||''
-    },
-    painType: document.getElementById('c-pain-type').value || '',
-    painSite: document.getElementById('c-pain-site').value || '',
-    nrs: document.getElementById('c-nrs').value || '',
-    vas: document.getElementById('c-vas').value || '',
-    vrs: document.getElementById('c-vrs').value || '',
-    faces: document.getElementById('c-faces').value || '',
-    whoStep: document.getElementById('c-who-step').value || '',
-    pharmaMod: document.getElementById('c-pharma-mod').value || '',
-    nonPharmaMod: document.getElementById('c-nonpharma-mod').value || '',
-    satisfaction: document.getElementById('c-satisfaction').value || '',
-    aldrete: document.getElementById('c-aldrete').value || '',
-    postopComp: document.getElementById('c-postop-comp').value || ''
-  };
-  records.push(entry); Store.set('medi045_records', JSON.stringify(records)); updateStats(); renderRecords(); renderDashboard(); postToCloud(entry); showToast('✅ Case submitted for evaluation!'); currentCasePage = 0; showCasePage(0); setTimeout(() => { goto('screen-records'); }, 1400);
-}
+
 
 // ==================== EVALUATION ====================
 window.starScores={}; window.crScores={};
@@ -2333,25 +2361,8 @@ function switchEvalTab(idx) { document.querySelectorAll('.eval-tab').forEach((t,
 function toggleDops(header) { let body=header.nextElementSibling; body.classList.toggle('open'); if(body.classList.contains('open')) initStarsIn(body); }
 function initStarsIn(container) { container.querySelectorAll('.star-group').forEach(g=>{ if(g.dataset.init) return; g.dataset.init=1; let field=g.dataset.field; let n=g.textContent.split('').filter(c=>c==='⭐').length; g.innerHTML=''; for(let i=1;i<=5;i++){ let s=document.createElement('span'); s.className='star'; s.textContent='⭐'; s.dataset.val=i; s.onclick=()=>{ g.querySelectorAll('.star').forEach(st=>st.classList.toggle('lit',parseInt(st.dataset.val)<=i)); window.starScores[field]=i; }; g.appendChild(s); if(i<=n) s.classList.add('lit'); } }); }
 function setCR(btn,type) { let row=btn.closest('.cr-btns'); row.querySelectorAll('.cr-btn').forEach(b=>b.classList.remove('done','fail','na')); btn.classList.add(type); let key=(btn.closest('.checklist-row').querySelector('.cr-text') ? btn.closest('.checklist-row').querySelector('.cr-text').textContent : 'item'); window.crScores[key]=type; }
-function calcScore_legacy() { /* replaced by liveCalcCase + calcFinalScore */
-  const kFields=['k-asa','k-labs','k-npo','k-comorbid','k-induct','k-opioid','k-nmba','k-volatile','k-local','k-vaso','k-ponv','k-resp-phys','k-cvs-phys','k-fluid','k-std-mon','k-inv-mon','k-capno'];
-  const pFields=['p-explain','p-consent','t-surgeon','t-who','t-loop','t-sbar','t-safety','r-time','r-appear','r-doc','r-help','r-reflect','r-dignity'];
-  const jFields=['j-plan','j-adapt','j-risk','j-safety','j-timely','s-anticipate','s-global','s-subtle','s-fixation'];
-  const starPct=fields=>{ let rated=fields.filter(f=>window.starScores[f]); if(!rated.length) return null; let total=rated.reduce((a,f)=>a+window.starScores[f],0); return Math.round((total/(rated.length*5))*100); };
-  const crPct=()=>{ let rel=Object.values(window.crScores).filter(v=>v!=='na'); if(!rel.length) return null; return Math.round((rel.filter(v=>v==='done').length/rel.length)*100); };
-  let kPct=starPct(kFields), techPct=crPct(), profPct=starPct(pFields), jPct=starPct(jFields);
-  let available=[kPct,techPct,profPct,jPct].filter(v=>v!==null);
-  let overall=available.length?Math.round(available.reduce((a,b)=>a+b,0)/available.length):null;
-  document.getElementById('sb-knowledge').style.width=(kPct||0)+'%'; document.getElementById('sp-knowledge').textContent=kPct?kPct+'%':'–';
-  document.getElementById('sb-technical').style.width=(techPct||0)+'%'; document.getElementById('sp-technical').textContent=techPct?techPct+'%':'–';
-  document.getElementById('sb-professional').style.width=(profPct||0)+'%'; document.getElementById('sp-professional').textContent=profPct?profPct+'%':'–';
-  document.getElementById('sb-judgment').style.width=(jPct||0)+'%'; document.getElementById('sp-judgment').textContent=jPct?jPct+'%':'–';
-  if(overall!==null){ let circle=document.getElementById('donut-circle'); let circumference=201; circle.style.strokeDashoffset=circumference-(overall/100)*circumference; circle.style.stroke=overall>=70?'#2ecc71':overall>=50?'#f39c12':'#e63946'; document.getElementById('donut-pct').textContent=overall+'%'; let vbox=document.getElementById('verdict-box'); vbox.style.display='flex'; if(overall>=70) vbox.className='verdict pass'; else if(overall>=50) vbox.className='verdict borderline'; else vbox.className='verdict fail'; vbox.innerHTML=overall>=70?'✅ PASS':overall>=50?'⚠️ BORDERLINE':'❌ UNSATISFACTORY'; }
-}
-function saveEvaluation_legacy() { /* replaced by submitEvaluation */
-  calcScore(); let entry={type:'evaluation',id:Date.now(),date:new Date().toLocaleDateString('en-SA'),student:document.getElementById('ev-student').value,sid:document.getElementById('ev-sid').value,caseNo:document.getElementById('ev-case').value,supervisor:document.getElementById('ev-supervisor').value,procedure:document.getElementById('ev-procedure').value,global:document.getElementById('ev-global').value,strengths:document.getElementById('ev-strengths').value,improve:document.getElementById('ev-improve').value,feedback:document.getElementById('ev-feedback').value,scores:{knowledge:document.getElementById('sp-knowledge').textContent,technical:document.getElementById('sp-technical').textContent,professional:document.getElementById('sp-professional').textContent,judgment:document.getElementById('sp-judgment').textContent,overall:document.getElementById('donut-pct').textContent}};
-  records.push(entry); Store.set('medi045_records',JSON.stringify(records)); updateStats(); renderRecords(); renderDashboard(); showToast('🎓 Evaluation saved!'); goto('screen-dashboard');
-}
+
+
 
 // ==================== DASHBOARD (grouped by student ID, then by type) ====================
 function renderDashboard() {
@@ -2445,6 +2456,7 @@ function exportEvalPDF(evalId){
 <tr><td>Professionalism</td><td>5</td><td>${(r.c1Domains||{}).prof||0}</td><td>${(r.c2Domains||{}).prof||0}</td></tr>
 <tr style="background:#eaf1fa"><td><b>Total</b></td><td><b>50</b></td><td><b>${r.c1Score||0}</b></td><td><b>${r.c2Score||0}</b></td></tr></table>
 ${(r.changeLog&&r.changeLog.length)?'<h3 style="color:#7b2d8b;margin-top:16px">Change Log</h3><table><tr><th>Date</th><th>By</th><th>Change</th></tr>'+r.changeLog.map(c=>'<tr><td>'+c.date+'</td><td>'+c.by+'</td><td>'+c.field+': '+c.oldVal+' → '+c.newVal+'</td></tr>').join('')+'</table>':''}<div class="mark">Total: ${r.total||0} / 100 &nbsp;→&nbsp; Final Mark: ${r.finalMark||0} / 10${r.overridden?' (Override)':''}</div><p><b>Feedback:</b> ${_esc(r.feedback||'—')}</p>
+<datalist id="supervisor-suggestions"><option value="Dr. Walid Badwi"></datalist>
 </body></html>`;
   let win=null; try { win=window.open('','_blank'); } catch(e){ win=null; }
   if (win && win.document) {
@@ -3166,6 +3178,7 @@ function submitAdminAuth() {
     document.getElementById('dash-admin-settings').style.display = 'block';
     var dataPanel = document.getElementById('dash-admin-data');
     if (dataPanel) dataPanel.style.display = 'block';
+    renderAdminAnnouncements();
     document.getElementById('new-eval-pwd').value = '';
     document.getElementById('new-admin-pwd').value = '';
     document.getElementById('pd-email-input').value = Store.get('medi045_pd_email') || '';
@@ -3753,6 +3766,8 @@ function _initApp() {
   _safe('supervisors', loadSupervisorDropdown);
   _safe('gradechart', renderGradeChart);
   checkProfileOnLoad();
+  updateAnnBanner();
+  syncAnnouncementsFromCloud();
 
   // iOS-safe date (no toISOString timezone offset issue)
   _safe('today', () => {
@@ -3814,7 +3829,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="cl-date" type="date"/></div>
-<div><label>Supervisor</label><select id="cl-supervisor"><option value="">-- Select --</option></select></div>
+<div><label>Supervisor</label><input id="cl-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" list="supervisor-suggestions"/></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
 <div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
@@ -3931,7 +3946,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="io-date" type="date"/></div>
-<div><label>Supervisor</label><select id="io-supervisor"><option value="">-- Select --</option></select></div>
+<div><label>Supervisor</label><input id="io-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" list="supervisor-suggestions"/></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">⚕️ Intraoperative Management</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
 <div class="form-row two-col"><div><label>Type of Surgery</label><input id="c-surg-type" placeholder="Elective / Emergency" type="text"/></div><div><label>Operation</label><input id="c-operation" placeholder="Surgical procedure" type="text"/></div></div>
@@ -3992,7 +4007,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="pacu-date" type="date"/></div>
-<div><label>Supervisor</label><select id="pacu-supervisor"><option value="">-- Select --</option></select></div>
+<div><label>Supervisor</label><input id="pacu-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" list="supervisor-suggestions"/></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🫁 Airway, Breathing &amp; Circulation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header">🫁 1. Airway Patency</div>
@@ -4419,7 +4434,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="wd-date" type="date"/></div>
-<div><label>Supervisor</label><select id="wd-supervisor"><option value="">-- Select --</option></select></div>
+<div><label>Supervisor</label><input id="wd-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" list="supervisor-suggestions"/></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🛏️ Postoperative Evaluation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
