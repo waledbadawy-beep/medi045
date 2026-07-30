@@ -881,6 +881,15 @@
   @media (min-width: 600px) {
     body { box-shadow: 0 0 60px rgba(26,58,92,0.18); }
   }
+
+.case-accordion { background:white; border-radius:12px; margin-bottom:14px; border:1px solid var(--border); overflow:hidden; }
+.case-accordion-summary { list-style:none; cursor:pointer; padding:14px 16px; font-size:14px; font-weight:800; color:#1a3a5c; background:#f8fafc; display:flex; align-items:center; justify-content:space-between; }
+.case-accordion-summary::-webkit-details-marker { display:none; }
+.case-accordion-summary::after { content:'›'; font-size:20px; color:#6c757d; transform:rotate(90deg); transition:transform .2s; }
+.case-accordion[open] .case-accordion-summary::after { transform:rotate(270deg); }
+.case-accordion-body { padding:4px 12px 12px; }
+.case-accordion-body .form-section { box-shadow:none; border:none; padding-left:0; padding-right:0; }
+
 </style>
 </head>
 <body>
@@ -3888,6 +3897,9 @@ setInterval(() => {
         🏥 Cases Recorded in Anesthesia Clinic for Preoperative Assessment
         <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">Preoperative history · Physical examination · Airway assessment · LEMON · Investigations · Anaesthetic plan</div>
       </div>
+<details class="case-accordion" open>
+  <summary class="case-accordion-summary">🏥 Preoperative Assessment & History</summary>
+  <div class="case-accordion-body">
 <div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
         <div class="form-row two-col"><div><label>Case No.</label><input type="text" id="c-case" placeholder="e.g. 1" oninput="updateProgress()"></div><div><label>Date</label><input type="date" id="c-date" oninput="updateProgress()"></div></div>
         <div class="form-row two-col"><div><label>Patient Name</label><input type="text" id="c-name" placeholder="Full name" oninput="updateProgress()"></div><div><label>Hospital ID</label><input type="text" id="c-id" placeholder="ID" oninput="updateProgress()"></div></div>
@@ -3896,7 +3908,7 @@ setInterval(() => {
         <div class="form-row"><label>Previous Anaesthesia / Problems</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search or type..." oninput="filterChips(this,'prev-anaes-list','c-prev-anaes')"><button class="chip-add-btn" onclick="addCustomChip(this,'prev-anaes-list','c-prev-anaes')">+ Add</button></div><div class="chip-list" id="prev-anaes-list"><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">No Previous Anaesthesia</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Difficult Intubation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Difficult Mask Ventilation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Failed Intubation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Laryngospasm</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Bronchospasm</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Anaphylaxis</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Malignant Hyperthermia</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">PONV</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Awareness</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Spinal Headache</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Failed Regional</span></div><div class="chip-selected-label">Selected: <span id="c-prev-anaes-display">None</span></div><input type="hidden" id="c-prev-anaes" value=""></div></div>
         <div class="form-row"><label>Drug Allergies</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search or type..." oninput="filterChips(this,'allergy-list','c-allergy')"><button class="chip-add-btn" onclick="addCustomChip(this,'allergy-list','c-allergy')">+ Add</button></div><div class="chip-list" id="allergy-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-allergy')">✓ NKDA – No Known Drug Allergy</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Penicillin</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Cephalosporins</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Sulfa</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Propofol</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Suxamethonium</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Morphine</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Latex</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Aspirin</span><span class="chip" onclick="toggleChip(this,'c-allergy')">NSAIDs</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Iodine</span></div><div class="chip-selected-label">Selected: <span id="c-allergy-display">None</span></div><input type="hidden" id="c-allergy" value=""></div></div>
       </div>
-      <div class="form-section"><div class="form-section-header">📋 Medical History</div>
+<div class="form-section"><div class="form-section-header">📋 Medical History</div>
         <div class="form-row"><label>❤️ CVS – Cardiovascular</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="Search..." oninput="filterChips(this,'cvs-list','c-cvs')"><button class="chip-add-btn" onclick="addCustomChip(this,'cvs-list','c-cvs')">+ Add</button></div><div class="chip-list" id="cvs-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-cvs')">None</span><span class="chip" onclick="toggleChip(this,'c-cvs')">Hypertension</span><span class="chip" onclick="toggleChip(this,'c-cvs')">IHD</span><span class="chip" onclick="toggleChip(this,'c-cvs')">Heart Failure</span><span class="chip" onclick="toggleChip(this,'c-cvs')">AF</span><span class="chip" onclick="toggleChip(this,'c-cvs')">Valvular Disease</span><span class="chip" onclick="toggleChip(this,'c-cvs')">Pacemaker</span></div><div class="chip-selected-label">Selected: <span id="c-cvs-display">None</span></div><input type="hidden" id="c-cvs" value=""></div></div>
         <div class="form-row"><label>🫁 Respiratory</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="Search..." oninput="filterChips(this,'resp-list','c-resp')"><button class="chip-add-btn" onclick="addCustomChip(this,'resp-list','c-resp')">+ Add</button></div><div class="chip-list" id="resp-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-resp')">None</span><span class="chip" onclick="toggleChip(this,'c-resp')">Asthma</span><span class="chip" onclick="toggleChip(this,'c-resp')">COPD</span><span class="chip" onclick="toggleChip(this,'c-resp')">OSA</span><span class="chip" onclick="toggleChip(this,'c-resp')">Pulmonary Fibrosis</span><span class="chip" onclick="toggleChip(this,'c-resp')">Pulmonary Hypertension</span></div><div class="chip-selected-label">Selected: <span id="c-resp-display">None</span></div><input type="hidden" id="c-resp" value=""></div></div>
         <div class="form-row"><label>⚗️ Endocrine</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="Search..." oninput="filterChips(this,'endo-list','c-endo')"><button class="chip-add-btn" onclick="addCustomChip(this,'endo-list','c-endo')">+ Add</button></div><div class="chip-list" id="endo-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-endo')">None</span><span class="chip" onclick="toggleChip(this,'c-endo')">DM Type 1</span><span class="chip" onclick="toggleChip(this,'c-endo')">DM Type 2</span><span class="chip" onclick="toggleChip(this,'c-endo')">Hypothyroidism</span><span class="chip" onclick="toggleChip(this,'c-endo')">Hyperthyroidism</span><span class="chip" onclick="toggleChip(this,'c-endo')">Cushing's</span><span class="chip" onclick="toggleChip(this,'c-endo')">Addison's</span></div><div class="chip-selected-label">Selected: <span id="c-endo-display">None</span></div><input type="hidden" id="c-endo" value=""></div></div>
@@ -3906,16 +3918,26 @@ setInterval(() => {
         <div class="form-row"><label>💊 Current Medications</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="Search drug name..." oninput="filterChips(this,'meds-list','c-meds')"><button class="chip-add-btn" onclick="addCustomChip(this,'meds-list','c-meds')">+ Add</button></div><div class="chip-list" id="meds-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-meds')">No Current Medications</span><span class="chip" onclick="toggleChip(this,'c-meds')">Aspirin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Warfarin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Metformin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Insulin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Salbutamol</span><span class="chip" onclick="toggleChip(this,'c-meds')">Amlodipine</span><span class="chip" onclick="toggleChip(this,'c-meds')">Atorvastatin</span><span class="chip" onclick="toggleChip(this,'c-meds')">Omeprazole</span></div><div class="chip-selected-label">Selected: <span id="c-meds-display">None</span></div><input type="hidden" id="c-meds" value=""></div></div>
       </div>
     </div>
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">🩺 Examination & Investigations</summary>
+  <div class="case-accordion-body">
 <div class="form-section"><div class="form-section-header">🩺 Physical Examination</div>
         <div class="form-row four-col"><div><label>HR (bpm)</label><input type="number" id="c-hr" placeholder="e.g., 80"></div><div><label>SpO₂ (%)</label><input type="number" id="c-spo2" placeholder="e.g., 98"></div><div><label>Temp (°C)</label><input type="number" id="c-temp" step="0.1" placeholder="e.g., 36.5"></div><div><label>BP (mmHg)</label><input type="text" id="c-bp" placeholder="e.g., 120/80"></div></div>
         <div class="form-row"><label>❤️ CVS Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'cvs-exam-list','c-cvs-ex')"><button class="chip-add-btn" onclick="addCustomChip(this,'cvs-exam-list','c-cvs-ex')">+ Add</button></div><div class="chip-list" id="cvs-exam-list"><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Normal</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (systolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (diastolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Raised JVP</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Peripheral edema</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pleural effusion</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Crackles (pulmonary edema)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Hepatomegaly</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Carotid bruit</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pulsus paradoxus</span></div><div class="chip-selected-label">Selected: <span id="c-cvs-ex-display">None</span></div><input type="hidden" id="c-cvs-ex" value=""></div></div>
         <div class="form-row"><label>🫁 Respiratory Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'resp-exam-list','c-resp-ex')"><button class="chip-add-btn" onclick="addCustomChip(this,'resp-exam-list','c-resp-ex')">+ Add</button></div><div class="chip-list" id="resp-exam-list"><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Clear</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Wheeze</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (coarse)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (fine)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Reduced breath sounds</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Bronchial breathing</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Stridor</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Pleural rub</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Prolonged expiration</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Dullness to percussion</span></div><div class="chip-selected-label">Selected: <span id="c-resp-ex-display">None</span></div><input type="hidden" id="c-resp-ex" value=""></div></div>
       </div>
-      <div class="form-section"><div class="form-section-header">🫁 Airway Assessment</div><div class="form-row two-col"><div><label>Mallampati</label><select id="c-mallampati"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div><label>Thyromental Dist.</label><select id="c-thyromental"><option>≥6.5 cm</option><option>6–6.5 cm</option><option>&lt;6 cm</option></select></div></div><div class="form-row two-col"><div><label>TMJ Mobility</label><select id="c-tmj"><option>Normal</option><option>Reduced</option></select></div><div><label>Neck Extension</label><select id="c-neck-ext"><option>Normal</option><option>Limited</option></select></div></div><div class="form-row two-col"><div><label>Mouth Opening</label><select id="c-mouth"><option>≥3 fingers</option><option>&lt;3 fingers</option></select></div><div><label>Teeth</label><select id="c-teeth"><option>Normal</option><option>Missing/Loose</option><option>Dentures</option></select></div></div></div>
-      <div class="form-section"><div class="form-section-header">🧪 Investigations</div><div class="form-row four-col"><div><label>Hb</label><input type="number" id="c-hb" step="0.1"></div><div><label>WBC</label><input type="number" id="c-wbc"></div><div><label>Plt</label><input type="number" id="c-plt"></div><div><label>Na</label><input type="number" id="c-na"></div></div><div class="form-row four-col"><div><label>K</label><input type="number" id="c-k" step="0.1"></div><div><label>Urea</label><input type="number" id="c-ur"></div><div><label>Creatinine</label><input type="number" id="c-cr"></div><div><label>Glucose</label><input type="number" id="c-glucose" step="0.1"></div></div><div class="form-row four-col"><div><label>PT</label><input type="number" id="c-pt"></div><div><label>aPTT</label><input type="number" id="c-aptt"></div><div><label>INR</label><input type="number" id="c-inr" step="0.1"></div><div><label>ASA Class</label><select id="c-asa"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div></div><div class="form-row two-col"><div><label>ECG</label><select id="c-ecg"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div><div><label>Chest X-Ray</label><select id="c-cxr"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div></div></div>
+<div class="form-section"><div class="form-section-header">🫁 Airway Assessment</div><div class="form-row two-col"><div><label>Mallampati</label><select id="c-mallampati"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div><label>Thyromental Dist.</label><select id="c-thyromental"><option>≥6.5 cm</option><option>6–6.5 cm</option><option>&lt;6 cm</option></select></div></div><div class="form-row two-col"><div><label>TMJ Mobility</label><select id="c-tmj"><option>Normal</option><option>Reduced</option></select></div><div><label>Neck Extension</label><select id="c-neck-ext"><option>Normal</option><option>Limited</option></select></div></div><div class="form-row two-col"><div><label>Mouth Opening</label><select id="c-mouth"><option>≥3 fingers</option><option>&lt;3 fingers</option></select></div><div><label>Teeth</label><select id="c-teeth"><option>Normal</option><option>Missing/Loose</option><option>Dentures</option></select></div></div></div>
+<div class="form-section"><div class="form-section-header">🧪 Investigations</div><div class="form-row four-col"><div><label>Hb</label><input type="number" id="c-hb" step="0.1"></div><div><label>WBC</label><input type="number" id="c-wbc"></div><div><label>Plt</label><input type="number" id="c-plt"></div><div><label>Na</label><input type="number" id="c-na"></div></div><div class="form-row four-col"><div><label>K</label><input type="number" id="c-k" step="0.1"></div><div><label>Urea</label><input type="number" id="c-ur"></div><div><label>Creatinine</label><input type="number" id="c-cr"></div><div><label>Glucose</label><input type="number" id="c-glucose" step="0.1"></div></div><div class="form-row four-col"><div><label>PT</label><input type="number" id="c-pt"></div><div><label>aPTT</label><input type="number" id="c-aptt"></div><div><label>INR</label><input type="number" id="c-inr" step="0.1"></div><div><label>ASA Class</label><select id="c-asa"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div></div><div class="form-row two-col"><div><label>ECG</label><select id="c-ecg"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div><div><label>Chest X-Ray</label><select id="c-cxr"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div></div></div>
     </div>
 <!-- History of Difficult Airway -->
-    <div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">📜 Difficult Airway Assessment (LEMON)</summary>
+  <div class="case-accordion-body">
+<div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
       <div class="form-row"><label>Previous difficult intubation?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-prev-int" value="No"><input type="text" id="aw-prev-int-c" placeholder="If yes, describe details" style="margin-top:6px"></div>
       <div class="form-row"><label>Known obstructive sleep apnea (OSA)?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-osa" value="No"><input type="text" id="aw-osa-c" placeholder="If yes, CPAP use? AHI?" style="margin-top:6px"></div>
       <div class="form-row"><label>Unstable cervical spine or previous surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-cspine" value="No"><input type="text" id="aw-cspine-c" placeholder="If yes, specify" style="margin-top:6px"></div>
@@ -3923,7 +3945,7 @@ setInterval(() => {
       <div class="form-row"><label>History of burns to face/neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-burns'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-burns" value="No"></div>
     </div>
     <!-- L – Look Externally -->
-    <div class="form-section"><div class="form-section-header">🍋 L – Look Externally</div>
+<div class="form-section"><div class="form-section-header">🍋 L – Look Externally</div>
       <div class="form-row"><label>Look for external features that may predict difficult intubation (check all that apply):</label>
         <div class="check-group" id="lemon-look">
           <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Obesity (BMI >30)</label>
@@ -3940,18 +3962,18 @@ setInterval(() => {
       </div>
     </div>
     <!-- E – Evaluate 3-3-2 Rule -->
-    <div class="form-section"><div class="form-section-header">📏 E – Evaluate 3-3-2 Rule</div>
+<div class="form-section"><div class="form-section-header">📏 E – Evaluate 3-3-2 Rule</div>
       <div class="form-row"><label>Inter‑incisor distance (mouth opening)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-1','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-1','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-1"></div>
       <div class="form-row"><label>Hyoid‑mental distance (chin to hyoid)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-2','≥3 fingers'); updateLEMON()">≥3 fingers (≥6 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-2','<3 fingers'); updateLEMON()">&lt;3 fingers (&lt;6 cm) – inadequate</label></div><input type="hidden" id="aw-332-2"></div>
       <div class="form-row"><label>Thyroid‑mouth distance (thyroid notch to floor of mouth)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-332-3','≥2 fingers'); updateLEMON()">≥2 fingers (≥4 cm) – adequate</label><label class="radio-option" onclick="selectRadio(this,'aw-332-3','<2 fingers'); updateLEMON()">&lt;2 fingers (&lt;4 cm) – inadequate</label></div><input type="hidden" id="aw-332-3"></div>
       <div class="form-row"><label>Comment on 3-3-2</label><input type="text" id="aw-332-c" placeholder="Any additional notes"></div>
     </div>
     <!-- M – Mallampati -->
-    <div class="form-section"><div class="form-section-header">👅 M – Mallampati Classification</div>
+<div class="form-section"><div class="form-section-header">👅 M – Mallampati Classification</div>
       <div class="form-row"><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','I'); updateLEMON()">Class I – soft palate, uvula, fauces, pillars visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','II'); updateLEMON()">Class II – soft palate, uvula, fauces visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','III'); updateLEMON()">Class III – soft palate, base of uvula visible</label><label class="radio-option" onclick="selectRadio(this,'aw-mallampati','IV'); updateLEMON()">Class IV – only hard palate visible</label></div><input type="hidden" id="aw-mallampati" value=""></div>
     </div>
     <!-- O – Obstruction -->
-    <div class="form-section"><div class="form-section-header">🔴 O – Obstruction / Pathology</div>
+<div class="form-section"><div class="form-section-header">🔴 O – Obstruction / Pathology</div>
       <div class="form-row"><label>Any evidence of airway obstruction (check all that apply):</label>
         <div class="check-group" id="lemon-obstruction">
           <label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"> Stridor</label>
@@ -3964,7 +3986,7 @@ setInterval(() => {
       </div>
     </div>
     <!-- N – Neck Mobility -->
-    <div class="form-section"><div class="form-section-header">🔄 N – Neck Mobility</div>
+<div class="form-section"><div class="form-section-header">🔄 N – Neck Mobility</div>
       <div class="form-row"><label>Can the patient fully flex and extend the neck?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-neck-mob'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-neck-mob" value="No"></div>
       <div class="form-row"><label>Is the patient wearing a cervical collar?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✗ No</div></div><input type="hidden" id="aw-collar" value="No"></div>
       <div class="form-row"><label>Congenital or acquired neck deformity?</label>
@@ -3977,15 +3999,20 @@ setInterval(() => {
       </div>
     </div>
     <!-- Additional Measurements -->
-    <div class="form-section"><div class="form-section-header">📏 Additional Measurements</div>
+<div class="form-section"><div class="form-section-header">📏 Additional Measurements</div>
       <div class="form-row two-col"><div><label>Thyromental distance (cm)</label><input type="number" id="aw-tmd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Sternomental distance (cm)</label><input type="number" id="aw-smd" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
       <div class="form-row two-col"><div><label>Neck circumference (cm)</label><input type="number" id="aw-neck-circ" step="0.1" placeholder="cm" oninput="updateLEMON()"></div><div><label>Mouth opening (cm)</label><input type="number" id="aw-mouth-opening" step="0.1" placeholder="cm" oninput="updateLEMON()"></div></div>
       <div class="form-row"><label>Upper lip bite test (ULBT)</label><div class="radio-group"><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class I'); updateLEMON()">Class I – lower incisors can bite upper lip</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class II'); updateLEMON()">Class II – upper lip can be bitten but incisors cannot</label><label class="radio-option" onclick="selectRadio(this,'aw-ulbt','Class III'); updateLEMON()">Class III – cannot bite upper lip</label></div><input type="hidden" id="aw-ulbt"></div>
     </div>
 <!-- LEMON Summary -->
-    <div class="form-section"><div class="form-section-header">⚠️ LEMON Summary & Risk</div>
+<div class="form-section"><div class="form-section-header">⚠️ LEMON Summary & Risk</div>
       <div class="form-row"><div id="lemon-summary" style="background:var(--section-bg); padding:12px; border-radius:8px; font-size:13px; line-height:1.5"></div></div>
     </div>
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">📝 Anaesthetic Plan</summary>
+  <div class="case-accordion-body">
 <div class="form-section"><div class="form-section-header">📝 Anaesthetic Plan</div>
         <div class="form-row two-col">
           <div><label>NPO (hours)</label><select id="c-npo"><option value="">-- Select --</option><option>2</option><option>4</option><option>6</option><option>8</option><option>&gt;8</option></select></div>
@@ -4003,7 +4030,9 @@ setInterval(() => {
     <!-- PAGE 2: INTRAOPERATIVE                                       -->
     <!-- ============================================================ -->
     <!-- SIGN-OFF -->
-    <div class="form-section">
+  </div>
+</details>
+<div class="form-section">
       <div class="form-section-header">✍️ Self-Reflection & Notes</div>
       <div class="form-row"><label>Personal reflection / learning points</label><textarea id="cl-feedback" placeholder="What did you learn from this case? What would you do differently?"></textarea></div>
     </div>
@@ -4015,8 +4044,7 @@ setInterval(() => {
 </div>
 <!-- ============================================================ -->
 <!-- SCREEN: INTRAOPERATIVE -->
-<!-- ============================================================ -->
-<div class="screen" id="screen-intraop">
+<!-- ============================================================ --><div class="screen" id="screen-intraop">
   <div class="app-bar" style="background:linear-gradient(135deg,#4a1a5c,#7b2d8b)">
     <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
     <div class="app-bar-title" style="padding-left:10px">
@@ -4050,12 +4078,15 @@ setInterval(() => {
         ⚕️ Cases Taken Intraoperatively — Operating Room
         <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">Intraoperative management · Anaesthetic technique · Medications · Fluids · Intraoperative events</div>
       </div>
+<details class="case-accordion" open>
+  <summary class="case-accordion-summary">⚕️ Intraoperative Management</summary>
+  <div class="case-accordion-body">
 <div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
         <div class="form-row two-col"><div><label>Type of Surgery</label><input type="text" id="c-surg-type" placeholder="Elective / Emergency"></div><div><label>Operation</label><input type="text" id="c-operation" placeholder="Surgical procedure"></div></div>
         <div class="form-row two-col"><div><label>Patient Position</label><select id="c-position"><option>Supine</option><option>Prone</option><option>Lateral</option><option>Lithotomy</option><option>Trendelenburg</option><option>Sitting</option></select></div><div><label>Standard Monitors</label><input type="text" id="c-monitors" placeholder="ECG, SpO₂, NIBP..."></div></div>
         <div class="form-row"><label>Invasive Monitors</label><input type="text" id="c-inv-monitors" placeholder="Art line, CVP, PA catheter..."></div>
       </div>
-      <div class="form-section"><div class="form-section-header">💉 Anaesthetic Technique</div>
+<div class="form-section"><div class="form-section-header">💉 Anaesthetic Technique</div>
         <div class="form-row two-col"><div><label>Induction Technique</label><select id="c-induction"><option value="">-- Select --</option><option>RSI (Rapid Sequence Induction)</option><option>Modified RSI</option><option>Awake intubation</option><option>Standard induction</option></select></div><div><label>Bag Mask Ventilation</label><select id="c-bmv"><option>Easy</option><option>Difficult</option><option>Not attempted</option></select></div></div>
         <div class="form-row two-col"><div><label>Airway Device</label><select id="c-airway-device"><option>ETT Oral</option><option>ETT Nasal</option><option>LMA Classic</option><option>LMA ProSeal</option><option>LMA Supreme</option><option>iGel</option><option>Face Mask</option></select></div><div><label>Laryngoscopy Grade</label><select id="c-laryngoscopy"><option>Grade I</option><option>Grade IIa</option><option>Grade IIb</option><option>Grade III</option><option>Grade IV</option></select></div></div>
         <div class="form-row three-col"><div><label>ETT Type</label><input type="text" id="c-ett-type" placeholder="Cuffed/Uncuffed"></div><div><label>Tube Size (mm)</label><input type="number" id="c-ett-size" step="0.5" placeholder="mm"></div><div><label>Level (cm)</label><input type="text" id="c-ett-level" placeholder="cm at lip"></div></div>
@@ -4065,6 +4096,17 @@ setInterval(() => {
     </div>
 
     <!-- Page 4: Medications (Induction, Maintenance, Fluid) – ENHANCED LISTS -->
+<div class="form-section"><div class="form-section-header">⚠️ Intraoperative Events</div><div class="form-row"><textarea id="c-events" placeholder="Document any significant intraoperative events..."></textarea></div></div>
+    </div>
+    <!-- ============================================================ -->
+    <!-- PAGE 3: POST-ANESTHESIA CARE UNIT (PACU) — RECOVERY ROOM   -->
+    <!-- ============================================================ -->
+    <!-- SIGN-OFF -->
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">💊 Medications</summary>
+  <div class="case-accordion-body">
 <div class="form-section"><div class="form-section-header">💊 Induction Medications</div>
         <div class="form-row two-col">
           <div><label>Analgesic</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'ind-analg-list','c-ind-analgesic')"><button class="chip-add-btn" onclick="addCustomChip(this,'ind-analg-list','c-ind-analgesic')">+ Add</button></div><div class="chip-list" id="ind-analg-list"><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Fentanyl 1-2 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Remifentanil 0.5-1 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Morphine 0.1 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Alfentanil 10-20 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Sufentanil 0.2-0.5 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-ind-analgesic')">Hydromorphone 0.01-0.02 mg/kg</span></div><div class="chip-selected-label">Selected: <span id="c-ind-analgesic-display">None</span></div><input type="hidden" id="c-ind-analgesic" value=""></div></div>
@@ -4076,7 +4118,7 @@ setInterval(() => {
         </div>
         <div class="form-row three-col"><div><label>Antibiotic (Drug)</label><input type="text" id="c-abx-type" placeholder="e.g. Cefazolin"></div><div><label>Dose</label><input type="text" id="c-abx-dose" placeholder="g / mg"></div><div><label>Time</label><input type="time" id="c-abx-time"></div></div>
       </div>
-      <div class="form-section"><div class="form-section-header">🔄 Maintenance Medications</div>
+<div class="form-section"><div class="form-section-header">🔄 Maintenance Medications</div>
         <div class="form-row two-col">
           <div><label>Hypnotic</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'maint-hyp-list','c-maint-hyp')"><button class="chip-add-btn" onclick="addCustomChip(this,'maint-hyp-list','c-maint-hyp')">+ Add</button></div><div class="chip-list" id="maint-hyp-list"><span class="chip" onclick="toggleChip(this,'c-maint-hyp')">Sevoflurane 1-2 MAC</span><span class="chip" onclick="toggleChip(this,'c-maint-hyp')">Desflurane 3-6%</span><span class="chip" onclick="toggleChip(this,'c-maint-hyp')">Isoflurane 0.8-1.5%</span><span class="chip" onclick="toggleChip(this,'c-maint-hyp')">Propofol TIVA 100-200 mcg/kg/min</span><span class="chip" onclick="toggleChip(this,'c-maint-hyp')">Ketamine infusion 0.5-2 mg/kg/h</span></div><div class="chip-selected-label">Selected: <span id="c-maint-hyp-display">None</span></div><input type="hidden" id="c-maint-hyp" value=""></div></div>
           <div><label>Analgesic</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'maint-anal-list','c-maint-anal')"><button class="chip-add-btn" onclick="addCustomChip(this,'maint-anal-list','c-maint-anal')">+ Add</button></div><div class="chip-list" id="maint-anal-list"><span class="chip" onclick="toggleChip(this,'c-maint-anal')">Remifentanil infusion 0.05-0.2 mcg/kg/min</span><span class="chip" onclick="toggleChip(this,'c-maint-anal')">Fentanyl boluses 0.5-1 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-maint-anal')">Morphine 0.05-0.1 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-maint-anal')">Dexmedetomidine infusion 0.2-0.7 mcg/kg/h</span></div><div class="chip-selected-label">Selected: <span id="c-maint-anal-display">None</span></div><input type="hidden" id="c-maint-anal" value=""></div></div>
@@ -4089,19 +4131,20 @@ setInterval(() => {
           <div><label>Reversal of NMB</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'reversal-list','c-reversal')"><button class="chip-add-btn" onclick="addCustomChip(this,'reversal-list','c-reversal')">+ Add</button></div><div class="chip-list" id="reversal-list"><span class="chip" onclick="toggleChip(this,'c-reversal')">Sugammadex 2-4 mg/kg</span><span class="chip" onclick="toggleChip(this,'c-reversal')">Neostigmine 50 mcg/kg + Glycopyrrolate 10 mcg/kg</span><span class="chip" onclick="toggleChip(this,'c-reversal')">Atropine 0.02 mg/kg + Neostigmine</span><span class="chip" onclick="toggleChip(this,'c-reversal')">Sugammadex for deep block (4-16 mg/kg)</span></div><div class="chip-selected-label">Selected: <span id="c-reversal-display">None</span></div><input type="hidden" id="c-reversal" value=""></div></div>
         </div>
       </div>
-      <div class="form-section"><div class="form-section-header">💧 IV Fluid Therapy</div>
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">💧 Fluids & Events</summary>
+  <div class="case-accordion-body">
+<div class="form-section"><div class="form-section-header">💧 IV Fluid Therapy</div>
         <div class="form-row"><label>Fluid Type</label><div class="chip-selector"><div class="chip-search-wrap"><input type="text" class="chip-search" placeholder="🔍 Search..." oninput="filterChips(this,'fluid-list','c-fluid-type')"><button class="chip-add-btn" onclick="addCustomChip(this,'fluid-list','c-fluid-type')">+ Add</button></div><div class="chip-list" id="fluid-list"><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Hartmann's (Ringer's Lactate)</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Normal Saline 0.9%</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Plasma-Lyte</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Colloid (Gelofusine, Voluven)</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">PRBC (Packed Red Blood Cells)</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">FFP (Fresh Frozen Plasma)</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Platelets</span><span class="chip" onclick="toggleChip(this,'c-fluid-type')">Albumin 5%</span></div><div class="chip-selected-label">Selected: <span id="c-fluid-type-display">None</span></div><input type="hidden" id="c-fluid-type" value=""></div></div>
         <div class="form-row four-col"><div><label>Maintenance (mL)</label><input type="number" id="c-maint-fl"></div><div><label>Fasting Deficit (mL)</label><input type="number" id="c-fasting"></div><div><label>Insensible (mL)</label><input type="number" id="c-insensible"></div><div><label>Blood Loss (mL)</label><input type="number" id="c-blood-loss"></div></div>
         <div class="form-row four-col"><div><label>Urine Out (mL)</label><input type="number" id="c-urine"></div><div><label>Total Out (mL)</label><input type="number" id="c-total-out"></div><div><label>Total In (mL)</label><input type="number" id="c-total-in"></div><div><label>Balance (mL)</label><input type="number" id="c-balance"></div></div>
       </div>
     </div>
-<div class="form-section"><div class="form-section-header">⚠️ Intraoperative Events</div><div class="form-row"><textarea id="c-events" placeholder="Document any significant intraoperative events..."></textarea></div></div>
-    </div>
-    <!-- ============================================================ -->
-    <!-- PAGE 3: POST-ANESTHESIA CARE UNIT (PACU) — RECOVERY ROOM   -->
-    <!-- ============================================================ -->
-    <!-- SIGN-OFF -->
-    <div class="form-section">
+  </div>
+</details>
+<div class="form-section">
       <div class="form-section-header">✍️ Self-Reflection & Notes</div>
       <div class="form-row"><label>Personal reflection / learning points</label><textarea id="io-feedback" placeholder="What did you learn from this case? What would you do differently?"></textarea></div>
     </div>
@@ -4113,8 +4156,7 @@ setInterval(() => {
 </div>
 <!-- ============================================================ -->
 <!-- SCREEN: PACU / RECOVERY -->
-<!-- ============================================================ -->
-<div class="screen" id="screen-pacu">
+<!-- ============================================================ --><div class="screen" id="screen-pacu">
   <div class="app-bar" style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e)">
     <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
     <div class="app-bar-title" style="padding-left:10px">
@@ -4145,19 +4187,10 @@ setInterval(() => {
       </div>
     </div>
     <!-- SECTION HEADER -->
-      <div class="form-section">
-        <div class="form-section-header" style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e)">🏥 Post-Anesthesia Care Unit (PACU) — Recovery Room Monitoring</div>
-        <div class="form-row" style="background:#e8f8f0;padding:10px 14px;font-size:11px;color:#1a5c3c;font-weight:600;border-bottom:1px solid #a3e4c1">
-          📋 Systematic PACU Assessment · Document all parameters upon patient arrival and at regular intervals until discharge criteria are met
-        </div>
-        <div class="form-row two-col">
-          <div><label>PACU Arrival Time</label><input type="time" id="c-pacu-arrival-time"></div>
-          <div><label>Discharge Time from PACU</label><input type="time" id="c-pacu-discharge-time"></div>
-        </div>
-      </div>
-
-      <!-- 1. AIRWAY PATENCY -->
-      <div class="form-section">
+<details class="case-accordion" open>
+  <summary class="case-accordion-summary">🫁 Airway, Breathing & Circulation</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header">🫁 1. Airway Patency</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Ensure the breathing passage is clear, open, and free of obstructions. Listen for stridor, gurgling, snoring. Observe chest rise symmetry. Assess need for airway adjuncts.
@@ -4192,7 +4225,7 @@ setInterval(() => {
       </div>
 
       <!-- 2. RESPIRATORY STATUS -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">🌬️ 2. Respiratory Status</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Track breathing depth, respiratory rate, and oxygen saturation using pulse oximetry. Note any accessory muscle use, paradoxical breathing, or abnormal breath sounds.
@@ -4237,7 +4270,7 @@ setInterval(() => {
       </div>
 
       <!-- 3. CIRCULATION & VITALS -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">❤️ 3. Circulation & Cardiovascular Status</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Frequently check blood pressure, heart rate, and heart rhythm via ECG monitors. BP should remain within 20% of pre-operative baseline. Monitor for hypertension, hypotension, tachycardia, and arrhythmias.
@@ -4278,7 +4311,12 @@ setInterval(() => {
       </div>
 
       <!-- 4. LEVEL OF CONSCIOUSNESS -->
-      <div class="form-section">
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">🧠 Consciousness, Wound & Temperature</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header">🧠 4. Level of Consciousness</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Evaluate mental status to determine how well the patient is awakening from anaesthesia. Use the AVPU scale and assess orientation, ability to follow commands, and presence of emergence delirium or agitation.
@@ -4335,7 +4373,7 @@ setInterval(() => {
       </div>
 
       <!-- 5. SURGICAL SITE CHECK -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">🩹 5. Surgical Site & Wound Check</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Inspect dressings, incisions, and drains for unexpected bleeding or fluid accumulation. Note any soakage, swelling, or dehiscence. Verify drain patency and output.
@@ -4378,7 +4416,7 @@ setInterval(() => {
       </div>
 
       <!-- 6. THERMOREGULATION -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">🌡️ 6. Thermoregulation</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Measure temperature to monitor for and treat hypothermia (&lt;36°C) or hyperthermia (&gt;38°C). Hypothermia increases bleeding risk, prolongs drug metabolism, and causes patient discomfort. Shivering increases O₂ consumption by 400%.
@@ -4420,7 +4458,12 @@ setInterval(() => {
       </div>
 
       <!-- 7. COMFORT — PAIN & PONV -->
-      <div class="form-section">
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">😊 Comfort & Fluid Balance</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header">😊 7. Comfort — Pain & PONV in PACU</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Gauge subjective pain, nausea, and vomiting using standard patient scales to provide targeted medication. Inadequate pain control in PACU predicts chronic pain development.
@@ -4458,7 +4501,7 @@ setInterval(() => {
       </div>
 
       <!-- 8. FLUID BALANCE -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">💧 8. Fluid Balance in PACU</div>
         <div class="form-row" style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:8px;border:1px solid var(--border);line-height:1.6">
           <b>Assessment:</b> Calculate overall intravenous fluid intake against urinary and drain output. Positive balance may indicate fluid overload; negative balance may indicate ongoing haemorrhage or inadequate resuscitation.
@@ -4481,7 +4524,12 @@ setInterval(() => {
       </div>
 
       <!-- 9. ALDRETE SCORE -->
-      <div class="form-section">
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">📊 Aldrete Score & Discharge Decision</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header" style="background:linear-gradient(135deg,#2a5298,#1a3a5c)">📊 9. Modified Aldrete Scoring System — PACU Discharge Criteria</div>
         <div class="form-row" style="background:#eaf1fa;padding:10px 14px;font-size:11px;color:#1a3a5c;border-bottom:1px solid #c5d8f0;line-height:1.6">
           <b>Purpose:</b> An objective scoring tool to determine if a patient is safe to be discharged from PACU to the ward or home. Each of the 5 categories is scored 0–2. A score of <b>9 or 10 out of 10</b> is generally required before discharge.
@@ -4599,7 +4647,21 @@ setInterval(() => {
     <!-- PAGE 4: WARD / PAIN ROUND — POSTOPERATIVE                   -->
     <!-- ============================================================ -->
     <!-- SIGN-OFF -->
-    <div class="form-section">
+  </div>
+</details>
+<div class="form-section">
+        <div class="form-section-header" style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e)">🏥 Post-Anesthesia Care Unit (PACU) — Recovery Room Monitoring</div>
+        <div class="form-row" style="background:#e8f8f0;padding:10px 14px;font-size:11px;color:#1a5c3c;font-weight:600;border-bottom:1px solid #a3e4c1">
+          📋 Systematic PACU Assessment · Document all parameters upon patient arrival and at regular intervals until discharge criteria are met
+        </div>
+        <div class="form-row two-col">
+          <div><label>PACU Arrival Time</label><input type="time" id="c-pacu-arrival-time"></div>
+          <div><label>Discharge Time from PACU</label><input type="time" id="c-pacu-discharge-time"></div>
+        </div>
+      </div>
+
+      <!-- 1. AIRWAY PATENCY -->
+<div class="form-section">
       <div class="form-section-header">✍️ Self-Reflection & Notes</div>
       <div class="form-row"><label>Personal reflection / learning points</label><textarea id="pacu-feedback" placeholder="What did you learn from this case? What would you do differently?"></textarea></div>
     </div>
@@ -4611,8 +4673,7 @@ setInterval(() => {
 </div>
 <!-- ============================================================ -->
 <!-- SCREEN: WARD / PAIN ROUND -->
-<!-- ============================================================ -->
-<div class="screen" id="screen-ward">
+<!-- ============================================================ --><div class="screen" id="screen-ward">
   <div class="app-bar" style="background:linear-gradient(135deg,#5c3a1a,#8b5e2e)">
     <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 12px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
     <div class="app-bar-title" style="padding-left:10px">
@@ -4647,7 +4708,10 @@ setInterval(() => {
         <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:3px">CLO 2.3 · Pain assessment · WHO analgesic ladder · Modalities · Patient satisfaction · Self-reflection · Sign-off</div>
       </div>
 <!-- ======= COMPREHENSIVE POSTOPERATIVE SECTION (CLO 23) ======= -->
-      <div class="form-section">
+<details class="case-accordion" open>
+  <summary class="case-accordion-summary">🛏️ Postoperative Evaluation</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
         <div class="form-row" style="background:#e8f0fe;padding:10px 14px;font-size:11px;color:#1a3a5c;font-weight:600;border-bottom:1px solid var(--border)">
           📋 Practical Skills Session 23 · First-day Post-operative Evaluation including Pain & Anaesthesia Indicators
@@ -4908,7 +4972,7 @@ setInterval(() => {
       </div>
 
       <!-- OTHER POST-ANAESTHESIA INDICATORS -->
-      <div class="form-section">
+<div class="form-section">
         <div class="form-section-header">📊 Other Anaesthesia Indicators — Day 1 Post-op</div>
 
         <!-- Vitals -->
@@ -4980,15 +5044,12 @@ setInterval(() => {
       </div>
 
       <!-- Self-Reflection (required) -->
-      <div class="form-section">
-        <div class="section-title-bar">💭 Self-Reflection</div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Before submitting, reflect on your clinical experience. This helps your evaluator understand your learning.</p>
-        <div class="admin-field"><label>What did you learn from this case?</label><textarea id="c-reflection-learn" rows="3" placeholder="e.g. I learned to anticipate difficult airways in patients with limited neck extension..."></textarea></div>
-        <div class="admin-field"><label>What would you do differently next time?</label><textarea id="c-reflection-improve" rows="3" placeholder="e.g. I would prepare a video laryngoscope as backup before induction..."></textarea></div>
-      </div>
-
-      <!-- Sign-off -->
-      <div class="form-section">
+  </div>
+</details>
+<details class="case-accordion">
+  <summary class="case-accordion-summary">✍️ Sign-off</summary>
+  <div class="case-accordion-body">
+<div class="form-section">
         <div class="form-section-header">✍️ Sign-off & Assessment</div>
         <div class="form-row"><label>Postoperative Notes / Overall Summary</label><textarea id="c-postop-notes" placeholder="Overall postoperative summary, plan, and next steps..."></textarea></div>
         <div class="form-row two-col"><div><label>Supervisor / Consultant</label><input type="text" id="c-supervisor"></div><div><label>Student Name & ID</label><input type="text" id="c-student"></div></div>
@@ -4997,7 +5058,17 @@ setInterval(() => {
     </div>
     </div>
     <!-- SIGN-OFF -->
-    <div class="form-section">
+  </div>
+</details>
+<div class="form-section">
+        <div class="section-title-bar">💭 Self-Reflection</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Before submitting, reflect on your clinical experience. This helps your evaluator understand your learning.</p>
+        <div class="admin-field"><label>What did you learn from this case?</label><textarea id="c-reflection-learn" rows="3" placeholder="e.g. I learned to anticipate difficult airways in patients with limited neck extension..."></textarea></div>
+        <div class="admin-field"><label>What would you do differently next time?</label><textarea id="c-reflection-improve" rows="3" placeholder="e.g. I would prepare a video laryngoscope as backup before induction..."></textarea></div>
+      </div>
+
+      <!-- Sign-off -->
+<div class="form-section">
       <div class="form-section-header">✍️ Self-Reflection & Notes</div>
       <div class="form-row"><label>Personal reflection / learning points</label><textarea id="wd-feedback" placeholder="What did you learn from this case? What would you do differently?"></textarea></div>
     </div>
@@ -5006,8 +5077,7 @@ setInterval(() => {
     <button onclick="saveDraft_wd()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:10px;padding:16px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Draft</button>
     <button onclick="submit_wd()" style="flex:2;background:#5c3a1a;color:white;border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:800;cursor:pointer">✓ Submit Case</button>
   </div>
-</div>
-</body></html>`;
+</div></body></html>`;
 
 </body>
 </html>
