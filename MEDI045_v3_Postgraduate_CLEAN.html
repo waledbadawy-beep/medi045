@@ -2132,10 +2132,23 @@ function showSupervisorSuggestions(prefix) {
   var filtered = names.filter(function(n){ return n.toLowerCase().indexOf(query) !== -1; });
   if (!filtered.length) { box.style.display='none'; return; }
   box.innerHTML = filtered.map(function(n){
-    return '<div onclick="selectSupervisor(\''+prefix+'\',\''+n.replace(/'/g,"\\'")+'\')" style="padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:1px solid var(--bg)">'+_esc(n)+'</div>';
+    return '<div onclick="selectSupervisor(\''+prefix+'\',\''+n.replace(/'/g,"\\'")+'\')" style="padding:12px 14px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--bg);background:white">'+_esc(n)+'</div>';
   }).join('');
+  // Position as fixed, calculated from the input's actual on-screen location — immune to any parent overflow/stacking issues
+  var rect = input.getBoundingClientRect();
+  box.style.position = 'fixed';
+  box.style.left = rect.left + 'px';
+  box.style.top = (rect.bottom + 2) + 'px';
+  box.style.width = rect.width + 'px';
   box.style.display = 'block';
+  box.style.zIndex = '9999';
 }
+window.addEventListener('resize', function(){
+  ['cl','io','pacu','wd'].forEach(function(p){ hideSupervisorSuggestions(p); });
+});
+window.addEventListener('scroll', function(){
+  ['cl','io','pacu','wd'].forEach(function(p){ hideSupervisorSuggestions(p); });
+}, true);
 function hideSupervisorSuggestions(prefix) {
   var box = document.getElementById(prefix+'-supervisor-suggest');
   if (box) box.style.display = 'none';
@@ -3873,7 +3886,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="cl-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="cl-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('cl')" onfocus="showSupervisorSuggestions('cl')" onblur="setTimeout(function(){hideSupervisorSuggestions('cl')},200)"/><div id="cl-supervisor-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;margin-top:2px"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="cl-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('cl')" onfocus="showSupervisorSuggestions('cl')" onblur="setTimeout(function(){hideSupervisorSuggestions('cl')},200)"/><div id="cl-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
 <div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
@@ -3990,7 +4003,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="io-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="io-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('io')" onfocus="showSupervisorSuggestions('io')" onblur="setTimeout(function(){hideSupervisorSuggestions('io')},200)"/><div id="io-supervisor-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;margin-top:2px"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="io-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('io')" onfocus="showSupervisorSuggestions('io')" onblur="setTimeout(function(){hideSupervisorSuggestions('io')},200)"/><div id="io-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">⚕️ Intraoperative Management</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
 <div class="form-row two-col"><div><label>Type of Surgery</label><input id="c-surg-type" placeholder="Elective / Emergency" type="text"/></div><div><label>Operation</label><input id="c-operation" placeholder="Surgical procedure" type="text"/></div></div>
@@ -4051,7 +4064,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="pacu-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="pacu-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('pacu')" onfocus="showSupervisorSuggestions('pacu')" onblur="setTimeout(function(){hideSupervisorSuggestions('pacu')},200)"/><div id="pacu-supervisor-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;margin-top:2px"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="pacu-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('pacu')" onfocus="showSupervisorSuggestions('pacu')" onblur="setTimeout(function(){hideSupervisorSuggestions('pacu')},200)"/><div id="pacu-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🫁 Airway, Breathing &amp; Circulation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header">🫁 1. Airway Patency</div>
@@ -4478,7 +4491,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="wd-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="wd-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('wd')" onfocus="showSupervisorSuggestions('wd')" onblur="setTimeout(function(){hideSupervisorSuggestions('wd')},200)"/><div id="wd-supervisor-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);max-height:180px;overflow-y:auto;z-index:50;margin-top:2px"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="wd-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('wd')" onfocus="showSupervisorSuggestions('wd')" onblur="setTimeout(function(){hideSupervisorSuggestions('wd')},200)"/><div id="wd-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🛏️ Postoperative Evaluation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
