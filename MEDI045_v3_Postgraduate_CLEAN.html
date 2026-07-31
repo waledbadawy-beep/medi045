@@ -890,6 +890,10 @@
 .case-accordion[open] .case-accordion-summary::after { transform:rotate(270deg); }
 .case-accordion-body { padding:4px 12px 12px; }
 .case-accordion-body .form-section { box-shadow:none; border:none; padding-left:0; padding-right:0; }
+
+@keyframes annPulse { 0%,100% { box-shadow:0 0 0 0 rgba(230,57,70,0.5); } 50% { box-shadow:0 0 0 8px rgba(230,57,70,0); } }
+@keyframes annPop { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
+
 </style>
 </head>
 <body>
@@ -923,6 +927,7 @@
 <button class="pwd-key del" onclick="pwdDel()">⌫</button>
 </div>
 <div class="pwd-hint">Default: 1234</div>
+<div style="margin-top:10px"><a href="javascript:void(0)" onclick="forgotPinFlow()" style="font-size:12px;color:#2a5298;text-decoration:underline">Forgot PIN?</a></div>
 </div>
 </div>
 <!-- ===================== HOME SCREEN ===================== -->
@@ -972,7 +977,7 @@
 <div class="stat-card"><div class="num" id="stat-skills">0</div><div class="lbl">Skills</div></div>
 <div class="stat-card"><div class="num">45</div><div class="lbl">Target</div></div>
 </div>
-<div id="ann-banner" style="display:none;margin:0 16px 14px;background:linear-gradient(135deg,#1a5c3c,#2e7d5e);border-radius:12px;padding:14px 16px;cursor:pointer;color:white" onclick="goto('screen-announcements')">
+<div id="ann-banner" style="display:none;margin:0 16px 14px;background:linear-gradient(135deg,#1a5c3c,#2e7d5e);border-radius:12px;padding:14px 16px;cursor:pointer;color:white" onclick="goto('screen-announcements');markAllAnnouncementsSeen();renderAnnouncements();">
 <div style="display:flex;justify-content:space-between;align-items:center">
 <div><div style="font-size:13px;font-weight:800">📢 <span id="ann-banner-title">Announcements</span></div><div style="font-size:11px;opacity:.85;margin-top:2px" id="ann-banner-sub">Tap to view</div></div>
 <div style="font-size:20px">›</div>
@@ -1767,6 +1772,7 @@
 <div style="margin-bottom:12px">
 <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;text-align:left">Admin Password</label>
 <input id="admin-password-input" placeholder="Enter admin password" style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;font-size:16px;font-family:inherit;-webkit-appearance:none" type="password"/>
+<div style="margin-top:8px"><a href="javascript:void(0)" onclick="forgotAdminPwdFlow()" style="font-size:12px;color:#2a5298;text-decoration:underline">Forgot password?</a></div>
 </div>
 <div id="admin-auth-error" style="color:var(--accent);font-size:12px;margin-bottom:10px;display:none">❌ Incorrect admin password. Try again.</div>
 <button onclick="submitAdminAuth()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔓 Unlock Admin Panel →</button>
@@ -1840,8 +1846,19 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <label>Link (optional)</label>
 <input id="ann-link" placeholder="https://..." type="url"/>
 </div>
-<button onclick="postAnnouncement()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px">📢 Post to All Students</button>
+<div class="admin-field">
+<label>Attach a PDF or image (optional)</label>
+<input id="ann-file" type="file" accept="application/pdf,image/*" onchange="handleAnnFileChange()" style="padding:10px;font-size:13px"/>
+<div id="ann-file-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+</div>
+<button id="ann-post-btn" onclick="postAnnouncement()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px">📢 Post to All Students</button>
 <div id="ann-admin-list" style="margin-top:14px"></div>
+</div>
+<!-- Section: Audit Log -->
+<div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
+<div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📜 Audit Log</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Every admin action is recorded here for academic accountability — grade approvals, data clears, announcement posts, and password recoveries. Shows the most recent 100 entries.</div>
+<div id="audit-log-list" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
 </div>
 <!-- Data Management -->
 <div id="dash-admin-data" style="display:none;background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px;border:2px solid #e63946">
@@ -2134,28 +2151,117 @@ function getSupervisorNames() {
   return raw.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
 }
 
+// ==================== FORGOT PASSWORD / PIN RECOVERY ====================
+// Recovery master code — known only to the Program Director. Documented separately,
+// never shown anywhere in the app UI. Resets the relevant password back to its default.
+var MASTER_RECOVERY_CODE = 'MEDI045RESET';
+
+function forgotPinFlow() {
+  var code = prompt('Enter the master recovery code to reset the Supervisor PIN to its default (1234):');
+  if (code === null) return;
+  if (code.trim() === MASTER_RECOVERY_CODE) {
+    Store.set('medi045_eval_pwd', '1234');
+    logAudit('pin_recovery', 'Supervisor PIN reset to default via recovery code');
+    closePasswordModal();
+    showToast('✅ Supervisor PIN reset to default (1234)');
+  } else {
+    showToast('❌ Incorrect recovery code');
+  }
+}
+
+function forgotAdminPwdFlow() {
+  var code = prompt('Enter the master recovery code to reset the Admin password to its default (ADMIN2025):');
+  if (code === null) return;
+  if (code.trim() === MASTER_RECOVERY_CODE) {
+    Store.set('medi045_admin_pwd', 'ADMIN2025');
+    logAudit('admin_pwd_recovery', 'Admin password reset to default via recovery code');
+    showToast('✅ Admin password reset to default (ADMIN2025)');
+    var input = document.getElementById('admin-password-input');
+    if (input) input.value = '';
+  } else {
+    showToast('❌ Incorrect recovery code');
+  }
+}
+
 // ==================== ANNOUNCEMENTS ====================
+// ---- File attachment handling ----
+var _annPendingFile = null; // {base64, fileName, mimeType}
+function handleAnnFileChange() {
+  var input = document.getElementById('ann-file');
+  var status = document.getElementById('ann-file-status');
+  if (!input.files || !input.files[0]) { _annPendingFile = null; status.textContent=''; return; }
+  var file = input.files[0];
+  if (file.size > 8 * 1024 * 1024) {
+    status.textContent = '⚠️ File too large — please keep under 8 MB';
+    status.style.color = '#e63946';
+    input.value = '';
+    _annPendingFile = null;
+    return;
+  }
+  status.textContent = '⏳ Preparing ' + file.name + '...';
+  status.style.color = 'var(--muted)';
+  var reader = new FileReader();
+  reader.onload = function() {
+    var base64 = reader.result.split(',')[1];
+    _annPendingFile = { base64: base64, fileName: file.name, mimeType: file.type || 'application/pdf' };
+    status.textContent = '✅ Ready to attach: ' + file.name;
+    status.style.color = '#1a7a4a';
+  };
+  reader.onerror = function() {
+    status.textContent = '⚠️ Could not read file';
+    status.style.color = '#e63946';
+  };
+  reader.readAsDataURL(file);
+}
+
 function postAnnouncement() {
   var title = document.getElementById('ann-title').value.trim();
   var message = document.getElementById('ann-message').value.trim();
   var link = document.getElementById('ann-link').value.trim();
   if (!title || !message) { showToast('⚠️ Please enter a title and message'); return; }
-  var entry = {
-    type: 'announcement', id: Date.now(), status: 'active',
-    title: title, message: message, link: link,
-    postedAt: new Date().toLocaleString('en-SA'),
-    postedBy: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Program Director'
+
+  var btn = document.getElementById('ann-post-btn');
+  var finish = function(fileUrl, fileName) {
+    var entry = {
+      type: 'announcement', id: Date.now(), status: 'active',
+      title: title, message: message, link: link,
+      fileUrl: fileUrl || '', fileName: fileName || '',
+      postedAt: new Date().toLocaleString('en-SA'),
+      postedBy: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Program Director'
+    };
+    records.push(entry);
+    Store.set('medi045_records', JSON.stringify(records));
+    postToCloud(entry);
+    logAudit('post_announcement', 'Posted: "' + title + '"' + (fileUrl ? ' (with attachment)' : ''));
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-message').value = '';
+    document.getElementById('ann-link').value = '';
+    document.getElementById('ann-file').value = '';
+    document.getElementById('ann-file-status').textContent = '';
+    _annPendingFile = null;
+    if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
+    showToast('📢 Announcement posted to all students!');
+    renderAdminAnnouncements();
+    renderAuditLog();
+    renderAnnouncements();
+    updateAnnBanner();
   };
-  records.push(entry);
-  Store.set('medi045_records', JSON.stringify(records));
-  postToCloud(entry);
-  document.getElementById('ann-title').value = '';
-  document.getElementById('ann-message').value = '';
-  document.getElementById('ann-link').value = '';
-  showToast('📢 Announcement posted to all students!');
-  renderAdminAnnouncements();
-  renderAnnouncements();
-  updateAnnBanner();
+
+  if (_annPendingFile) {
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading attachment...'; }
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ _action:'upload_file', base64:_annPendingFile.base64, fileName:_annPendingFile.fileName, mimeType:_annPendingFile.mimeType })
+    }).then(function(r){ return r.json(); })
+      .then(function(result){
+        if (result && result.success) { finish(result.url, result.fileName); }
+        else { showToast('⚠️ Attachment upload failed — posting without it'); finish('', ''); }
+      })
+      .catch(function(){ showToast('⚠️ Attachment upload failed — posting without it'); finish('', ''); });
+  } else {
+    finish('', '');
+  }
 }
 
 function deleteAnnouncement(id) {
@@ -2163,7 +2269,7 @@ function deleteAnnouncement(id) {
   var ann = records.find(function(r){ return r.type==='announcement' && String(r.id)===String(id); });
   records = records.filter(function(r){ return !(r.type==='announcement' && String(r.id)===String(id)); });
   Store.set('medi045_records', JSON.stringify(records));
-  if (ann) { ann.status = 'deleted'; postToCloud(ann); } // upsert with deleted status so cloud reflects removal
+  if (ann) { ann.status = 'deleted'; postToCloud(ann); logAudit('delete_announcement', 'Deleted: "' + (ann.title||'') + '"'); }
   renderAdminAnnouncements();
   renderAnnouncements();
   updateAnnBanner();
@@ -2183,6 +2289,7 @@ function renderAdminAnnouncements() {
       + '</div>'
       + '<div style="font-size:12px;color:#444;margin-top:4px">'+_esc(a.message)+'</div>'
       + (a.link ? '<div style="font-size:11px;color:#2a5298;margin-top:4px">🔗 '+_esc(a.link)+'</div>' : '')
+      + (a.fileUrl ? '<a href="'+_esc(a.fileUrl)+'" target="_blank" rel="noopener" style="display:inline-block;font-size:11px;color:#c0392b;margin-top:4px;text-decoration:none">📎 '+_esc(a.fileName||'Attachment')+'</a>' : '')
       + '<div style="font-size:10px;color:var(--muted);margin-top:6px">'+_esc(a.postedAt)+'</div>'
       + '</div>';
   }).join('');
@@ -2198,6 +2305,7 @@ function renderAnnouncements() {
       + '<div style="font-weight:800;font-size:15px;color:#1a3a5c">'+_esc(a.title)+'</div>'
       + '<div style="font-size:13px;color:#444;margin-top:6px;line-height:1.5;white-space:pre-wrap">'+_esc(a.message)+'</div>'
       + (a.link ? '<a href="'+_esc(a.link)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-size:12px;color:#2a5298;font-weight:700;text-decoration:none">🔗 Open Link →</a>' : '')
+      + (a.fileUrl ? '<a href="'+_esc(a.fileUrl)+'" target="_blank" rel="noopener" style="display:block;margin-top:8px;font-size:12px;color:#c0392b;font-weight:700;text-decoration:none">📎 '+_esc(a.fileName||'Download Attachment')+'</a>' : '')
       + '<div style="font-size:11px;color:var(--muted);margin-top:8px">'+_esc(a.postedAt)+(a.postedBy?' · '+_esc(a.postedBy):'')+'</div>'
       + '</div>';
   }).join('');
@@ -2206,15 +2314,76 @@ function renderAnnouncements() {
 function syncAnnouncementsFromCloud() {
   syncFromCloud(function(){ updateAnnBanner(); renderAnnouncements(); renderAdminAnnouncements(); });
 }
+function getSeenAnnouncementIds() {
+  try { return JSON.parse(Store.get('medi045_seen_announcements') || '[]'); } catch(e) { return []; }
+}
+function markAllAnnouncementsSeen() {
+  var anns = records.filter(function(r){ return r.type==='announcement' && r.status!=='deleted'; });
+  var ids = anns.map(function(a){ return String(a.id); });
+  Store.set('medi045_seen_announcements', JSON.stringify(ids));
+  updateAnnBanner();
+}
+function playNotificationChime() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var notes = [880, 1108];
+    notes.forEach(function(freq, i){
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i*0.14);
+      gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + i*0.14 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i*0.14 + 0.28);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i*0.14);
+      osc.stop(ctx.currentTime + i*0.14 + 0.3);
+    });
+  } catch(e) { /* audio not available — silent fail, visual alert still shows */ }
+}
+function showNewAnnouncementPopup(unreadList) {
+  var existing = document.getElementById('ann-popup-overlay');
+  if (existing) existing.remove();
+  var latest = unreadList[unreadList.length-1];
+  var overlay = document.createElement('div');
+  overlay.id = 'ann-popup-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px';
+  overlay.innerHTML =
+    '<div style="background:white;border-radius:16px;max-width:360px;width:100%;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:annPop .25s ease">' +
+      '<div style="background:linear-gradient(135deg,#1a5c3c,#2e7d5e);color:white;padding:20px;text-align:center">' +
+        '<div style="font-size:34px;margin-bottom:6px">📢</div>' +
+        '<div style="font-size:15px;font-weight:800">' + (unreadList.length>1 ? unreadList.length+' New Announcements' : 'New Announcement') + '</div>' +
+      '</div>' +
+      '<div style="padding:18px 20px">' +
+        '<div style="font-weight:800;font-size:15px;color:#1a3a5c;margin-bottom:6px">' + _esc(latest.title) + '</div>' +
+        '<div style="font-size:13px;color:#444;line-height:1.5;max-height:120px;overflow-y:auto">' + _esc(latest.message) + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px;padding:0 20px 20px">' +
+        '<button onclick="document.getElementById(\'ann-popup-overlay\').remove()" style="flex:1;background:#eee;color:#444;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">Dismiss</button>' +
+        '<button onclick="document.getElementById(\'ann-popup-overlay\').remove();markAllAnnouncementsSeen();goto(\'screen-announcements\');renderAnnouncements();" style="flex:1;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">View All</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  playNotificationChime();
+  if (navigator.vibrate) { try { navigator.vibrate([120,60,120]); } catch(e){} }
+}
 function updateAnnBanner() {
   var banner = document.getElementById('ann-banner');
   if (!banner) return;
   var anns = records.filter(function(r){ return r.type==='announcement' && r.status!=='deleted'; });
   if (!anns.length) { banner.style.display='none'; return; }
+  var seenIds = getSeenAnnouncementIds();
+  var unread = anns.filter(function(a){ return seenIds.indexOf(String(a.id)) === -1; });
   var latest = anns[anns.length-1];
   document.getElementById('ann-banner-title').textContent = latest.title;
-  document.getElementById('ann-banner-sub').textContent = anns.length + ' announcement' + (anns.length!==1?'s':'') + ' · Tap to view';
+  var badge = unread.length ? ' · <b style="background:#e63946;padding:1px 7px;border-radius:10px;font-size:10px">' + unread.length + ' NEW</b>' : '';
+  document.getElementById('ann-banner-sub').innerHTML = anns.length + ' announcement' + (anns.length!==1?'s':'') + badge;
   banner.style.display = 'block';
+  banner.style.animation = unread.length ? 'annPulse 1.6s ease-in-out infinite' : 'none';
+  if (unread.length && !window._annPopupShownThisSession) {
+    window._annPopupShownThisSession = true;
+    setTimeout(function(){ showNewAnnouncementPopup(unread); }, 600);
+  }
 }
 
 // ==================== STUDENT PROFILE ====================
@@ -2495,6 +2664,32 @@ function deleteFromCloud(type) {
   }).catch(function() {});
 }
 
+// ==================== AUDIT LOG ====================
+function logAudit(action, details) {
+  var entry = {
+    type: 'audit_log', id: Date.now() + Math.random(),
+    action: action, details: details || '',
+    admin: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Admin',
+    timestamp: new Date().toLocaleString('en-SA')
+  };
+  records.push(entry);
+  Store.set('medi045_records', JSON.stringify(records));
+  postToCloud(entry);
+}
+function renderAuditLog() {
+  var el = document.getElementById('audit-log-list');
+  if (!el) return;
+  var logs = records.filter(function(r){ return r.type==='audit_log'; }).slice().reverse().slice(0, 100);
+  if (!logs.length) { el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px">No actions logged yet</div>'; return; }
+  el.innerHTML = logs.map(function(l){
+    return '<div style="padding:9px 12px;border-bottom:1px solid var(--bg);font-size:12px">'
+      + '<div style="font-weight:700;color:#1a3a5c">'+_esc(l.action)+'</div>'
+      + '<div style="color:#444;margin-top:2px">'+_esc(l.details)+'</div>'
+      + '<div style="color:var(--muted);font-size:10px;margin-top:3px">'+_esc(l.timestamp)+' · '+_esc(l.admin)+'</div>'
+      + '</div>';
+  }).join('');
+}
+
 // ==================== DATA MANAGEMENT ====================
 function clearStudentCases() {
   var cases = records.filter(function(r){ return r.type === 'case'; });
@@ -2503,6 +2698,7 @@ function clearStudentCases() {
   records = records.filter(function(r){ return r.type !== 'case'; });
   Store.set('medi045_records', JSON.stringify(records));
   deleteFromCloud('case');
+  logAudit('clear_student_cases', 'Deleted ' + cases.length + ' student case(s)');
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast(cases.length + ' cases deleted');
 }
@@ -2513,6 +2709,7 @@ function clearEvaluations() {
   records = records.filter(function(r){ return r.type !== 'evaluation'; });
   Store.set('medi045_records', JSON.stringify(records));
   deleteFromCloud('evaluation');
+  logAudit('clear_evaluations', 'Deleted ' + evals.length + ' evaluation(s)');
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast(evals.length + ' evaluations deleted');
 }
@@ -2520,11 +2717,13 @@ function clearSurveys() {
   if (!confirm('Delete ALL survey responses?\n\nThis cannot be undone.')) return;
   Store.set('medi045_surveys', '[]');
   deleteFromCloud('survey');
+  logAudit('clear_surveys', 'Cleared all survey responses');
   showToast('Survey data cleared');
 }
 function resetEntireApp() {
   if (!confirm('DELETE EVERYTHING?\n\nAll cases, evaluations, surveys, and settings will be permanently erased.\n\nThis cannot be undone.')) return;
   if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
+  logAudit('full_app_reset', 'Full app reset performed — all data erased');
   deleteFromCloud('all');
   try { localStorage.clear(); } catch(e) {}
   records = [];
@@ -3217,7 +3416,7 @@ function saveAdminSettings() {
   if (newAdmin) { if (newAdmin.length < 6) { showToast('⚠️ Admin password must be at least 6 characters'); return; } Store.set('medi045_admin_pwd', newAdmin); }
   Store.set('medi045_pd_email', pdEmail);
   const supervisors = document.getElementById('admin-supervisors').value.trim();
-  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); loadSupervisorDropdown(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); }
+  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); loadSupervisorDropdown(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); logAudit('save_supervisor_list', 'Updated supervisor names list (' + supervisors.split(String.fromCharCode(10)).filter(function(s){return s.trim();}).length + ' names)'); }
   if (pdName)  Store.set('medi045_pd_name', pdName);
   if (pdInst)  Store.set('medi045_pd_institution', pdInst);
   if (pdYear)  Store.set('medi045_pd_year', pdYear);
@@ -3622,6 +3821,7 @@ function dmApprove() {
   if (!r.changeLog) r.changeLog = [];
   r.changeLog.push({date: new Date().toLocaleString('en-SA'), by: r.supervisor||'PD', field:'Status', oldVal:'pending_review', newVal:'approved'});
   Store.set('medi045_records', JSON.stringify(records)); postToCloud(r);
+  logAudit('approve_grade', 'Approved ' + r.finalMark + '/10 for ' + r.student + ' (' + (r.sid||'') + ')');
   renderDashboard(); renderResults(); renderGradeChart();
   showToast('Grade approved ✅');
   openDetailModal(window._detailId);
