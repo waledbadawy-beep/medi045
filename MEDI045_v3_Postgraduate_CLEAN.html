@@ -2255,10 +2255,23 @@ function postAnnouncement() {
       body: JSON.stringify({ _action:'upload_file', base64:_annPendingFile.base64, fileName:_annPendingFile.fileName, mimeType:_annPendingFile.mimeType })
     }).then(function(r){ return r.json(); })
       .then(function(result){
-        if (result && result.success) { finish(result.url, result.fileName); }
-        else { showToast('⚠️ Attachment upload failed — posting without it'); finish('', ''); }
+        if (result && result.success && result.url) {
+          finish(result.url, result.fileName);
+        } else if (result && result.success && !result.url) {
+          // Backend responded OK but has no file-upload support — old Apps Script version is deployed.
+          if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
+          alert('⚠️ Attachment was NOT uploaded.\n\nYour Google Apps Script backend needs to be updated to the latest version to support file attachments.\n\nGo to script.google.com, replace the code with the latest MEDI045_Backend.gs, then Deploy → Manage Deployments → Edit → New Version → Deploy.\n\nThe announcement will now post WITHOUT the attachment — you can delete and repost once the script is updated.');
+          finish('', '');
+        } else {
+          showToast('⚠️ Attachment upload failed — posting without it');
+          finish('', '');
+        }
       })
-      .catch(function(){ showToast('⚠️ Attachment upload failed — posting without it'); finish('', ''); });
+      .catch(function(err){
+        if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
+        alert('⚠️ Attachment upload failed: ' + (err && err.message ? err.message : 'network error') + '\n\nPosting the announcement without the attachment.');
+        finish('', '');
+      });
   } else {
     finish('', '');
   }
