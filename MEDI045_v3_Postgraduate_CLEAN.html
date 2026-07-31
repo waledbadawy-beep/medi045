@@ -2123,6 +2123,9 @@ function getSupervisorNames() {
   var raw = Store.get('medi045_supervisors') || '';
   return raw.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
 }
+var _supervisorHighlightIdx = {};
+var _supervisorFilteredCache = {};
+
 function showSupervisorSuggestions(prefix) {
   var input = document.getElementById(prefix+'-supervisor');
   var box = document.getElementById(prefix+'-supervisor-suggest');
@@ -2130,19 +2133,77 @@ function showSupervisorSuggestions(prefix) {
   var names = getSupervisorNames();
   var query = (input.value||'').toLowerCase();
   var filtered = names.filter(function(n){ return n.toLowerCase().indexOf(query) !== -1; });
+  _supervisorFilteredCache[prefix] = filtered;
+  _supervisorHighlightIdx[prefix] = -1;
   if (!filtered.length) { box.style.display='none'; return; }
-  box.innerHTML = filtered.map(function(n){
-    return '<div onclick="selectSupervisor(\''+prefix+'\',\''+n.replace(/'/g,"\\'")+'\')" style="padding:12px 14px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--bg);background:white">'+_esc(n)+'</div>';
-  }).join('');
-  // Position as fixed, calculated from the input's actual on-screen location — immune to any parent overflow/stacking issues
+  renderSupervisorBox(prefix);
   var rect = input.getBoundingClientRect();
+  var maxBoxHeight = 200;
+  var spaceBelow = window.innerHeight - rect.bottom;
+  var spaceAbove = rect.top;
   box.style.position = 'fixed';
   box.style.left = rect.left + 'px';
-  box.style.top = (rect.bottom + 2) + 'px';
   box.style.width = rect.width + 'px';
-  box.style.display = 'block';
   box.style.zIndex = '9999';
+  box.style.display = 'block';
+  if (spaceBelow < maxBoxHeight && spaceAbove > spaceBelow) {
+    // Not enough room below — flip above the input instead
+    box.style.top = '';
+    box.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
+    box.style.maxHeight = Math.min(maxBoxHeight, spaceAbove - 8) + 'px';
+  } else {
+    box.style.bottom = '';
+    box.style.top = (rect.bottom + 2) + 'px';
+    box.style.maxHeight = Math.min(maxBoxHeight, spaceBelow - 8) + 'px';
+  }
 }
+
+function renderSupervisorBox(prefix) {
+  var box = document.getElementById(prefix+'-supervisor-suggest');
+  var filtered = _supervisorFilteredCache[prefix] || [];
+  var hi = _supervisorHighlightIdx[prefix];
+  box.innerHTML = filtered.map(function(n, idx){
+    var bg = (idx===hi) ? '#eaf1fa' : 'white';
+    return '<div onmousedown="selectSupervisor(\''+prefix+'\',\''+n.replace(/'/g,"\\'")+'\')" '
+      + 'onmouseenter="_supervisorHighlightIdx[\''+prefix+'\']='+idx+';renderSupervisorBox(\''+prefix+'\')" '
+      + 'style="padding:12px 14px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--bg);background:'+bg+'">'+_esc(n)+'</div>';
+  }).join('');
+}
+
+function supervisorKeyNav(evt, prefix) {
+  var box = document.getElementById(prefix+'-supervisor-suggest');
+  if (!box || box.style.display==='none') return;
+  var filtered = _supervisorFilteredCache[prefix] || [];
+  if (!filtered.length) return;
+  if (evt.key === 'ArrowDown') {
+    evt.preventDefault();
+    _supervisorHighlightIdx[prefix] = Math.min((_supervisorHighlightIdx[prefix]||-1)+1, filtered.length-1);
+    renderSupervisorBox(prefix);
+    scrollHighlightIntoView(prefix);
+  } else if (evt.key === 'ArrowUp') {
+    evt.preventDefault();
+    _supervisorHighlightIdx[prefix] = Math.max((_supervisorHighlightIdx[prefix]||0)-1, 0);
+    renderSupervisorBox(prefix);
+    scrollHighlightIntoView(prefix);
+  } else if (evt.key === 'Enter') {
+    var hi = _supervisorHighlightIdx[prefix];
+    if (hi >= 0 && hi < filtered.length) {
+      evt.preventDefault();
+      selectSupervisor(prefix, filtered[hi]);
+    }
+  } else if (evt.key === 'Escape') {
+    hideSupervisorSuggestions(prefix);
+  }
+}
+
+function scrollHighlightIntoView(prefix) {
+  var box = document.getElementById(prefix+'-supervisor-suggest');
+  var hi = _supervisorHighlightIdx[prefix];
+  if (!box || hi < 0) return;
+  var el = box.children[hi];
+  if (el) el.scrollIntoView({block:'nearest'});
+}
+
 window.addEventListener('resize', function(){
   ['cl','io','pacu','wd'].forEach(function(p){ hideSupervisorSuggestions(p); });
 });
@@ -3886,7 +3947,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="cl-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="cl-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('cl')" onfocus="showSupervisorSuggestions('cl')" onblur="setTimeout(function(){hideSupervisorSuggestions('cl')},200)"/><div id="cl-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="cl-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('cl')" onfocus="showSupervisorSuggestions('cl')" onkeydown="supervisorKeyNav(event,'cl')" onblur="setTimeout(function(){hideSupervisorSuggestions('cl')},200)"/><div id="cl-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
 <div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
@@ -4003,7 +4064,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="io-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="io-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('io')" onfocus="showSupervisorSuggestions('io')" onblur="setTimeout(function(){hideSupervisorSuggestions('io')},200)"/><div id="io-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="io-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('io')" onfocus="showSupervisorSuggestions('io')" onkeydown="supervisorKeyNav(event,'io')" onblur="setTimeout(function(){hideSupervisorSuggestions('io')},200)"/><div id="io-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">⚕️ Intraoperative Management</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
 <div class="form-row two-col"><div><label>Type of Surgery</label><input id="c-surg-type" placeholder="Elective / Emergency" type="text"/></div><div><label>Operation</label><input id="c-operation" placeholder="Surgical procedure" type="text"/></div></div>
@@ -4064,7 +4125,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="pacu-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="pacu-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('pacu')" onfocus="showSupervisorSuggestions('pacu')" onblur="setTimeout(function(){hideSupervisorSuggestions('pacu')},200)"/><div id="pacu-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="pacu-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('pacu')" onfocus="showSupervisorSuggestions('pacu')" onkeydown="supervisorKeyNav(event,'pacu')" onblur="setTimeout(function(){hideSupervisorSuggestions('pacu')},200)"/><div id="pacu-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🫁 Airway, Breathing &amp; Circulation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header">🫁 1. Airway Patency</div>
@@ -4491,7 +4552,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="wd-date" type="date"/></div>
-<div><label>Supervisor</label><div style="position:relative"><input id="wd-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('wd')" onfocus="showSupervisorSuggestions('wd')" onblur="setTimeout(function(){hideSupervisorSuggestions('wd')},200)"/><div id="wd-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
+<div><label>Supervisor</label><div style="position:relative"><input id="wd-supervisor" type="text" placeholder="e.g. Dr. Walid Badwi" autocomplete="off" oninput="showSupervisorSuggestions('wd')" onfocus="showSupervisorSuggestions('wd')" onkeydown="supervisorKeyNav(event,'wd')" onblur="setTimeout(function(){hideSupervisorSuggestions('wd')},200)"/><div id="wd-supervisor-suggest" style="display:none;background:white;border:1px solid var(--border);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.18);max-height:200px;overflow-y:auto"></div></div></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🛏️ Postoperative Evaluation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
