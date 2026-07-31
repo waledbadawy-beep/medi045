@@ -2038,7 +2038,7 @@ function _saveDraftEntry(entry) {
 function syncSupervisorListFromCloud() {
   syncFromCloud(function(){
     var listRec = records.find(function(r){ return r.type==='supervisor_list'; });
-    if (listRec && listRec.names) { Store.set('medi045_supervisors', listRec.names); updateSupervisorDatalist(); }
+    if (listRec && listRec.names) { Store.set('medi045_supervisors', listRec.names); updateSupervisorDatalist(); loadSupervisorDropdown(); }
   });
 }
 
@@ -3238,7 +3238,7 @@ function saveAdminSettings() {
   if (newAdmin) { if (newAdmin.length < 6) { showToast('⚠️ Admin password must be at least 6 characters'); return; } Store.set('medi045_admin_pwd', newAdmin); }
   Store.set('medi045_pd_email', pdEmail);
   const supervisors = document.getElementById('admin-supervisors').value.trim();
-  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); }
+  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); loadSupervisorDropdown(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); }
   if (pdName)  Store.set('medi045_pd_name', pdName);
   if (pdInst)  Store.set('medi045_pd_institution', pdInst);
   if (pdYear)  Store.set('medi045_pd_year', pdYear);
