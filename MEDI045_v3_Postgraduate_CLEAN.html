@@ -2137,6 +2137,14 @@ function showSupervisorSuggestions(prefix) {
   _supervisorHighlightIdx[prefix] = -1;
   if (!filtered.length) { box.style.display='none'; return; }
   renderSupervisorBox(prefix);
+  positionSupervisorBox(prefix);
+  box.style.display = 'block';
+}
+
+function positionSupervisorBox(prefix) {
+  var input = document.getElementById(prefix+'-supervisor');
+  var box = document.getElementById(prefix+'-supervisor-suggest');
+  if (!input || !box) return;
   var rect = input.getBoundingClientRect();
   var maxBoxHeight = 200;
   var spaceBelow = window.innerHeight - rect.bottom;
@@ -2145,29 +2153,54 @@ function showSupervisorSuggestions(prefix) {
   box.style.left = rect.left + 'px';
   box.style.width = rect.width + 'px';
   box.style.zIndex = '9999';
-  box.style.display = 'block';
   if (spaceBelow < maxBoxHeight && spaceAbove > spaceBelow) {
-    // Not enough room below — flip above the input instead
     box.style.top = '';
     box.style.bottom = (window.innerHeight - rect.top + 2) + 'px';
-    box.style.maxHeight = Math.min(maxBoxHeight, spaceAbove - 8) + 'px';
+    box.style.maxHeight = Math.max(80, Math.min(maxBoxHeight, spaceAbove - 8)) + 'px';
   } else {
     box.style.bottom = '';
     box.style.top = (rect.bottom + 2) + 'px';
-    box.style.maxHeight = Math.min(maxBoxHeight, spaceBelow - 8) + 'px';
+    box.style.maxHeight = Math.max(80, Math.min(maxBoxHeight, spaceBelow - 8)) + 'px';
   }
 }
 
+// Build the suggestion list ONCE per open/filter-change. Highlight updates only toggle a CSS
+// class on existing elements afterwards — the list is never rebuilt mid-interaction, so a
+// click/tap in progress can never have its target element pulled out from under it.
 function renderSupervisorBox(prefix) {
   var box = document.getElementById(prefix+'-supervisor-suggest');
   var filtered = _supervisorFilteredCache[prefix] || [];
-  var hi = _supervisorHighlightIdx[prefix];
   box.innerHTML = filtered.map(function(n, idx){
-    var bg = (idx===hi) ? '#eaf1fa' : 'white';
-    return '<div onmousedown="selectSupervisor(\''+prefix+'\',\''+n.replace(/'/g,"\\'")+'\')" '
-      + 'onmouseenter="_supervisorHighlightIdx[\''+prefix+'\']='+idx+';renderSupervisorBox(\''+prefix+'\')" '
-      + 'style="padding:12px 14px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--bg);background:'+bg+'">'+_esc(n)+'</div>';
+    var safe = n.replace(/'/g, "\\'");
+    return '<div class="sup-suggest-item" data-idx="'+idx+'" data-name="'+_esc(n)+'" '
+      + 'style="padding:13px 14px;font-size:15px;cursor:pointer;border-bottom:1px solid var(--bg);background:white">'+_esc(n)+'</div>';
   }).join('');
+  // Attach listeners once via delegation-friendly direct binding (no re-render on hover)
+  var items = box.querySelectorAll('.sup-suggest-item');
+  items.forEach(function(item){
+    item.addEventListener('mousedown', function(evt){
+      evt.preventDefault(); // keep input focused — prevents blur from closing the box before click registers
+      selectSupervisor(prefix, item.getAttribute('data-name'));
+    });
+    item.addEventListener('touchstart', function(evt){
+      evt.preventDefault();
+      selectSupervisor(prefix, item.getAttribute('data-name'));
+    }, {passive:false});
+    item.addEventListener('mouseenter', function(){
+      setSupervisorHighlight(prefix, parseInt(item.getAttribute('data-idx'),10));
+    });
+  });
+}
+
+// Only toggles background colour on the already-rendered items — no DOM rebuild.
+function setSupervisorHighlight(prefix, idx) {
+  _supervisorHighlightIdx[prefix] = idx;
+  var box = document.getElementById(prefix+'-supervisor-suggest');
+  if (!box) return;
+  var items = box.querySelectorAll('.sup-suggest-item');
+  items.forEach(function(item, i){
+    item.style.background = (i===idx) ? '#eaf1fa' : 'white';
+  });
 }
 
 function supervisorKeyNav(evt, prefix) {
@@ -2177,17 +2210,17 @@ function supervisorKeyNav(evt, prefix) {
   if (!filtered.length) return;
   if (evt.key === 'ArrowDown') {
     evt.preventDefault();
-    _supervisorHighlightIdx[prefix] = Math.min((_supervisorHighlightIdx[prefix]||-1)+1, filtered.length-1);
-    renderSupervisorBox(prefix);
+    var next = Math.min((_supervisorHighlightIdx[prefix]==null?-1:_supervisorHighlightIdx[prefix])+1, filtered.length-1);
+    setSupervisorHighlight(prefix, next);
     scrollHighlightIntoView(prefix);
   } else if (evt.key === 'ArrowUp') {
     evt.preventDefault();
-    _supervisorHighlightIdx[prefix] = Math.max((_supervisorHighlightIdx[prefix]||0)-1, 0);
-    renderSupervisorBox(prefix);
+    var prev = Math.max((_supervisorHighlightIdx[prefix]==null?0:_supervisorHighlightIdx[prefix])-1, 0);
+    setSupervisorHighlight(prefix, prev);
     scrollHighlightIntoView(prefix);
   } else if (evt.key === 'Enter') {
     var hi = _supervisorHighlightIdx[prefix];
-    if (hi >= 0 && hi < filtered.length) {
+    if (hi!=null && hi >= 0 && hi < filtered.length) {
       evt.preventDefault();
       selectSupervisor(prefix, filtered[hi]);
     }
@@ -2199,7 +2232,7 @@ function supervisorKeyNav(evt, prefix) {
 function scrollHighlightIntoView(prefix) {
   var box = document.getElementById(prefix+'-supervisor-suggest');
   var hi = _supervisorHighlightIdx[prefix];
-  if (!box || hi < 0) return;
+  if (!box || hi==null || hi < 0) return;
   var el = box.children[hi];
   if (el) el.scrollIntoView({block:'nearest'});
 }
