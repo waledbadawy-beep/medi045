@@ -2035,6 +2035,22 @@ function _saveDraftEntry(entry) {
   showToast('💾 Draft saved');
 }
 
+function syncSupervisorListFromCloud() {
+  syncFromCloud(function(){
+    var listRec = records.find(function(r){ return r.type==='supervisor_list'; });
+    if (listRec && listRec.names) { Store.set('medi045_supervisors', listRec.names); updateSupervisorDatalist(); }
+  });
+}
+
+function updateSupervisorDatalist() {
+  var dl = document.getElementById('supervisor-suggestions');
+  if (!dl) return;
+  var raw = Store.get('medi045_supervisors') || '';
+  var names = raw.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
+  if (!names.length) { dl.innerHTML = '<option value="Dr. Walid Badwi">'; return; }
+  dl.innerHTML = names.map(function(n){ return '<option value="'+_esc(n)+'">'; }).join('');
+}
+
 // ==================== ANNOUNCEMENTS ====================
 function postAnnouncement() {
   var title = document.getElementById('ann-title').value.trim();
@@ -3195,7 +3211,7 @@ function saveAdminSettings() {
   if (newAdmin) { if (newAdmin.length < 6) { showToast('⚠️ Admin password must be at least 6 characters'); return; } Store.set('medi045_admin_pwd', newAdmin); }
   Store.set('medi045_pd_email', pdEmail);
   const supervisors = document.getElementById('admin-supervisors').value.trim();
-  if (supervisors) Store.set('medi045_supervisors', supervisors);
+  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); }
   if (pdName)  Store.set('medi045_pd_name', pdName);
   if (pdInst)  Store.set('medi045_pd_institution', pdInst);
   if (pdYear)  Store.set('medi045_pd_year', pdYear);
@@ -3740,7 +3756,9 @@ function _initApp() {
   _safe('gradechart', renderGradeChart);
   checkProfileOnLoad();
   updateAnnBanner();
+  updateSupervisorDatalist();
   syncAnnouncementsFromCloud();
+  syncSupervisorListFromCloud();
 
   // iOS-safe date (no toISOString timezone offset issue)
   _safe('today', () => {
