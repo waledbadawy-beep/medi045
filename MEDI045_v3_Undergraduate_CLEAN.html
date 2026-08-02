@@ -1705,10 +1705,8 @@
 <th style="padding:10px 8px;text-align:left;border-radius:8px 0 0 0">#</th>
 <th style="padding:10px 8px;text-align:left">Student Name</th>
 <th style="padding:10px 8px;text-align:left">Comp. No.</th>
-<th style="padding:10px 8px;text-align:center">C1/50</th>
-<th style="padding:10px 8px;text-align:center">C2/50</th>
-<th style="padding:10px 8px;text-align:center">Total</th>
-<th style="padding:10px 8px;text-align:center;border-radius:0 8px 0 0">Mark/5</th>
+<th style="padding:10px 8px;text-align:center">Case Score/50</th>
+<th style="padding:10px 8px;text-align:center;border-radius:0 8px 0 0">Final Mark/5</th>
 </tr></thead>
 <tbody id="results-tbody"></tbody>
 </table>
@@ -2631,15 +2629,15 @@ let pendingEvalCaseId=null;
 function _esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function exportEvalPDF(evalId){
   let r=records.find(x=>String(x.id)===String(evalId)&&x.type==='evaluation'); if(!r) return;
-  const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Evaluation Report</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:24px;color:#1a1a2e;max-width:700px;margin:0 auto}h2{color:#1a3a5c;border-bottom:2px solid #2a5298;padding-bottom:8px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:10px 12px;border:1px solid #ddd;text-align:left}th{background:#1a3a5c;color:white}tr:nth-child(even){background:#f8fafc}.mark{font-size:24px;font-weight:800;color:#1a3a5c;text-align:center;margin:20px 0;padding:16px;background:#eaf1fa;border-radius:10px}</style></head><body><h2>MEDI 045 – Student Evaluation Report</h2><table><tr><th>Student</th><td>${_esc(r.student)}</td><th>Computer No.</th><td>${_esc(r.sid)}</td></tr><tr><th>Supervisor</th><td>${_esc(r.supervisor)}</td><th>Date</th><td>${_esc(r.date)}</td></tr></table><table><tr><th>Domain</th><th>Max</th><th>Case 1</th><th>Case 2</th></tr>
-<tr><td>Case Title</td><td></td><td>${_esc(r.c1Title)}</td><td>${_esc(r.c2Title)}</td></tr>
-<tr><td>Pre-op Assessment</td><td>10</td><td>${(r.c1Domains||{}).preop||0}</td><td>${(r.c2Domains||{}).preop||0}</td></tr>
-<tr><td>Intra-op Management</td><td>15</td><td>${(r.c1Domains||{}).intra||0}</td><td>${(r.c2Domains||{}).intra||0}</td></tr>
-<tr><td>Technical Skills</td><td>10</td><td>${(r.c1Domains||{}).tech||0}</td><td>${(r.c2Domains||{}).tech||0}</td></tr>
-<tr><td>Post-op Care</td><td>10</td><td>${(r.c1Domains||{}).postop||0}</td><td>${(r.c2Domains||{}).postop||0}</td></tr>
-<tr><td>Professionalism</td><td>5</td><td>${(r.c1Domains||{}).prof||0}</td><td>${(r.c2Domains||{}).prof||0}</td></tr>
-<tr style="background:#eaf1fa"><td><b>Total</b></td><td><b>50</b></td><td><b>${r.c1Score||0}</b></td><td><b>${r.c2Score||0}</b></td></tr></table>
-${(r.changeLog&&r.changeLog.length)?'<h3 style="color:#7b2d8b;margin-top:16px">Change Log</h3><table><tr><th>Date</th><th>By</th><th>Change</th></tr>'+r.changeLog.map(c=>'<tr><td>'+c.date+'</td><td>'+c.by+'</td><td>'+c.field+': '+c.oldVal+' → '+c.newVal+'</td></tr>').join('')+'</table>':''}<div class="mark">Total: ${r.total||0} / 100 &nbsp;→&nbsp; Final Mark: ${r.finalMark||0} / 5${r.overridden?' (Override)':''}</div><p><b>Feedback:</b> ${_esc(r.feedback||'—')}</p>
+  const doc=`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Evaluation Report</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:24px;color:#1a1a2e;max-width:700px;margin:0 auto}h2{color:#1a3a5c;border-bottom:2px solid #2a5298;padding-bottom:8px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:10px 12px;border:1px solid #ddd;text-align:left}th{background:#1a3a5c;color:white}tr:nth-child(even){background:#f8fafc}.mark{font-size:24px;font-weight:800;color:#1a3a5c;text-align:center;margin:20px 0;padding:16px;background:#eaf1fa;border-radius:10px}</style></head><body><h2>MEDI 045 – Student Evaluation Report</h2><table><tr><th>Student</th><td>${_esc(r.student)}</td><th>Computer No.</th><td>${_esc(r.sid)}</td></tr><tr><th>Supervisor</th><td>${_esc(r.supervisor)}</td><th>Date</th><td>${_esc(r.date)}</td></tr></table><table><tr><th>Domain</th><th>Max</th><th>Score</th></tr>
+<tr><td>Case Title</td><td></td><td>${_esc(r.c1Title)}</td></tr>
+<tr><td>Pre-op Assessment</td><td>10</td><td>${(r.c1Domains||{}).preop||0}</td></tr>
+<tr><td>Intra-op Management</td><td>15</td><td>${(r.c1Domains||{}).intra||0}</td></tr>
+<tr><td>Technical Skills</td><td>10</td><td>${(r.c1Domains||{}).tech||0}</td></tr>
+<tr><td>Post-op Care</td><td>10</td><td>${(r.c1Domains||{}).postop||0}</td></tr>
+<tr><td>Professionalism</td><td>5</td><td>${(r.c1Domains||{}).prof||0}</td></tr>
+<tr style="background:#eaf1fa"><td><b>Case Score</b></td><td><b>50</b></td><td><b>${r.c1Score||0}</b></td></tr></table>
+${(r.changeLog&&r.changeLog.length)?'<h3 style="color:#7b2d8b;margin-top:16px">Change Log</h3><table><tr><th>Date</th><th>By</th><th>Change</th></tr>'+r.changeLog.map(c=>'<tr><td>'+c.date+'</td><td>'+c.by+'</td><td>'+c.field+': '+c.oldVal+' → '+c.newVal+'</td></tr>').join('')+'</table>':''}<div class="mark">Case Score: ${r.c1Score||0} / 50 &nbsp;→&nbsp; Final Mark: ${r.finalMark||0} / 5${r.overridden?' (Override)':''}</div><p><b>Feedback:</b> ${_esc(r.feedback||'—')}</p>
 <datalist id="supervisor-suggestions"><option value="Dr. Walid Badwi"></datalist>
 </body></html>`;
   let win=null; try { win=window.open('','_blank'); } catch(e){ win=null; }
@@ -2660,12 +2658,11 @@ ${(r.changeLog&&r.changeLog.length)?'<h3 style="color:#7b2d8b;margin-top:16px">C
 function emailReport(evalId){ 
   var r=records.find(function(x){ return String(x.id)===String(evalId)&&x.type==='evaluation'; }); 
   if(!r) return; 
-  var d1=r.c1Domains||{}, d2=r.c2Domains||{};
+  var d1=r.c1Domains||{};
   var text='MEDI 045 - Evaluation Report\n\n'+
     'Student: '+r.student+'\nComputer No.: '+(r.sid||'')+'\nSupervisor: '+(r.supervisor||'')+'\nDate: '+(r.date||'')+'\nStatus: '+(r.status||'').toUpperCase()+'\n\n'+
-    'CASE 1: '+(r.c1Title||'')+'\nPre-op:'+(d1.preop||0)+'/10  Intra-op:'+(d1.intra||0)+'/15  Tech:'+(d1.tech||0)+'/10  Post-op:'+(d1.postop||0)+'/10  Prof:'+(d1.prof||0)+'/5\nCase 1 Total: '+(r.c1Score||0)+'/50\n\n'+
-    'CASE 2: '+(r.c2Title||'')+'\nPre-op:'+(d2.preop||0)+'/10  Intra-op:'+(d2.intra||0)+'/15  Tech:'+(d2.tech||0)+'/10  Post-op:'+(d2.postop||0)+'/10  Prof:'+(d2.prof||0)+'/5\nCase 2 Total: '+(r.c2Score||0)+'/50\n\n'+
-    'CASE SCORE: '+(r.total||0)+'/50\nFINAL MARK: '+(r.finalMark||0)+'/5'+(r.overridden?' (Override)':'')+'\n\nFeedback: '+(r.feedback||'');
+    'CASE: '+(r.c1Title||'')+'\nPre-op:'+(d1.preop||0)+'/10  Intra-op:'+(d1.intra||0)+'/15  Tech:'+(d1.tech||0)+'/10  Post-op:'+(d1.postop||0)+'/10  Prof:'+(d1.prof||0)+'/5\nCase Score: '+(r.c1Score||0)+'/50\n\n'+
+    'FINAL MARK: '+(r.finalMark||0)+'/5'+(r.overridden?' (Override)':'')+'\n\nFeedback: '+(r.feedback||'');
   shareOrCopy('MEDI 045 Evaluation - '+r.student, text);
 }
 function deleteFromCloud(type) {
@@ -3598,9 +3595,7 @@ function renderResults() {
     <td style="padding:8px;border-bottom:1px solid #eee">${i+1}</td>
     <td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">${_esc(r.student)}</td>
     <td style="padding:8px;border-bottom:1px solid #eee">${_esc(r.sid)}</td>
-    <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${r.c1Score||'—'}</td>
-    <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${r.c2Score||'—'}</td>
-    <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${r.total||'—'}</td>
+    <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:700">${r.c1Score||'—'}</td>
     <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:800;color:var(--primary)">${r.finalMark||'—'}</td>
   </tr>`).join('');
 }
@@ -3609,8 +3604,8 @@ function exportResultsExcel() {
   if (!evals.length) { showToast('⚠️ No evaluations to export'); return; }
   let csv = 'Student Name,University ID,Status,Pre-op(/10),Intra-op(/15),Technical(/10),Post-op(/10),Professionalism(/5),Case Score(/50),Auto Mark(/5),Final Mark(/5),Overridden,Supervisor,Date\n';
   evals.forEach(r => {
-    const d1=r.c1Domains||{}, d2=r.c2Domains||{};
-    csv += `"${(r.student||'').replace(/"/g,'""')}","${r.sid||''}","${r.status||''}",${d1.preop||0},${d1.intra||0},${d1.tech||0},${d1.postop||0},${d1.prof||0},${r.c1Score||0},${d2.preop||0},${d2.intra||0},${d2.tech||0},${d2.postop||0},${d2.prof||0},${r.c2Score||0},${r.total||0},${r.autoOut10||0},${r.finalMark||0},${r.overridden?'YES':'NO'},"${(r.supervisor||'').replace(/"/g,'""')}","${r.date||''}"\n`;
+    const d1=r.c1Domains||{};
+    csv += `"${(r.student||'').replace(/"/g,'""')}","${r.sid||''}","${r.status||''}",${d1.preop||0},${d1.intra||0},${d1.tech||0},${d1.postop||0},${d1.prof||0},${r.c1Score||0},${r.autoOut5||0},${r.finalMark||0},${r.overridden?'YES':'NO'},"${(r.supervisor||'').replace(/"/g,'""')}","${r.date||''}"\n`;
   });
   const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -3678,7 +3673,7 @@ function buildEvalEntry(status) {
     supervisor: document.getElementById('ev-supervisor').value,
     c1Title: document.getElementById('c1-title').value, c1Domains: c1d, c1Score,
     c1Comments: document.getElementById('c1-comments').value,
-    c2Score: 0, total: c1Score,
+    total: c1Score,
     autoOut5, overridden: override !== '', finalMark,
     feedback: document.getElementById('ev-feedback').value,
     changeLog: []
@@ -3694,7 +3689,6 @@ function openDetailModal(evalId) {
   document.getElementById('dm-meta').textContent = (r.supervisor||'') + ' · ' + (r.date||'') + ' · Status: ' + (r.status||'submitted').toUpperCase();
   
   const d = r.c1Domains || {};
-  const d2 = r.c2Domains || {};
   const labels = {preop:'Pre-op Assessment',intra:'Intra-op Management',tech:'Technical Skills',postop:'Post-op Care',prof:'Professionalism'};
   const maxes = {preop:10,intra:15,tech:10,postop:10,prof:5};
   
@@ -3726,16 +3720,10 @@ function openDetailModal(evalId) {
   
   // ===== EVALUATION SCORES =====
   html += `<div style="margin-bottom:14px">
-    <div style="font-weight:700;color:var(--primary);margin-bottom:6px">Case 1: ${_esc(r.c1Title||'—')}</div>
+    <div style="font-weight:700;color:var(--primary);margin-bottom:6px">${_esc(r.c1Title||'Case Evaluation')}</div>
     <table style="width:100%;border-collapse:collapse">${domainRows(d,'c1')}</table>
     <div style="text-align:right;font-weight:800;color:var(--primary);margin-top:4px" id="dm-c1-total">${r.c1Score||0} / 50</div>
     ${r.c1Comments ? '<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">'+_esc(r.c1Comments)+'</div>' : ''}
-  </div>
-  <div style="margin-bottom:14px">
-    <div style="font-weight:700;color:#2a5298;margin-bottom:6px">Case 2: ${_esc(r.c2Title||'—')}</div>
-    <table style="width:100%;border-collapse:collapse">${domainRows(d2,'c2')}</table>
-    <div style="text-align:right;font-weight:800;color:#2a5298;margin-top:4px" id="dm-c2-total">${r.c2Score||0} / 50</div>
-    ${r.c2Comments ? '<div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">'+_esc(r.c2Comments)+'</div>' : ''}
   </div>
   <div style="display:flex;gap:8px;margin-bottom:14px">
     <div style="flex:1;text-align:center;background:#eaf1fa;border-radius:8px;padding:10px"><div style="font-size:11px;color:var(--muted)">Case Score</div><div style="font-size:22px;font-weight:800;color:var(--primary)" id="dm-total">${r.c1Score||r.total||0}/50</div></div>
@@ -3784,11 +3772,9 @@ function dmToggleEdit() {
 }
 function dmRecalc() {
   const ids = ['preop','intra','tech','postop','prof'];
-  let c1=0, c2=0;
+  let c1=0;
   ids.forEach(k => { c1 += parseFloat(document.getElementById('dm-c1-'+k).value)||0; });
-  ids.forEach(k => { c2 += parseFloat(document.getElementById('dm-c2-'+k).value)||0; });
   document.getElementById('dm-c1-total').textContent = c1+' / 50';
-  document.getElementById('dm-c2-total').textContent = c2+' / 50';
   document.getElementById('dm-total').textContent = c1+'/50';
   document.getElementById('dm-final').textContent = (Math.round((c1/50)*5*10)/10)+'/5';
 }
@@ -3800,16 +3786,10 @@ function dmSaveEdits() {
   const now = new Date().toLocaleString('en-SA');
   if (!r.changeLog) r.changeLog = [];
   if (!r.c1Domains) r.c1Domains = {};
-  if (!r.c2Domains) r.c2Domains = {};
   ids.forEach(k => {
     const newV = parseFloat(document.getElementById('dm-c1-'+k).value)||0;
     const oldV = r.c1Domains[k]||0;
-    if (newV !== oldV) { r.changeLog.push({date:now, by:supervisor, field:'C1 '+k, oldVal:oldV, newVal:newV}); r.c1Domains[k] = newV; }
-  });
-  ids.forEach(k => {
-    const newV = parseFloat(document.getElementById('dm-c2-'+k).value)||0;
-    const oldV = r.c2Domains[k]||0;
-    if (newV !== oldV) { r.changeLog.push({date:now, by:supervisor, field:'C2 '+k, oldVal:oldV, newVal:newV}); r.c2Domains[k] = newV; }
+    if (newV !== oldV) { r.changeLog.push({date:now, by:supervisor, field:k, oldVal:oldV, newVal:newV}); r.c1Domains[k] = newV; }
   });
   r.c1Score = Object.values(r.c1Domains).reduce((a,b)=>a+b,0);
   r.total = r.c1Score;
