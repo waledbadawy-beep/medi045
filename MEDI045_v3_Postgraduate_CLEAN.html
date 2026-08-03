@@ -3390,15 +3390,52 @@ function saveAdminSettings() {
   const pdName   = document.getElementById('pd-name-input').value.trim();
   const pdInst   = document.getElementById('pd-institution-input').value.trim();
   const pdYear   = document.getElementById('pd-year-input').value.trim();
-  if (newEval)  { if (newEval.length < 4)  { showToast('⚠️ Supervisor PIN must be at least 4 digits'); return; } Store.set('medi045_eval_pwd', newEval); }
-  if (newAdmin) { if (newAdmin.length < 6) { showToast('⚠️ Admin password must be at least 6 characters'); return; } Store.set('medi045_admin_pwd', newAdmin); }
-  Store.set('medi045_pd_email', pdEmail);
+
+  var errors = [];
+  var savedSomething = false;
+
+  if (newEval) {
+    if (newEval.length < 4) {
+      errors.push('Supervisor PIN must be at least 4 digits — not saved');
+    } else {
+      Store.set('medi045_eval_pwd', newEval);
+      logAudit('change_supervisor_pin', 'Supervisor PIN changed');
+      savedSomething = true;
+    }
+  }
+  if (newAdmin) {
+    if (newAdmin.length < 6) {
+      errors.push('Admin password must be at least 6 characters — not saved');
+    } else {
+      Store.set('medi045_admin_pwd', newAdmin);
+      logAudit('change_admin_password', 'Admin password changed');
+      savedSomething = true;
+    }
+  }
+  if (pdEmail) { Store.set('medi045_pd_email', pdEmail); savedSomething = true; }
   const supervisors = document.getElementById('admin-supervisors').value.trim();
-  if (supervisors) { Store.set('medi045_supervisors', supervisors); updateSupervisorDatalist(); loadSupervisorDropdown(); postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()}); logAudit('save_supervisor_list', 'Updated supervisor names list (' + supervisors.split(String.fromCharCode(10)).filter(function(s){return s.trim();}).length + ' names)'); }
-  if (pdName)  Store.set('medi045_pd_name', pdName);
-  if (pdInst)  Store.set('medi045_pd_institution', pdInst);
-  if (pdYear)  Store.set('medi045_pd_year', pdYear);
-  showToast('✅ Settings saved successfully');
+  if (supervisors) {
+    Store.set('medi045_supervisors', supervisors);
+    updateSupervisorDatalist(); loadSupervisorDropdown();
+    postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:supervisors, status:'active', updatedAt:new Date().toISOString()});
+    logAudit('save_supervisor_list', 'Updated supervisor names list (' + supervisors.split(String.fromCharCode(10)).filter(function(s){return s.trim();}).length + ' names)');
+    savedSomething = true;
+  }
+  if (pdName)  { Store.set('medi045_pd_name', pdName); savedSomething = true; }
+  if (pdInst)  { Store.set('medi045_pd_institution', pdInst); savedSomething = true; }
+  if (pdYear)  { Store.set('medi045_pd_year', pdYear); savedSomething = true; }
+
+  // Clear the password fields regardless, so a rejected short value isn't left sitting in the box
+  document.getElementById('new-eval-pwd').value = '';
+  document.getElementById('new-admin-pwd').value = '';
+
+  if (errors.length) {
+    alert('⚠️ Some settings were NOT saved:\n\n' + errors.join('\n') + (savedSomething ? '\n\nEverything else was saved successfully.' : ''));
+  } else if (savedSomething) {
+    showToast('✅ Settings saved successfully');
+  } else {
+    showToast('Nothing to save — no fields were changed');
+  }
 }
 
 // Legacy stubs (kept for any residual calls)
