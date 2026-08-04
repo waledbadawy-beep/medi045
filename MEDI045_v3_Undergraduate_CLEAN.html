@@ -2184,7 +2184,9 @@ function postAnnouncement() {
           alert('⚠️ Attachment was NOT uploaded.\n\nYour Google Apps Script backend needs to be updated to the latest version to support file attachments.\n\nGo to script.google.com, replace the code with the latest MEDI045_Backend.gs, then Deploy → Manage Deployments → Edit → New Version → Deploy.\n\nThe announcement will now post WITHOUT the attachment — you can delete and repost once the script is updated.');
           finish('', '');
         } else {
-          showToast('⚠️ Attachment upload failed — posting without it');
+          if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
+          var errDetail = (result && result.error) ? result.error : 'Unknown error (no response detail)';
+          alert('⚠️ Attachment upload FAILED.\n\nServer error: ' + errDetail + '\n\nThis usually means Google Drive permission was not granted when you last deployed the script. Go to script.google.com → Deploy → Test deployments (or re-run the script once manually) and accept the Drive permission prompt if one appears.\n\nThe announcement will now post WITHOUT the attachment.');
           finish('', '');
         }
       })
