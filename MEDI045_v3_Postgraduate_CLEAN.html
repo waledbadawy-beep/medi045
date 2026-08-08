@@ -2149,6 +2149,17 @@ function forgotAdminPwdFlow() {
   }
 }
 
+function syncCredentialsFromCloud(callback) {
+  syncFromCloud(function(){
+    var cred = records.find(function(r){ return r.type==='app_credentials'; });
+    if (cred) {
+      if (cred.evalPwd)  Store.set('medi045_eval_pwd', cred.evalPwd);
+      if (cred.adminPwd) Store.set('medi045_admin_pwd', cred.adminPwd);
+    }
+    if (callback) callback();
+  });
+}
+
 // ==================== ANNOUNCEMENTS ====================
 // ---- File attachment handling ----
 var _annPendingFile = null; // {base64, fileName, mimeType}
@@ -2417,18 +2428,18 @@ function pwdDel() { pwdVal = pwdVal.slice(0,-1); updatePwdDots(); document.getEl
 function updatePwdDots() { for(let i=0;i<4;i++) document.getElementById('pwd-dots').children[i].classList.toggle('filled', i < pwdVal.length); }
 function checkEvalPin() {
   const correct = Store.get('medi045_eval_pwd') || '1234';
-  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); setTimeout(()=>evalUnlocked=false,30*60*1000); }
+  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); setTimeout(()=>evalUnlocked=false,30*60*1000); }
   else { document.getElementById('pwd-error').style.display='block'; pwdVal=''; updatePwdDots(); }
 }
 function closePasswordModal() { document.getElementById('pwd-modal').style.display='none'; pwdVal=''; updatePwdDots(); }
-function showPasswordModal() { document.getElementById('pwd-modal').style.display='flex'; pwdVal=''; updatePwdDots(); }
+function showPasswordModal() { document.getElementById('pwd-modal').style.display='flex'; pwdVal=''; updatePwdDots(); syncCredentialsFromCloud(); }
 
 // ==================== NAVIGATION ====================
 function goto(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
 function gotoProtected(id) { if (evalUnlocked) goto(id); else showPasswordModal(); }
 
 // ==================== HELPER FUNCTIONS ====================
-function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var el=document.getElementById('stat-cases'); if(el) el.textContent=records.filter(function(r){return TYPES.indexOf(r.type)!==-1;}).length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway';}).length; updateUGBanner(); }
+function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var myId = studentProfile ? String(studentProfile.universityId||'') : ''; var mine = records.filter(function(r){return TYPES.indexOf(r.type)!==-1 && (!myId || String(r.studentId||'')===myId);}); var el=document.getElementById('stat-cases'); if(el) el.textContent=mine.length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway' && (!myId || String(r.studentId||'')===myId);}).length; updateUGBanner(); }
 function updateUGBanner() {
   var el = document.getElementById('ug-case-status');
   if (!el) return;
@@ -2459,7 +2470,11 @@ function addCustomChip(btn,listId,fieldId) { let input=btn.previousElementSiblin
 
 // ==================== RECORDS ====================
 function renderRecords() {
-  let myRecords = records.slice().reverse();
+  var TYPES = ['clinic','intraop','pacu','ward','case','airway'];
+  var myId = studentProfile ? String(studentProfile.universityId||'') : '';
+  let myRecords = records.filter(function(r){
+    return TYPES.indexOf(r.type)!==-1 && (!myId || String(r.studentId||'')===myId);
+  }).slice().reverse();
   document.getElementById('records-count').textContent = myRecords.length + ' record'+(myRecords.length!==1?'s':'')+' saved';
   let container=document.getElementById('records-container');
   if(myRecords.length===0){ container.innerHTML='<div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div>'; return; }
@@ -3401,6 +3416,7 @@ function saveAdminSettings() {
       errors.push('Supervisor PIN must be at least 4 digits — not saved');
     } else {
       Store.set('medi045_eval_pwd', newEval);
+      postToCloud({type:'app_credentials', id:'app_credentials_singleton', evalPwd:newEval, adminPwd: Store.get('medi045_admin_pwd')||'ADMIN2025', status:'active', updatedAt:new Date().toISOString()});
       logAudit('change_supervisor_pin', 'Supervisor PIN changed');
       savedSomething = true;
     }
@@ -3410,6 +3426,7 @@ function saveAdminSettings() {
       errors.push('Admin password must be at least 6 characters — not saved');
     } else {
       Store.set('medi045_admin_pwd', newAdmin);
+      postToCloud({type:'app_credentials', id:'app_credentials_singleton', evalPwd: Store.get('medi045_eval_pwd')||'1234', adminPwd:newAdmin, status:'active', updatedAt:new Date().toISOString()});
       logAudit('change_admin_password', 'Admin password changed');
       savedSomething = true;
     }
@@ -3874,6 +3891,11 @@ function emailAllResults() {
 function openCaseDetail(caseId) {
   const r = records.find(x => String(x.id) === String(caseId));
   if (!r) return;
+  // Privacy gate: a student may only open their own case; supervisors (evalUnlocked) can open any.
+  if (!evalUnlocked) {
+    var myId = studentProfile ? String(studentProfile.universityId||'') : '';
+    if (!myId || String(r.studentId||'') !== myId) { showToast('⚠️ You can only view your own cases'); return; }
+  }
   document.getElementById('dm-name').textContent = 'Case #' + (r.caseNo||'?') + ' · ' + (r.patientName||'');
   document.getElementById('dm-meta').textContent = (r.studentName||'') + ' · ' + (r.caseDate||r.date||'') + ' · ' + (r.status==='submitted'?'SUBMITTED':'DRAFT');
   
@@ -3965,6 +3987,7 @@ function _initApp() {
   updateSupervisorDatalist();
   syncAnnouncementsFromCloud();
   syncSupervisorListFromCloud();
+  syncCredentialsFromCloud();
 
   // iOS-safe date (no toISOString timezone offset issue)
   _safe('today', () => {
