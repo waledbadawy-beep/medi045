@@ -2381,13 +2381,29 @@ let pwdVal = '';
 function pwdKey(k) { if (pwdVal.length < 4) { pwdVal += k; updatePwdDots(); if (pwdVal.length===4) checkEvalPin(); } }
 function pwdDel() { pwdVal = pwdVal.slice(0,-1); updatePwdDots(); document.getElementById('pwd-error').style.display='none'; }
 function updatePwdDots() { for(let i=0;i<4;i++) document.getElementById('pwd-dots').children[i].classList.toggle('filled', i < pwdVal.length); }
+
+// Race-condition guard: the PIN screen fires a cloud credential sync on open, but a fast typist
+// (or a slow network) could otherwise submit before that fetch resolves, checking against a stale
+// locally-cached PIN. This flag + queue makes the check WAIT for the in-flight sync (or a safety
+// timeout) instead of comparing early.
+var _credsReady = false;
+var _pendingPinCheck = null;
+
 function checkEvalPin() {
+  if (!_credsReady) { _pendingPinCheck = checkEvalPin; return; }
   const correct = Store.get('medi045_eval_pwd') || '1234';
   if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); setTimeout(()=>evalUnlocked=false,30*60*1000); }
   else { document.getElementById('pwd-error').style.display='block'; pwdVal=''; updatePwdDots(); }
 }
 function closePasswordModal() { document.getElementById('pwd-modal').style.display='none'; pwdVal=''; updatePwdDots(); }
-function showPasswordModal() { document.getElementById('pwd-modal').style.display='flex'; pwdVal=''; updatePwdDots(); syncCredentialsFromCloud(); }
+function showPasswordModal() {
+  document.getElementById('pwd-modal').style.display='flex'; pwdVal=''; updatePwdDots();
+  _credsReady = false; _pendingPinCheck = null;
+  var settled = false;
+  var settle = function(){ if (settled) return; settled = true; _credsReady = true; if (_pendingPinCheck) { var fn=_pendingPinCheck; _pendingPinCheck=null; fn(); } };
+  syncCredentialsFromCloud(settle);
+  setTimeout(settle, 4000); // safety fallback so a dead network never locks the screen forever
+}
 
 // ==================== NAVIGATION ====================
 function goto(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
@@ -3330,6 +3346,13 @@ function switchDashTab(idx) {
     }
   });
   if (idx === 1) { renderResults(); renderGradeChart(); }
+  if (idx === 2) {
+    _adminCredsReady = false; _pendingAdminCheck = null;
+    var settled = false;
+    var settle = function(){ if (settled) return; settled = true; _adminCredsReady = true; if (_pendingAdminCheck) { var fn=_pendingAdminCheck; _pendingAdminCheck=null; fn(); } };
+    syncCredentialsFromCloud(settle);
+    setTimeout(settle, 4000);
+  }
   window.scrollTo(0,0);
 }
 
@@ -3414,7 +3437,10 @@ function selectFaces(val,btn) {
 }
 
 // ==================== ADMIN PANEL ====================
+var _adminCredsReady = false;
+var _pendingAdminCheck = null;
 function submitAdminAuth() {
+  if (!_adminCredsReady) { _pendingAdminCheck = submitAdminAuth; return; }
   const entered = document.getElementById('admin-password-input').value;
   const correct = Store.get('medi045_admin_pwd') || 'ADMIN2025';
   if (entered === correct) {
@@ -3506,7 +3532,10 @@ function saveAdminSettings() {
 }
 
 // Legacy stubs (kept for any residual calls)
-function showAdminModal() { gotoProtected('screen-dashboard'); setTimeout(() => switchDashTab(2), 300); }
+function showAdminModal() {
+  gotoProtected('screen-dashboard');
+  setTimeout(() => switchDashTab(2), 300);
+}
 function closeAdminModal() {}
 
 // ==================== iOS INSTALL BANNER ====================
