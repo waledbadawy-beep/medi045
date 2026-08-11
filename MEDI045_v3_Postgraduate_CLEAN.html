@@ -4570,13 +4570,13 @@ setInterval(() => {
         </div>
 <div class="form-row">
 <label>Airway Status on Arrival</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Patent — no intervention needed')"><input name="pacuairway" type="radio"/> ✅ Patent — no intervention needed</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Partial obstruction — repositioning required')"><input name="pacuairway" type="radio"/> ⚠️ Partial obstruction — repositioning required</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','Airway adjunct required')"><input name="pacuairway" type="radio"/> 🔴 Airway adjunct required</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-airway','ETT still in situ on arrival')"><input name="pacuairway" type="radio"/> 🔵 ETT still in situ on arrival</label>
-</div>
-<input id="c-pacu-airway" type="hidden" value=""/>
+<select id="c-pacu-airway" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="Patent — no intervention needed">✅ Patent — no intervention needed</option>
+<option value="Partial obstruction — repositioning required">⚠️ Partial obstruction — repositioning required</option>
+<option value="Airway adjunct required">🔴 Airway adjunct required</option>
+<option value="ETT still in situ on arrival">🔵 ETT still in situ on arrival</option>
+</select>
 </div>
 <div class="form-row">
 <label>Airway Adjuncts Used (if any)</label>
@@ -4628,13 +4628,13 @@ setInterval(() => {
 </div>
 <div class="form-row">
 <label>Breathing Pattern</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Regular and adequate')"><input name="pacubreath" type="radio"/> ✅ Regular and adequate</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Shallow — stimulation required')"><input name="pacubreath" type="radio"/> ⚠️ Shallow — stimulation required</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Irregular / apnoeic episodes')"><input name="pacubreath" type="radio"/> 🔴 Irregular / apnoeic episodes</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-breathing','Mechanically ventilated')"><input name="pacubreath" type="radio"/> 🔵 Mechanically ventilated</label>
-</div>
-<input id="c-pacu-breathing" type="hidden" value=""/>
+<select id="c-pacu-breathing" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="Regular and adequate">✅ Regular and adequate</option>
+<option value="Shallow — stimulation required">⚠️ Shallow — stimulation required</option>
+<option value="Irregular / apnoeic episodes">🔴 Irregular / apnoeic episodes</option>
+<option value="Mechanically ventilated">🔵 Mechanically ventilated</option>
+</select>
 </div>
 <div class="form-row"><label>Respiratory Notes</label><input id="c-pacu-resp-notes" placeholder="Residual neuromuscular blockade, opioid-induced respiratory depression..." type="text"/></div>
 </div><div class="form-section">
@@ -4667,12 +4667,12 @@ setInterval(() => {
 </div>
 <div class="form-row">
 <label>Haemodynamic Status vs. Pre-op Baseline</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Stable — within 20% baseline')"><input name="pacuhaemo" type="radio"/> ✅ Stable — within 20% baseline</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Mild deviation — 20–30% from baseline')"><input name="pacuhaemo" type="radio"/> ⚠️ Mild deviation — 20–30% from baseline</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-haemo','Significant — &gt;30% deviation, treatment given')"><input name="pacuhaemo" type="radio"/> 🔴 Significant — &gt;30% deviation, treatment given</label>
-</div>
-<input id="c-pacu-haemo" type="hidden" value=""/>
+<select id="c-pacu-haemo" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="Stable — within 20% baseline">✅ Stable — within 20% baseline</option>
+<option value="Mild deviation — 20–30% from baseline">⚠️ Mild deviation — 20–30% from baseline</option>
+<option value="Significant — &gt;30% deviation, treatment given">🔴 Significant — &gt;30% deviation, treatment given</option>
+</select>
 </div>
 <div class="form-row"><label>Cardiovascular Interventions Given</label><input id="c-pacu-cv-tx" placeholder="e.g. IV fluids 500mL, Metaraminol 0.5mg, Atropine 0.6mg..." type="text"/></div>
 </div></div></details><details class="case-accordion"><summary class="case-accordion-summary">🧠 Consciousness, Wound &amp; Temperature</summary><div class="case-accordion-body"><div class="form-section">
@@ -4682,13 +4682,13 @@ setInterval(() => {
         </div>
 <div class="form-row">
 <label>AVPU Scale — Level of Consciousness</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','A — Alert: fully awake, oriented × 3 (person, place, time)')"><input name="pacuavpu" type="radio"/> ✅ <b>A</b> — Alert: fully awake, oriented × 3</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','V — Responds to Voice: arousable, follows commands')"><input name="pacuavpu" type="radio"/> 🟡 <b>V</b> — Responds to Voice: arousable, follows commands</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','P — Responds to Pain only: requires stimulation')"><input name="pacuavpu" type="radio"/> 🟠 <b>P</b> — Responds to Pain only</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-avpu','U — Unresponsive: no response to any stimulus')"><input name="pacuavpu" type="radio"/> 🔴 <b>U</b> — Unresponsive</label>
-</div>
-<input id="c-pacu-avpu" type="hidden" value=""/>
+<select id="c-pacu-avpu" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="A — Alert: fully awake, oriented × 3 (person, place, time)">✅ <b>A</b> — Alert: fully awake, oriented × 3</option>
+<option value="V — Responds to Voice: arousable, follows commands">🟡 <b>V</b> — Responds to Voice: arousable, follows commands</option>
+<option value="P — Responds to Pain only: requires stimulation">🟠 <b>P</b> — Responds to Pain only</option>
+<option value="U — Unresponsive: no response to any stimulus">🔴 <b>U</b> — Unresponsive</option>
+</select>
 </div>
 <div class="form-row two-col">
 <div>
@@ -4834,13 +4834,13 @@ setInterval(() => {
 <div class="form-row"><label>Analgesic Treatment in PACU</label><input id="c-pacu-analgesic" placeholder="e.g. Morphine 2mg IV, Paracetamol 1g IV, Ketorolac 30mg..." type="text"/></div>
 <div class="form-row">
 <label>PONV Status in PACU</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','None')"><input name="pacuponv" type="radio"/> ✅ None</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Nausea only — not treated')"><input name="pacuponv" type="radio"/> ⚠️ Nausea only — not treated</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Nausea — antiemetic given')"><input name="pacuponv" type="radio"/> 🟡 Nausea — antiemetic given</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-ponv','Vomiting — treated')"><input name="pacuponv" type="radio"/> 🔴 Vomiting — treated</label>
-</div>
-<input id="c-pacu-ponv" type="hidden" value=""/>
+<select id="c-pacu-ponv" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="None">✅ None</option>
+<option value="Nausea only — not treated">⚠️ Nausea only — not treated</option>
+<option value="Nausea — antiemetic given">🟡 Nausea — antiemetic given</option>
+<option value="Vomiting — treated">🔴 Vomiting — treated</option>
+</select>
 <input id="c-pacu-ponv-tx" placeholder="Antiemetic drug + dose given..." style="margin-top:6px" type="text"/>
 </div>
 </div><div class="form-section">
@@ -4856,12 +4856,12 @@ setInterval(() => {
 </div>
 <div class="form-row">
 <label>Fluid Balance Assessment</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Balanced — adequate output')"><input name="pacufluid" type="radio"/> ✅ Balanced — adequate output</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Positive balance — oliguria / fluid excess')"><input name="pacufluid" type="radio"/> ⚠️ Positive balance — oliguria / fluid excess</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-fluid-bal','Negative balance — ongoing losses')"><input name="pacufluid" type="radio"/> 🔴 Negative balance — ongoing losses</label>
-</div>
-<input id="c-pacu-fluid-bal" type="hidden" value=""/>
+<select id="c-pacu-fluid-bal" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="Balanced — adequate output">✅ Balanced — adequate output</option>
+<option value="Positive balance — oliguria / fluid excess">⚠️ Positive balance — oliguria / fluid excess</option>
+<option value="Negative balance — ongoing losses">🔴 Negative balance — ongoing losses</option>
+</select>
 </div>
 </div></div></details><details class="case-accordion"><summary class="case-accordion-summary">📊 Aldrete Score &amp; Discharge Decision</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header" style="background:linear-gradient(135deg,#2a5298,#1a3a5c)">📊 9. Modified Aldrete Scoring System — PACU Discharge Criteria</div>
@@ -4946,13 +4946,13 @@ setInterval(() => {
 <!-- Discharge Decision -->
 <div class="form-row">
 <label>PACU Discharge Decision</label>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Discharged to ward — Aldrete ≥9')"><input name="pacudischarge" type="radio"/> ✅ Discharged to ward — Aldrete ≥9</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Discharged home — Day surgery criteria met')"><input name="pacudischarge" type="radio"/> 🏠 Discharged home — Day surgery criteria met</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Extended PACU stay — score &lt;9')"><input name="pacudischarge" type="radio"/> ⏳ Extended PACU stay — score &lt;9</label>
-<label class="radio-option" onclick="selectRadio(this,'c-pacu-discharge','Transferred to HDU/ICU')"><input name="pacudischarge" type="radio"/> 🔴 Transferred to HDU/ICU</label>
-</div>
-<input id="c-pacu-discharge" type="hidden" value=""/>
+<select id="c-pacu-discharge" style="font-size:15px">
+<option value="">-- Select --</option>
+<option value="Discharged to ward — Aldrete ≥9">✅ Discharged to ward — Aldrete ≥9</option>
+<option value="Discharged home — Day surgery criteria met">🏠 Discharged home — Day surgery criteria met</option>
+<option value="Extended PACU stay — score &lt;9">⏳ Extended PACU stay — score &lt;9</option>
+<option value="Transferred to HDU/ICU">🔴 Transferred to HDU/ICU</option>
+</select>
 </div>
 <div class="form-row two-col">
 <div><label>PACU Duration (minutes)</label><input id="c-pacu-duration" min="0" placeholder="min" type="number"/></div>
