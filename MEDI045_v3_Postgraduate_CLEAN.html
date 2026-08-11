@@ -198,19 +198,17 @@
     background: var(--section-bg); border-color: var(--primary-light);
     color: var(--primary); font-weight: 600;
   }
-  .radio-option, .check-option { position: relative; }
   .radio-option input[type="radio"], .radio-option input[type="checkbox"],
   .check-option input[type="radio"], .check-option input[type="checkbox"] {
     display: none !important;
   }
-  .radio-option::before, .check-option::before {
-    content: ''; flex-shrink: 0; width: 16px; height: 16px; border-radius: 4px;
-    border: 1.5px solid var(--border); background: white; transition: all 0.15s;
-  }
-  .radio-option.selected::before, .check-option.selected::before {
-    background: var(--primary); border-color: var(--primary);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M13.5 4.5l-7 7L3 8'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: center;
+  /* No separate checkbox-square indicator here — these options already carry their own
+     coloured status icon (✅⚠️🔴🔵) in the label text, so a generic square next to a circle
+     read as a duplicated / nested box. Selection is instead shown purely by the stronger
+     background, border and weight change below (same pattern already used successfully
+     by the chip selectors elsewhere in the app). */
+  .radio-option.selected, .check-option.selected {
+    background: var(--section-bg); border: 2px solid var(--primary); font-weight: 700;
   }
   .yn-group { display: flex; gap: 8px; margin-top: 4px; }
   .yn-btn {
