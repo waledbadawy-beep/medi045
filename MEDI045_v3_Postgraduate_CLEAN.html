@@ -201,9 +201,7 @@
   .radio-option, .check-option { position: relative; }
   .radio-option input[type="radio"], .radio-option input[type="checkbox"],
   .check-option input[type="radio"], .check-option input[type="checkbox"] {
-    position: absolute !important; width: 1px !important; height: 1px !important;
-    opacity: 0 !important; pointer-events: none !important; margin: 0 !important;
-    -webkit-appearance: none; appearance: none; left: 0; top: 0;
+    display: none !important;
   }
   .radio-option::before, .check-option::before {
     content: ''; flex-shrink: 0; width: 16px; height: 16px; border-radius: 4px;
