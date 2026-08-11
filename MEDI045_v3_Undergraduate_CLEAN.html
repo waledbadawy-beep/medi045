@@ -4984,12 +4984,12 @@ setInterval(() => {
 <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
             Move all 4 extremities = 2 · Move 2 extremities = 1 · Unable to move extremities = 0
           </div>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-ald-activity','2'); calcAldreteTotal()"><input name="aldact" type="radio"/> <b style="color:#1a7a4a">2</b> — Able to move 4 limbs voluntarily or on command</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-activity','1'); calcAldreteTotal()"><input name="aldact" type="radio"/> <b style="color:#c67a00">1</b> — Able to move 2 limbs</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-activity','0'); calcAldreteTotal()"><input name="aldact" type="radio"/> <b style="color:#e63946">0</b> — Unable to move extremities</label>
-</div>
-<input id="c-ald-activity" type="hidden" value=""/>
+<select id="c-ald-activity" onchange="calcAldreteTotal()" style="font-size:14px">
+<option value="">-- Select --</option>
+<option value="2">2 — Able to move 4 limbs voluntarily or on command</option>
+<option value="1">1 — Able to move 2 limbs</option>
+<option value="0">0 — Unable to move extremities</option>
+</select>
 </div>
 <!-- Respiration -->
 <div class="form-row">
@@ -4997,12 +4997,12 @@ setInterval(() => {
 <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
             Deep breath &amp; cough freely = 2 · Dyspnoeic / limited breathing = 1 · Apnoeic = 0
           </div>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-ald-resp','2'); calcAldreteTotal()"><input name="aldresp" type="radio"/> <b style="color:#1a7a4a">2</b> — Able to breathe deeply and cough freely</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-resp','1'); calcAldreteTotal()"><input name="aldresp" type="radio"/> <b style="color:#c67a00">1</b> — Dyspnoeic, shallow or limited breathing</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-resp','0'); calcAldreteTotal()"><input name="aldresp" type="radio"/> <b style="color:#e63946">0</b> — Apnoeic — requires ventilatory support</label>
-</div>
-<input id="c-ald-resp" type="hidden" value=""/>
+<select id="c-ald-resp" onchange="calcAldreteTotal()" style="font-size:14px">
+<option value="">-- Select --</option>
+<option value="2">2 — Able to breathe deeply and cough freely</option>
+<option value="1">1 — Dyspnoeic, shallow or limited breathing</option>
+<option value="0">0 — Apnoeic — requires ventilatory support</option>
+</select>
 </div>
 <!-- Circulation -->
 <div class="form-row">
@@ -5010,12 +5010,12 @@ setInterval(() => {
 <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
             BP within ±20% of pre-op = 2 · BP within ±20–50% = 1 · BP &gt;50% different from baseline = 0
           </div>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-ald-circ','2'); calcAldreteTotal()"><input name="aldcirc" type="radio"/> <b style="color:#1a7a4a">2</b> — BP within ±20% of pre-anaesthetic level</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-circ','1'); calcAldreteTotal()"><input name="aldcirc" type="radio"/> <b style="color:#c67a00">1</b> — BP within ±20–50% of pre-anaesthetic level</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-circ','0'); calcAldreteTotal()"><input name="aldcirc" type="radio"/> <b style="color:#e63946">0</b> — BP deviates &gt;50% from pre-anaesthetic level</label>
-</div>
-<input id="c-ald-circ" type="hidden" value=""/>
+<select id="c-ald-circ" onchange="calcAldreteTotal()" style="font-size:14px">
+<option value="">-- Select --</option>
+<option value="2">2 — BP within ±20% of pre-anaesthetic level</option>
+<option value="1">1 — BP within ±20–50% of pre-anaesthetic level</option>
+<option value="0">0 — BP deviates &gt;50% from pre-anaesthetic level</option>
+</select>
 </div>
 <!-- Consciousness -->
 <div class="form-row">
@@ -5023,12 +5023,12 @@ setInterval(() => {
 <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
             Fully awake = 2 · Arousable on calling = 1 · Not responding = 0
           </div>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','2'); calcAldreteTotal()"><input name="aldconsc" type="radio"/> <b style="color:#1a7a4a">2</b> — Fully awake, alert, and oriented</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','1'); calcAldreteTotal()"><input name="aldconsc" type="radio"/> <b style="color:#c67a00">1</b> — Arousable on verbal calling</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-conscious','0'); calcAldreteTotal()"><input name="aldconsc" type="radio"/> <b style="color:#e63946">0</b> — Not responding to stimulation</label>
-</div>
-<input id="c-ald-conscious" type="hidden" value=""/>
+<select id="c-ald-conscious" onchange="calcAldreteTotal()" style="font-size:14px">
+<option value="">-- Select --</option>
+<option value="2">2 — Fully awake, alert, and oriented</option>
+<option value="1">1 — Arousable on verbal calling</option>
+<option value="0">0 — Not responding to stimulation</option>
+</select>
 </div>
 <!-- SpO2 -->
 <div class="form-row">
@@ -5036,12 +5036,12 @@ setInterval(() => {
 <div style="background:#f8faff;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--muted);margin-bottom:6px;border:1px solid var(--border)">
             SpO₂ &gt;92% on room air = 2 · SpO₂ &gt;90% with O₂ = 1 · SpO₂ &lt;90% even with O₂ = 0
           </div>
-<div class="radio-group">
-<label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','2'); calcAldreteTotal()"><input name="aldspo2" type="radio"/> <b style="color:#1a7a4a">2</b> — SpO₂ &gt;92% on room air</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','1'); calcAldreteTotal()"><input name="aldspo2" type="radio"/> <b style="color:#c67a00">1</b> — SpO₂ &gt;90% with supplemental O₂</label>
-<label class="radio-option" onclick="selectRadio(this,'c-ald-spo2','0'); calcAldreteTotal()"><input name="aldspo2" type="radio"/> <b style="color:#e63946">0</b> — SpO₂ &lt;90% despite O₂ supplementation</label>
-</div>
-<input id="c-ald-spo2" type="hidden" value=""/>
+<select id="c-ald-spo2" onchange="calcAldreteTotal()" style="font-size:14px">
+<option value="">-- Select --</option>
+<option value="2">2 — SpO₂ &gt;92% on room air</option>
+<option value="1">1 — SpO₂ &gt;90% with supplemental O₂</option>
+<option value="0">0 — SpO₂ &lt;90% despite O₂ supplementation</option>
+</select>
 </div>
 <!-- Aldrete Total Score Display -->
 <div class="form-row">
