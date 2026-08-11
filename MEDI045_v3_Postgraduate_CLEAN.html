@@ -198,6 +198,19 @@
     background: var(--section-bg); border-color: var(--primary-light);
     color: var(--primary); font-weight: 600;
   }
+  .radio-option input[type="radio"], .radio-option input[type="checkbox"],
+  .check-option input[type="radio"], .check-option input[type="checkbox"] {
+    position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; margin: 0;
+  }
+  .radio-option::before, .check-option::before {
+    content: ''; flex-shrink: 0; width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border); background: white; transition: all 0.15s;
+  }
+  .radio-option.selected::before, .check-option.selected::before {
+    background: var(--primary); border-color: var(--primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M13.5 4.5l-7 7L3 8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+  }
   .yn-group { display: flex; gap: 8px; margin-top: 4px; }
   .yn-btn {
     flex: 1; text-align: center; padding: 9px;
@@ -953,6 +966,15 @@
 <label>University ID <span style="color:#e63946">*</span></label>
 <input id="reg-id" placeholder="e.g. 444012345" style="font-size:16px"/>
 <div style="font-size:11px;color:var(--muted);margin-top:4px">This ID will index all your cases in the supervisor panel</div>
+</div>
+<div class="admin-field">
+<label>Group</label>
+<select id="reg-group" style="font-size:16px">
+<option value="">-- Select Group --</option>
+<option>A1</option><option>A2</option>
+<option>B1</option><option>B2</option>
+<option>F1</option><option>F2</option>
+</select>
 </div>
 <div class="admin-field">
 <label>Academic Year</label>
@@ -1976,6 +1998,7 @@ function openCaseScreen(screenId, prefix) {
   if (studentProfile) {
     var n = document.getElementById(prefix+'-student'); if(n) n.value = studentProfile.name || '';
     var i = document.getElementById(prefix+'-id');      if(i) i.value = studentProfile.universityId || '';
+    var g = document.getElementById(prefix+'-group');   if(g) g.value = studentProfile.group || '';
   }
   // Set today's date
   var d = document.getElementById(prefix+'-date');
@@ -1994,6 +2017,7 @@ function buildCaseEntry(type, prefix, status) {
     type: type, id: Date.now(), status: status || 'submitted',
     submittedAt: new Date().toLocaleString('en-SA'),
     studentName: gv(prefix+'-student'), studentId: gv(prefix+'-id'),
+    studentGroup: gv(prefix+'-group'),
     patientName: gv(prefix+'-patient'), caseNo: gv(prefix+'-case-no'),
     caseDate: gv(prefix+'-date'), supervisor: gv(prefix+'-supervisor'),
     feedback: gv(prefix+'-feedback')
@@ -2386,9 +2410,10 @@ function loadStudentProfile() {
 function saveProfile() {
   var name = (document.getElementById('reg-name').value || '').trim();
   var uid  = (document.getElementById('reg-id').value || '').trim();
+  var group = document.getElementById('reg-group') ? document.getElementById('reg-group').value : '';
   var year = document.getElementById('reg-year') ? document.getElementById('reg-year').value : '2025–2026';
   if (!name || !uid) { showToast('⚠️ Please enter your name and University ID'); return; }
-  studentProfile = { name: name, universityId: uid, year: year };
+  studentProfile = { name: name, universityId: uid, group: group, year: year };
   Store.set('medi045_profile', JSON.stringify(studentProfile));
   autoFillProfile();
   showToast('✅ Profile saved!');
@@ -2399,6 +2424,7 @@ function editProfile() {
   if (studentProfile) {
     var n = document.getElementById('reg-name'); if(n) n.value = studentProfile.name || '';
     var i = document.getElementById('reg-id');   if(i) i.value = studentProfile.universityId || '';
+    var g = document.getElementById('reg-group'); if(g) g.value = studentProfile.group || '';
     var y = document.getElementById('reg-year'); if(y) y.value = studentProfile.year || '2025–2026';
   }
   goto('screen-register');
@@ -2584,7 +2610,7 @@ function renderDashboard() {
   var studentMap = {};
   casesAll.forEach(function(c) {
     var sid = c.studentId || c.studentName || 'Unknown';
-    if (!studentMap[sid]) studentMap[sid] = { studentId:c.studentId||'', studentName:c.studentName||sid, byType:{}, evals:[] };
+    if (!studentMap[sid]) studentMap[sid] = { studentId:c.studentId||'', studentName:c.studentName||sid, studentGroup:c.studentGroup||'', byType:{}, evals:[] };
     if (!studentMap[sid].byType[c.type]) studentMap[sid].byType[c.type] = [];
     studentMap[sid].byType[c.type].push(c);
   });
@@ -2609,7 +2635,7 @@ function renderDashboard() {
     // Student header
     html += '<div style="background:white;border-radius:14px;margin-bottom:18px;overflow:hidden;box-shadow:0 2px 14px rgba(26,58,92,0.10)">';
     html += '<div style="background:linear-gradient(135deg,#1a3a5c,#2a5298);color:white;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">';
-    html += '<div><div style="font-weight:800;font-size:15px">🎓 '+_esc(s.studentName)+'</div><div style="font-size:11px;opacity:.8">ID: '+_esc(s.studentId)+' · '+totalCases+' case'+(totalCases!==1?'s':'')+' submitted</div></div>';
+    html += '<div><div style="font-weight:800;font-size:15px">🎓 '+_esc(s.studentName)+(s.studentGroup?' <span style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);padding:1px 8px;border-radius:8px">'+_esc(s.studentGroup)+'</span>':'')+'</div><div style="font-size:11px;opacity:.8">ID: '+_esc(s.studentId)+' · '+totalCases+' case'+(totalCases!==1?'s':'')+' submitted</div></div>';
     if (finalGrade5!==null) html += '<div style="text-align:center;background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px"><div style="font-size:10px;opacity:.8">GRADE</div><div style="font-size:26px;font-weight:900">'+finalGrade5+'</div><div style="font-size:10px;opacity:.8">/ 5</div></div>';
     html += '</div>';
     // Per-type sub-sections
@@ -4015,6 +4041,7 @@ function openCaseDetail(caseId) {
 function _safe(label, fn){ try { fn(); } catch(e){ /* keep app alive even if one module fails on a given browser */ } }
 function _initApp() {
   // Production version — no test data
+  checkProfileOnLoad(); // must run before stats/records so per-student filtering has the profile ready
   _safe('stats', updateStats);
   _safe('records', renderRecords);
   _safe('dashboard', renderDashboard);
@@ -4027,7 +4054,6 @@ function _initApp() {
   _safe('results', renderResults);
   _safe('supervisors', loadSupervisorDropdown);
   _safe('gradechart', renderGradeChart);
-  checkProfileOnLoad();
   updateAnnBanner();
   updateSupervisorDatalist();
   syncAnnouncementsFromCloud();
@@ -4088,6 +4114,7 @@ setInterval(() => {
 <div><label>Student Name</label><input id="cl-student" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 <div><label>University ID</label><input id="cl-id" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 </div>
+<div class="form-row"><div><label>Group</label><input id="cl-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="cl-patient" placeholder="e.g. A.M."/></div>
 <div><label>Case No.</label><input id="cl-case-no" placeholder="e.g. 1"/></div>
@@ -4115,7 +4142,7 @@ setInterval(() => {
 <div class="form-row four-col"><div><label>HR (bpm)</label><input id="c-hr" placeholder="e.g., 80" type="number"/></div><div><label>SpO₂ (%)</label><input id="c-spo2" placeholder="e.g., 98" type="number"/></div><div><label>Temp (°C)</label><input id="c-temp" placeholder="e.g., 36.5" step="0.1" type="number"/></div><div><label>BP (mmHg)</label><input id="c-bp" placeholder="e.g., 120/80" type="text"/></div></div>
 <div class="form-row"><label>❤️ CVS Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'cvs-exam-list','c-cvs-ex')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'cvs-exam-list','c-cvs-ex')">+ Add</button></div><div class="chip-list" id="cvs-exam-list"><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Normal</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (systolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Murmur (diastolic)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Raised JVP</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Peripheral edema</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pleural effusion</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Crackles (pulmonary edema)</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Hepatomegaly</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Carotid bruit</span><span class="chip" onclick="toggleChip(this,'c-cvs-ex')">Pulsus paradoxus</span></div><div class="chip-selected-label">Selected: <span id="c-cvs-ex-display">None</span></div><input id="c-cvs-ex" type="hidden" value=""/></div></div>
 <div class="form-row"><label>🫁 Respiratory Examination</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'resp-exam-list','c-resp-ex')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'resp-exam-list','c-resp-ex')">+ Add</button></div><div class="chip-list" id="resp-exam-list"><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Clear</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Wheeze</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (coarse)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Crackles (fine)</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Reduced breath sounds</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Bronchial breathing</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Stridor</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Pleural rub</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Prolonged expiration</span><span class="chip" onclick="toggleChip(this,'c-resp-ex')">Dullness to percussion</span></div><div class="chip-selected-label">Selected: <span id="c-resp-ex-display">None</span></div><input id="c-resp-ex" type="hidden" value=""/></div></div>
-</div><div class="form-section"><div class="form-section-header">🫁 Airway Assessment</div><div class="form-row two-col"><div><label>Mallampati</label><select id="c-mallampati"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div><label>Thyromental Dist.</label><select id="c-thyromental"><option>≥6.5 cm</option><option>6–6.5 cm</option><option>&lt;6 cm</option></select></div></div><div class="form-row two-col"><div><label>TMJ Mobility</label><select id="c-tmj"><option>Normal</option><option>Reduced</option></select></div><div><label>Neck Extension</label><select id="c-neck-ext"><option>Normal</option><option>Limited</option></select></div></div><div class="form-row two-col"><div><label>Mouth Opening</label><select id="c-mouth"><option>≥3 fingers</option><option>&lt;3 fingers</option></select></div><div><label>Teeth</label><select id="c-teeth"><option>Normal</option><option>Missing/Loose</option><option>Dentures</option></select></div></div></div><div class="form-section"><div class="form-section-header">🧪 Investigations</div><div class="form-row four-col"><div><label>Hb</label><input id="c-hb" step="0.1" type="number"/></div><div><label>WBC</label><input id="c-wbc" type="number"/></div><div><label>Plt</label><input id="c-plt" type="number"/></div><div><label>Na</label><input id="c-na" type="number"/></div></div><div class="form-row four-col"><div><label>K</label><input id="c-k" step="0.1" type="number"/></div><div><label>Urea</label><input id="c-ur" type="number"/></div><div><label>Creatinine</label><input id="c-cr" type="number"/></div><div><label>Glucose</label><input id="c-glucose" step="0.1" type="number"/></div></div><div class="form-row four-col"><div><label>PT</label><input id="c-pt" type="number"/></div><div><label>aPTT</label><input id="c-aptt" type="number"/></div><div><label>INR</label><input id="c-inr" step="0.1" type="number"/></div><div><label>ASA Class</label><select id="c-asa"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div></div><div class="form-row two-col"><div><label>ECG</label><select id="c-ecg"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div><div><label>Chest X-Ray</label><select id="c-cxr"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div></div></div></div></details><details class="case-accordion"><summary class="case-accordion-summary">📜 Difficult Airway Assessment (LEMON)</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
+</div><div class="form-section"><div class="form-section-header">🫁 Airway Assessment</div><div class="form-row two-col"><div><label>Mallampati</label><select id="c-mallampati"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div><div><label>Thyromental Dist.</label><select id="c-thyromental"><option>≥6.5 cm</option><option>6–6.5 cm</option><option>&lt;6 cm</option></select></div></div><div class="form-row two-col"><div><label>TMJ Mobility</label><select id="c-tmj"><option>Normal</option><option>Reduced</option></select></div><div><label>Neck Extension</label><select id="c-neck-ext"><option>Normal</option><option>Limited</option></select></div></div><div class="form-row two-col"><div><label>Mouth Opening</label><select id="c-mouth"><option>≥3 fingers</option><option>&lt;3 fingers</option></select></div><div><label>Teeth</label><select id="c-teeth"><option>Normal</option><option>Missing/Loose</option><option>Dentures</option></select></div></div></div><div class="form-section"><div class="form-section-header">🧪 Investigations</div><div class="form-row four-col"><div><label>Hb</label><input id="c-hb" step="any" type="number"/></div><div><label>WBC</label><input id="c-wbc" step="any" type="number"/></div><div><label>Plt</label><input id="c-plt" step="any" type="number"/></div><div><label>Na</label><input id="c-na" step="any" type="number"/></div></div><div class="form-row four-col"><div><label>K</label><input id="c-k" step="any" type="number"/></div><div><label>Urea</label><input id="c-ur" step="any" type="number"/></div><div><label>Creatinine</label><input id="c-cr" step="any" type="number"/></div><div><label>Glucose</label><input id="c-glucose" step="any" type="number"/></div></div><div class="form-row four-col"><div><label>PT</label><input id="c-pt" step="any" type="number"/></div><div><label>aPTT</label><input id="c-aptt" step="any" type="number"/></div><div><label>INR</label><input id="c-inr" step="any" type="number"/></div><div><label>ASA Class</label><select id="c-asa"><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option></select></div></div><div class="form-row two-col"><div><label>ECG</label><select id="c-ecg"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div><div><label>Chest X-Ray</label><select id="c-cxr"><option>Normal</option><option>Abnormal</option><option>Not done</option></select></div></div></div></div></details><details class="case-accordion"><summary class="case-accordion-summary">📜 Difficult Airway Assessment (LEMON)</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">📜 History of Difficult Airway</div>
 <div class="form-row"><label>Previous difficult intubation?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-prev-int'); updateLEMON()">✗ No</div></div><input id="aw-prev-int" type="hidden" value="No"/><input id="aw-prev-int-c" placeholder="If yes, describe details" style="margin-top:6px" type="text"/></div>
 <div class="form-row"><label>Known obstructive sleep apnea (OSA)?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-osa'); updateLEMON()">✗ No</div></div><input id="aw-osa" type="hidden" value="No"/><input id="aw-osa-c" placeholder="If yes, CPAP use? AHI?" style="margin-top:6px" type="text"/></div>
 <div class="form-row"><label>Unstable cervical spine or previous surgery?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-cspine'); updateLEMON()">✗ No</div></div><input id="aw-cspine" type="hidden" value="No"/><input id="aw-cspine-c" placeholder="If yes, specify" style="margin-top:6px" type="text"/></div>
@@ -4205,6 +4232,7 @@ setInterval(() => {
 <div><label>Student Name</label><input id="io-student" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 <div><label>University ID</label><input id="io-id" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 </div>
+<div class="form-row"><div><label>Group</label><input id="io-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="io-patient" placeholder="e.g. A.M."/></div>
 <div><label>Case No.</label><input id="io-case-no" placeholder="e.g. 1"/></div>
@@ -4266,6 +4294,7 @@ setInterval(() => {
 <div><label>Student Name</label><input id="pacu-student" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 <div><label>University ID</label><input id="pacu-id" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 </div>
+<div class="form-row"><div><label>Group</label><input id="pacu-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="pacu-patient" placeholder="e.g. A.M."/></div>
 <div><label>Case No.</label><input id="pacu-case-no" placeholder="e.g. 1"/></div>
@@ -4693,6 +4722,7 @@ setInterval(() => {
 <div><label>Student Name</label><input id="wd-student" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 <div><label>University ID</label><input id="wd-id" placeholder="Auto-filled" readonly="" style="background:#f0f4f8"/></div>
 </div>
+<div class="form-row"><div><label>Group</label><input id="wd-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="wd-patient" placeholder="e.g. A.M."/></div>
 <div><label>Case No.</label><input id="wd-case-no" placeholder="e.g. 1"/></div>
