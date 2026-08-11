@@ -1820,6 +1820,13 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
 <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
 </div>
+<!-- Section: Backup -->
+<div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
+<div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📦 Backup</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Saves a full Excel copy of all data to Google Drive and emails it to you. If that inbox is your Outlook/university mailbox, use "Save to OneDrive" on the attachment to keep a copy there too. Runs automatically every week — or trigger one right now.</div>
+<button id="backup-now-btn" onclick="triggerBackupNow()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">📦 Backup Now</button>
+<div id="backup-status" style="font-size:12px;margin-top:8px"></div>
+</div>
 <!-- Section: Batch Management -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📅 Batch Management</div>
@@ -2314,6 +2321,35 @@ function updateHomeBatchBanner() {
   el.style.background = bg;
   el.querySelector('span').textContent = text;
   el.style.display = 'block';
+}
+
+function triggerBackupNow() {
+  var btn = document.getElementById('backup-now-btn');
+  var status = document.getElementById('backup-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Backing up...'; }
+  if (status) { status.textContent = ''; status.style.color = 'var(--muted)'; }
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ _action: 'backup_now' })
+  }).then(function(r){ return r.json(); })
+    .then(function(result){
+      if (btn) { btn.disabled = false; btn.textContent = '📦 Backup Now'; }
+      if (result && result.success) {
+        logAudit('manual_backup', 'Backup created and emailed to ' + (result.emailedTo||'configured address'));
+        if (status) { status.style.color = '#1a7a4a'; status.textContent = '✅ Backup saved to Drive and emailed to ' + (result.emailedTo||'your address') + '.'; }
+        showToast('✅ Backup complete');
+      } else {
+        var err = result && result.error ? result.error : 'Unknown error';
+        if (status) { status.style.color = '#c0392b'; status.textContent = '⚠️ Backup failed: ' + err; }
+        alert('⚠️ Backup failed.\n\nServer error: ' + err + '\n\nMake sure the Apps Script backend has been updated to the latest version (with the backup_now handler) and redeployed.');
+      }
+    })
+    .catch(function(err){
+      if (btn) { btn.disabled = false; btn.textContent = '📦 Backup Now'; }
+      if (status) { status.style.color = '#c0392b'; status.textContent = '⚠️ Backup request failed — check your connection.'; }
+      alert('⚠️ Backup request failed: ' + (err && err.message ? err.message : 'network error'));
+    });
 }
 
 function getSupervisorNames() {
