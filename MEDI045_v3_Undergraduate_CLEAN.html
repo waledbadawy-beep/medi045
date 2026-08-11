@@ -3027,16 +3027,17 @@ function emailReport(evalId){
   shareOrCopy('MEDI 045 Evaluation - '+r.student, text);
 }
 function deleteFromCloud(type) {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return Promise.resolve();
-  // Returns the fetch promise so callers that need the deletion to actually finish before
-  // proceeding (e.g. reloading the page, or refreshing views) can wait for it — this was
-  // previously fire-and-forget, which meant a page reload could happen before the server-side
-  // delete completed, and the very next cloud sync would pull the "deleted" data right back.
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return Promise.resolve({success:false, error:'no APPS_SCRIPT_URL configured'});
+  // Returns a promise that resolves to the SERVER'S ACTUAL PARSED RESPONSE (e.g. {success:true,
+  // deleted:12}), not just "the request finished" — callers can inspect exactly what the backend
+  // claims it did, which is essential for diagnosing whether a "still see old data" report is a
+  // real server-side deletion failure vs. a client-side re-sync/caching issue.
   return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ _action: 'delete', type: type })
-  }).catch(function() {});
+  }).then(function(r){ return r.json(); })
+    .catch(function(err){ return { success:false, error: (err && err.message) ? err.message : 'network error' }; });
 }
 
 // ==================== AUDIT LOG ====================
@@ -3122,17 +3123,31 @@ function resetEntireApp() {
   if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
   logAudit('full_app_reset', 'Full app reset performed — all data erased');
   showToast('⏳ Deleting cloud data — please wait, do not close this page...');
-  // Wait for the server-side delete to actually finish before wiping local storage and
-  // reloading — otherwise the reload's own cloud sync can pull the "deleted" data straight
-  // back in if the delete request was still in flight.
   var finish = function(){
     try { localStorage.clear(); } catch(e) {}
     records = [];
     showToast('✅ App reset complete — reloading...');
     setTimeout(function(){ location.reload(); }, 400);
   };
-  var safety = setTimeout(finish, 25000); // full-sheet delete can take a while — don't hang forever, but give it real time first
-  deleteFromCloud('all').then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
+  var safety = setTimeout(function(){
+    alert('⚠️ No response from the server after 25 seconds.\n\nThe deletion may not have completed. Check your internet connection and Apps Script deployment before assuming the reset worked.');
+    finish();
+  }, 25000);
+  deleteFromCloud('all').then(function(result){
+    clearTimeout(safety);
+    // Show EXACTLY what the server reports it deleted — this is the definitive way to tell
+    // a real server-side deletion failure apart from a client-side caching/re-sync issue.
+    if (result && result.success) {
+      alert('✅ Server confirmed: ' + (typeof result.deleted === 'number' ? result.deleted + ' row(s) deleted.' : 'deletion request succeeded.') + '\n\nThe app will now reload. If old data still appears after this, the problem is NOT server deletion — it would point to a caching or re-sync issue instead, and we would investigate that specifically.');
+    } else {
+      alert('🔴 SERVER-SIDE DELETION FAILED.\n\nThe backend reported: ' + (result && result.error ? result.error : 'unknown error — no success flag returned') + '\n\nThis means the data was NOT deleted from Google Sheets at all. This is the root cause — the Apps Script backend needs to be checked/updated, not the browser cache.\n\nThe app will still reload and clear your LOCAL device data, but the cloud data remains and will resync back.');
+    }
+    finish();
+  }).catch(function(err){
+    clearTimeout(safety);
+    alert('🔴 Could not reach the server at all: ' + (err && err.message ? err.message : 'network error') + '\n\nThe cloud data was NOT deleted. Check your internet connection or the Apps Script deployment URL.');
+    finish();
+  });
 }
 
 function renderAdminResults() {
