@@ -1892,11 +1892,14 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <!-- Data Management -->
 <div id="dash-admin-data" style="display:none;background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px;border:2px solid #e63946">
 <div style="font-size:14px;font-weight:800;color:#e63946;margin-bottom:12px">⚠️ Data Management</div>
+<button onclick="syncFromCloud(function(){exportResultsExcel(); exportSurveyResults();})" style="width:100%;background:#1a7a4a;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px">📥 Export Everything Now (Cases + Surveys)</button>
+<div style="height:1px;background:var(--border);margin-bottom:14px"></div>
 <button onclick="clearStudentCases()" style="width:100%;background:#c67a00;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Student Cases (keep evaluations)</button>
 <button onclick="clearEvaluations()" style="width:100%;background:#e63946;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Evaluations (keep cases)</button>
 <button onclick="clearSurveys()" style="width:100%;background:#6c757d;color:white;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">🗑️ Clear All Survey Responses</button>
 <button onclick="resetEntireApp()" style="width:100%;background:#1a1a2e;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:800;cursor:pointer">🔴 Reset Entire App (delete everything)</button>
 <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">These actions cannot be undone. Export your data first.</div>
+<div style="font-size:10px;color:#c67a00;margin-top:6px;text-align:center">💡 To reset between student batches, use "Close Batch &amp; Reset" in Batch Management instead — it preserves your Admin password, grading rules, and supervisor list. "Reset Entire App" wipes those too.</div>
 </div>
 </div>
 <div class="bottom-nav">
@@ -3044,15 +3047,19 @@ function clearEvaluations() {
 }
 function clearSurveys() {
   if (isBatchActivePeriod()) { alert('🔒 Cannot clear survey data — the current batch submission window is still active (until '+getBatchConfig().deadlineDate+').'); return; }
-  if (!confirm('Delete ALL survey responses?\n\nThis cannot be undone.')) return;
+  var surveyCount = records.filter(function(r){ return r.type === 'survey'; }).length;
+  if (!surveyCount) { showToast('No survey responses to clear'); return; }
+  if (!confirm('Delete ALL ' + surveyCount + ' survey responses?\n\nThis cannot be undone.')) return;
+  records = records.filter(function(r){ return r.type !== 'survey'; });
+  Store.set('medi045_records', JSON.stringify(records));
   Store.set('medi045_surveys', '[]');
   deleteFromCloud('survey');
-  logAudit('clear_surveys', 'Cleared all survey responses');
+  logAudit('clear_surveys', 'Cleared ' + surveyCount + ' survey response(s)');
   showToast('Survey data cleared');
 }
 function resetEntireApp() {
   if (isBatchActivePeriod()) { alert('🔒 Cannot reset the app — the current batch submission window is still active (until '+getBatchConfig().deadlineDate+').\n\nClose the batch first once the deadline has passed.'); return; }
-  if (!confirm('DELETE EVERYTHING?\n\nAll cases, evaluations, surveys, and settings will be permanently erased.\n\nThis cannot be undone.')) return;
+  if (!confirm('DELETE EVERYTHING?\n\nThis wipes ALL of the following, for ALL students, permanently:\n• All cases and evaluations\n• All survey responses\n• Your custom Supervisor PIN and Admin password (reset to defaults 1234 / ADMIN2025)\n• Grading configuration (required cases, scale)\n• Batch window settings\n• Supervisor names list\n• Announcements\n\nIf you only want to clear student data between batches, use "Close Batch & Reset" in Batch Management instead — it keeps your program settings intact.\n\nThis action cannot be undone.')) return;
   if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
   logAudit('full_app_reset', 'Full app reset performed — all data erased');
   deleteFromCloud('all');
@@ -3910,11 +3917,17 @@ function submitSurvey() {
   const totalQ = SURVEY_A.length + SURVEY_B.length + SURVEY_C.length + SURVEY_D.length + 1; // +1 for NPS
   const answered = Object.keys(window.surveyData).length;
   if (answered < totalQ * 0.5) { showToast('⚠️ Please answer at least half the questions'); return; }
-  const entry = { type: 'survey', id: Date.now(), date: new Date().toLocaleDateString('en-SA'),
+  const entry = { type: 'survey', id: Date.now(), status: 'submitted', date: new Date().toLocaleDateString('en-SA'),
+    studentId: studentProfile ? studentProfile.universityId : '', studentName: studentProfile ? studentProfile.name : '',
     ratings: { ...window.surveyData }, best: document.getElementById('survey-best').value,
     improve: document.getElementById('survey-improve').value, other: document.getElementById('survey-other').value };
+  // Keep legacy local-only list for backward compatibility, but the REAL source of truth is now
+  // the shared records/cloud sync — without this, survey responses never left the student's own
+  // device and the admin could never see them from anywhere else.
   let surveys = []; try { surveys = JSON.parse(Store.get('medi045_surveys') || '[]'); } catch(e) {}
   surveys.push(entry); Store.set('medi045_surveys', JSON.stringify(surveys));
+  records.push(entry); Store.set('medi045_records', JSON.stringify(records));
+  postToCloud(entry);
   document.getElementById('survey-thankyou').style.display = 'block';
   showToast('🎉 Thank you for your feedback!');
 }
@@ -3990,7 +4003,11 @@ function exportResultsExcel() {
   URL.revokeObjectURL(url); showToast('📥 CSV downloaded');
 }
 function exportSurveyResults() {
-  let surveys = []; try { surveys = JSON.parse(Store.get('medi045_surveys') || '[]'); } catch(e) {}
+  showToast('⏳ Syncing latest responses...');
+  syncFromCloud(function(){ _doExportSurveyResults(); });
+}
+function _doExportSurveyResults() {
+  let surveys = records.filter(function(r){ return r.type === 'survey'; });
   if (!surveys.length) { showToast('⚠️ No survey responses to export'); return; }
   // Build header from first response keys
   const allKeys = new Set();
