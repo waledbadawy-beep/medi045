@@ -198,9 +198,12 @@
     background: var(--section-bg); border-color: var(--primary-light);
     color: var(--primary); font-weight: 600;
   }
+  .radio-option, .check-option { position: relative; }
   .radio-option input[type="radio"], .radio-option input[type="checkbox"],
   .check-option input[type="radio"], .check-option input[type="checkbox"] {
-    position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; margin: 0;
+    position: absolute !important; width: 1px !important; height: 1px !important;
+    opacity: 0 !important; pointer-events: none !important; margin: 0 !important;
+    -webkit-appearance: none; appearance: none; left: 0; top: 0;
   }
   .radio-option::before, .check-option::before {
     content: ''; flex-shrink: 0; width: 16px; height: 16px; border-radius: 4px;
@@ -1818,6 +1821,20 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
 <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
 </div>
+<!-- Section: Grading Configuration -->
+<div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
+<div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">🎯 Grading Configuration</div>
+<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Set the program's grading policy. Every student's grade on the dashboard recalculates automatically — no manual regrading needed when the committee changes the rules.</div>
+<div class="admin-field">
+<label>Required Cases per Student</label>
+<input id="gc-required-cases" type="number" min="1" placeholder="e.g. 10"/>
+</div>
+<div class="admin-field">
+<label>Total Grade Scale (out of)</label>
+<input id="gc-scale" type="number" min="1" step="any" placeholder="e.g. 5, 10, or 100"/>
+</div>
+<button onclick="saveGradingConfig()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">🎯 Save Grading Rules</button>
+</div>
 <!-- Section: Announcements -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">📢 Announcements, Memos &amp; Links</div>
@@ -2032,6 +2049,7 @@ function submit_cl() {
   var entry = buildCaseEntry('clinic','cl');
   // Clinic-specific fields
   entry.age=gv('c-age'); entry.sex=gv('c-sex'); entry.weight=gv('c-weight');
+  entry.neoGA=gv('c-neo-ga'); entry.neoCA=gv('c-neo-ca'); entry.neoSurgDate=gv('c-neo-surgdate'); entry.neoPMA=(document.getElementById('c-neo-pma-display')?document.getElementById('c-neo-pma-display').textContent:'');
   entry.dx=gv('c-dx'); entry.procedure=gv('c-procedure'); entry.asa=gv('c-asa');
   entry.mallampati=gv('c-mallampati'); entry.prevAnaes=gv('c-prev-anaes'); entry.allergy=gv('c-allergy');
   entry.cvs=gv('c-cvs'); entry.resp=gv('c-resp'); entry.endo=gv('c-endo');
@@ -2136,6 +2154,88 @@ function updateSupervisorDatalist() {
       names.map(function(n){ return '<option value="'+_esc(n)+'">'+_esc(n)+'</option>'; }).join('');
   });
 }
+function checkNewSupervisor(prefix) {
+  var input = document.getElementById(prefix+'-supervisor');
+  var box = document.getElementById(prefix+'-supervisor-add');
+  if (!input || !box) return;
+  var val = (input.value||'').trim();
+  var names = getSupervisorNames();
+  var existsAlready = names.some(function(n){ return n.toLowerCase() === val.toLowerCase(); });
+  if (val.length >= 3 && !existsAlready) {
+    box.innerHTML = '<a href="javascript:void(0)" onclick="addSupervisorToList(\''+prefix+'\')" style="color:#1a7a4a;font-weight:700;text-decoration:none">+ Add "'+_esc(val)+'" to supervisor list</a>';
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+function addSupervisorToList(prefix) {
+  var input = document.getElementById(prefix+'-supervisor');
+  var box = document.getElementById(prefix+'-supervisor-add');
+  var val = (input.value||'').trim();
+  if (!val) return;
+  var names = getSupervisorNames();
+  if (names.some(function(n){ return n.toLowerCase()===val.toLowerCase(); })) { box.style.display='none'; return; }
+  names.push(val);
+  var joined = names.join('\n');
+  Store.set('medi045_supervisors', joined);
+  updateSupervisorDatalist();
+  loadSupervisorDropdown();
+  postToCloud({type:'supervisor_list', id:'supervisor_list_singleton', names:joined, status:'active', updatedAt:new Date().toISOString()});
+  logAudit('student_added_supervisor', 'Student added new supervisor name: "'+val+'"');
+  box.innerHTML = '<span style="color:#1a7a4a">✅ Added to list</span>';
+  setTimeout(function(){ box.style.display='none'; }, 2000);
+}
+
+function getGradingConfig() {
+  var raw = Store.get('medi045_grading_config');
+  var def = { requiredCases: 10, scale: 5 };
+  if (!raw) return def;
+  try { var c = JSON.parse(raw); return { requiredCases: c.requiredCases||def.requiredCases, scale: c.scale||def.scale }; } catch(e) { return def; }
+}
+function saveGradingConfig() {
+  var rc = parseInt(document.getElementById('gc-required-cases').value, 10);
+  var sc = parseFloat(document.getElementById('gc-scale').value);
+  if (!rc || rc < 1) { showToast('⚠️ Required Cases must be at least 1'); return; }
+  if (!sc || sc <= 0) { showToast('⚠️ Grade Scale must be greater than 0'); return; }
+  var cfg = { requiredCases: rc, scale: sc };
+  Store.set('medi045_grading_config', JSON.stringify(cfg));
+  postToCloud({type:'grading_config', id:'grading_config_singleton', requiredCases:rc, scale:sc, status:'active', updatedAt:new Date().toISOString()});
+  logAudit('update_grading_config', 'Set Required Cases='+rc+', Scale=/'+sc+' — all grades recalculate live');
+  renderDashboard();
+  showToast('✅ Grading rules saved — all grades updated automatically');
+}
+function syncGradingConfigFromCloud() {
+  syncFromCloud(function(){
+    var cfg = records.find(function(r){ return r.type==='grading_config'; });
+    if (cfg) {
+      Store.set('medi045_grading_config', JSON.stringify({requiredCases:cfg.requiredCases, scale:cfg.scale}));
+      var rc = document.getElementById('gc-required-cases'); if(rc) rc.value = cfg.requiredCases;
+      var sc = document.getElementById('gc-scale'); if(sc) sc.value = cfg.scale;
+      renderDashboard();
+    }
+  });
+}
+
+function calcNeoPMA() {
+  var ga = parseFloat(document.getElementById('c-neo-ga').value);
+  var ca = parseFloat(document.getElementById('c-neo-ca').value);
+  var surgDate = document.getElementById('c-neo-surgdate').value;
+  var disp = document.getElementById('c-neo-pma-display');
+  if (!disp) return;
+  if (isNaN(ga) || isNaN(ca)) { disp.textContent = 'PMA: — (enter GA and Chronological Age)'; return; }
+  var pmaWeeks = ga + (ca/7);
+  var wholeWeeks = Math.floor(pmaWeeks);
+  var extraDays = Math.round((pmaWeeks - wholeWeeks) * 7);
+  var label = wholeWeeks + 'w' + (extraDays>0 ? '+'+extraDays+'d' : '') + ' PMA';
+  if (surgDate) {
+    var sd = new Date(surgDate + 'T00:00:00');
+    var today = new Date();
+    var pod = Math.floor((today - sd) / (1000*60*60*24));
+    if (pod >= 0) label += ', POD #' + pod;
+  }
+  disp.textContent = 'PMA: ' + label;
+}
+
 function getSupervisorNames() {
   var raw = Store.get('medi045_supervisors') || '';
   return raw.split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length>0; });
@@ -2180,6 +2280,8 @@ function syncCredentialsFromCloud(callback) {
       if (cred.evalPwd)  Store.set('medi045_eval_pwd', cred.evalPwd);
       if (cred.adminPwd) Store.set('medi045_admin_pwd', cred.adminPwd);
     }
+    var gc = records.find(function(r){ return r.type==='grading_config'; });
+    if (gc) { Store.set('medi045_grading_config', JSON.stringify({requiredCases:gc.requiredCases, scale:gc.scale})); }
     if (callback) callback();
   });
 }
@@ -2631,12 +2733,18 @@ function renderDashboard() {
     var totalCases = casesAll.filter(function(c){ return (c.studentId||c.studentName||'Unknown')===sid; }).length;
     var approved = s.evals.filter(function(e){ return e.status==='approved'; });
     var finalGrade5 = null;
-    if (approved.length) { var tot=approved.reduce(function(a,e){ return a+(e.finalMark||0); },0); finalGrade5=Math.round((tot/approved.length)*10)/10; }
+    var gc = getGradingConfig();
+    if (approved.length) {
+      var tot=approved.reduce(function(a,e){ return a+(e.finalMark||0); },0);
+      var avgOutOf5 = tot/approved.length;
+      finalGrade5 = Math.round((avgOutOf5/5*gc.scale)*10)/10;
+    }
     // Student header
     html += '<div style="background:white;border-radius:14px;margin-bottom:18px;overflow:hidden;box-shadow:0 2px 14px rgba(26,58,92,0.10)">';
     html += '<div style="background:linear-gradient(135deg,#1a3a5c,#2a5298);color:white;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">';
     html += '<div><div style="font-weight:800;font-size:15px">🎓 '+_esc(s.studentName)+(s.studentGroup?' <span style="font-size:11px;font-weight:700;background:rgba(255,255,255,0.2);padding:1px 8px;border-radius:8px">'+_esc(s.studentGroup)+'</span>':'')+'</div><div style="font-size:11px;opacity:.8">ID: '+_esc(s.studentId)+' · '+totalCases+' case'+(totalCases!==1?'s':'')+' submitted</div></div>';
-    if (finalGrade5!==null) html += '<div style="text-align:center;background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px"><div style="font-size:10px;opacity:.8">GRADE</div><div style="font-size:26px;font-weight:900">'+finalGrade5+'</div><div style="font-size:10px;opacity:.8">/ 5</div></div>';
+    if (finalGrade5!==null) html += '<div style="text-align:center;background:rgba(255,255,255,0.15);border-radius:12px;padding:8px 16px"><div style="font-size:10px;opacity:.8">GRADE</div><div style="font-size:26px;font-weight:900">'+finalGrade5+'</div><div style="font-size:10px;opacity:.8">/ '+gc.scale+'</div></div>';
+    html += '<div style="text-align:center;background:rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;margin-left:6px"><div style="font-size:10px;opacity:.8">CASES</div><div style="font-size:20px;font-weight:800">'+totalCases+'/'+gc.requiredCases+'</div></div>';
     html += '</div>';
     // Per-type sub-sections
     TYPES.forEach(function(type) {
@@ -3346,6 +3454,9 @@ function switchDashTab(idx) {
     var settle = function(){ if (settled) return; settled = true; _adminCredsReady = true; if (_pendingAdminCheck) { var fn=_pendingAdminCheck; _pendingAdminCheck=null; fn(); } };
     syncCredentialsFromCloud(settle);
     setTimeout(settle, 4000);
+    var gc = getGradingConfig();
+    var rcEl = document.getElementById('gc-required-cases'); if(rcEl) rcEl.value = gc.requiredCases;
+    var scEl = document.getElementById('gc-scale'); if(scEl) scEl.value = gc.scale;
   }
   window.scrollTo(0,0);
 }
@@ -4121,12 +4232,24 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="cl-date" type="date"/></div>
-<div><label>Supervisor</label><input id="cl-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px"/><select id="cl-supervisor-select" onchange="if(this.value){document.getElementById('cl-supervisor').value=this.value;}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
+<div><label>Supervisor</label><input id="cl-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px" oninput="checkNewSupervisor('cl')"/><div id="cl-supervisor-add" style="display:none;font-size:12px;margin-bottom:6px"></div><select id="cl-supervisor-select" onchange="if(this.value){document.getElementById('cl-supervisor').value=this.value; document.getElementById('cl-supervisor-add').style.display='none';}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
 <div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
 <div class="form-row two-col"><div><label>Patient Name</label><input id="c-name" oninput="updateProgress()" placeholder="Full name" type="text"/></div><div><label>Hospital ID</label><input id="c-id" oninput="updateProgress()" placeholder="ID" type="text"/></div></div>
-<div class="form-row three-col"><div><label>Age</label><input id="c-age" placeholder="yrs" type="number"/></div><div><label>Sex</label><select id="c-sex"><option value="">--</option><option>Male</option><option>Female</option></select></div><div><label>Weight (kg)</label><input id="c-weight" placeholder="kg" type="number"/></div></div>
+<div class="form-row three-col"><div><label>Age</label><input id="c-age" placeholder="yrs" step="any" type="number"/></div><div><label>Sex</label><select id="c-sex"><option value="">--</option><option>Male</option><option>Female</option></select></div><div><label>Weight (kg)</label><input id="c-weight" placeholder="kg" step="any" type="number"/></div></div>
+<details style="margin-top:6px;background:var(--bg);border-radius:8px;padding:2px 10px">
+<summary style="font-size:11px;color:var(--muted);cursor:pointer;padding:6px 0">🍼 Neonatal / Premature Infant Age Calculator (optional)</summary>
+<div style="padding:6px 0 10px">
+<div class="form-row three-col">
+<div><label style="font-size:11px">GA at Birth (weeks)</label><input id="c-neo-ga" placeholder="e.g. 28" step="any" type="number" oninput="calcNeoPMA()"/></div>
+<div><label style="font-size:11px">Chronological Age (days)</label><input id="c-neo-ca" placeholder="e.g. 49" step="any" type="number" oninput="calcNeoPMA()"/></div>
+<div><label style="font-size:11px">Surgery Date (if any)</label><input id="c-neo-surgdate" type="date" oninput="calcNeoPMA()"/></div>
+</div>
+<div id="c-neo-pma-display" style="font-size:13px;font-weight:800;color:#1a3a5c;margin-top:6px">PMA: — </div>
+<div style="font-size:10px;color:var(--muted);margin-top:4px">PMA = Gestational Age at birth + Chronological Age. If a surgery date is entered, Postoperative Day (POD) is appended. Plot current weight against PMA on your unit's Fenton/Intergrowth chart for percentile — this app does not calculate percentiles.</div>
+</div>
+</details>
 <div class="form-row two-col"><div><label>Diagnosis</label><input id="c-dx" placeholder="Primary diagnosis" type="text"/></div><div><label>Procedure</label><input id="c-procedure" placeholder="Planned procedure" type="text"/></div></div>
 <div class="form-row"><label>Previous Anaesthesia / Problems</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'prev-anaes-list','c-prev-anaes')" placeholder="🔍 Search or type..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'prev-anaes-list','c-prev-anaes')">+ Add</button></div><div class="chip-list" id="prev-anaes-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-prev-anaes')">No Previous Anaesthesia</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Difficult Intubation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Difficult Mask Ventilation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Failed Intubation</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Laryngospasm</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Bronchospasm</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Anaphylaxis</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Malignant Hyperthermia</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">PONV</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Awareness</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Spinal Headache</span><span class="chip" onclick="toggleChip(this,'c-prev-anaes')">Failed Regional</span></div><div class="chip-selected-label">Selected: <span id="c-prev-anaes-display">None</span></div><input id="c-prev-anaes" type="hidden" value=""/></div></div>
 <div class="form-row"><label>Drug Allergies</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'allergy-list','c-allergy')" placeholder="🔍 Search or type..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'allergy-list','c-allergy')">+ Add</button></div><div class="chip-list" id="allergy-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-allergy')">✓ NKDA – No Known Drug Allergy</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Penicillin</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Cephalosporins</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Sulfa</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Propofol</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Suxamethonium</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Morphine</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Latex</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Aspirin</span><span class="chip" onclick="toggleChip(this,'c-allergy')">NSAIDs</span><span class="chip" onclick="toggleChip(this,'c-allergy')">Iodine</span></div><div class="chip-selected-label">Selected: <span id="c-allergy-display">None</span></div><input id="c-allergy" type="hidden" value=""/></div></div>
@@ -4239,7 +4362,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="io-date" type="date"/></div>
-<div><label>Supervisor</label><input id="io-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px"/><select id="io-supervisor-select" onchange="if(this.value){document.getElementById('io-supervisor').value=this.value;}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
+<div><label>Supervisor</label><input id="io-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px" oninput="checkNewSupervisor('io')"/><div id="io-supervisor-add" style="display:none;font-size:12px;margin-bottom:6px"></div><select id="io-supervisor-select" onchange="if(this.value){document.getElementById('io-supervisor').value=this.value; document.getElementById('io-supervisor-add').style.display='none';}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">⚕️ Intraoperative Management</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
 <div class="form-row two-col"><div><label>Type of Surgery</label><input id="c-surg-type" placeholder="Elective / Emergency" type="text"/></div><div><label>Operation</label><input id="c-operation" placeholder="Surgical procedure" type="text"/></div></div>
@@ -4301,7 +4424,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="pacu-date" type="date"/></div>
-<div><label>Supervisor</label><input id="pacu-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px"/><select id="pacu-supervisor-select" onchange="if(this.value){document.getElementById('pacu-supervisor').value=this.value;}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
+<div><label>Supervisor</label><input id="pacu-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px" oninput="checkNewSupervisor('pacu')"/><div id="pacu-supervisor-add" style="display:none;font-size:12px;margin-bottom:6px"></div><select id="pacu-supervisor-select" onchange="if(this.value){document.getElementById('pacu-supervisor').value=this.value; document.getElementById('pacu-supervisor-add').style.display='none';}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🫁 Airway, Breathing &amp; Circulation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header">🫁 1. Airway Patency</div>
@@ -4729,7 +4852,7 @@ setInterval(() => {
 </div>
 <div class="form-row two-col">
 <div><label>Date</label><input id="wd-date" type="date"/></div>
-<div><label>Supervisor</label><input id="wd-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px"/><select id="wd-supervisor-select" onchange="if(this.value){document.getElementById('wd-supervisor').value=this.value;}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
+<div><label>Supervisor</label><input id="wd-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px" oninput="checkNewSupervisor('wd')"/><div id="wd-supervisor-add" style="display:none;font-size:12px;margin-bottom:6px"></div><select id="wd-supervisor-select" onchange="if(this.value){document.getElementById('wd-supervisor').value=this.value; document.getElementById('wd-supervisor-add').style.display='none';}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🛏️ Postoperative Evaluation</summary><div class="case-accordion-body"><div class="form-section">
 <div class="form-section-header" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">🛏️ Postoperative Patient Evaluation — CLO 23</div>
