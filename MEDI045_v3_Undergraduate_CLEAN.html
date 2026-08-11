@@ -2300,17 +2300,27 @@ function closeBatchAndReset() {
   if (!confirm('Are you absolutely sure? Type OK to confirm final deletion.')) return;
   var b = getBatchConfig();
   logAudit('close_batch', 'Closed batch "'+(b?b.batchName:'')+'" and reset all data for next batch');
+  showToast('⏳ Deleting cloud data — please wait...');
+  var btn = document.getElementById('batch-close-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Closing batch...'; }
   Store.set('medi045_batch_config', '');
   postToCloud({type:'batch_config', id:'batch_config_singleton', status:'deleted', updatedAt:new Date().toISOString()});
   var CASE_TYPES = ['clinic','intraop','pacu','ward','case','evaluation'];
-  CASE_TYPES.forEach(function(t){ deleteFromCloud(t); });
-  records = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)===-1; });
-  Store.set('medi045_records', JSON.stringify(records));
-  document.getElementById('batch-name').value='';
-  document.getElementById('batch-start').value='';
-  document.getElementById('batch-deadline').value='';
-  renderBatchStatus(); updateHomeBatchBanner(); updateStats(); renderRecords(); renderDashboard(); renderResults();
-  showToast('✅ Batch closed. Ready for a new batch.');
+  // Wait for ALL cloud deletes to actually finish before touching local state/views — otherwise
+  // a sync that fires while a delete is still in flight can pull the "deleted" data right back.
+  var deletePromises = CASE_TYPES.map(function(t){ return deleteFromCloud(t); });
+  var finish = function(){
+    records = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)===-1; });
+    Store.set('medi045_records', JSON.stringify(records));
+    document.getElementById('batch-name').value='';
+    document.getElementById('batch-start').value='';
+    document.getElementById('batch-deadline').value='';
+    if (btn) { btn.disabled = false; btn.textContent = '🔒 Close Batch & Reset for Next Batch'; }
+    renderBatchStatus(); updateHomeBatchBanner(); updateStats(); renderRecords(); renderDashboard(); renderResults();
+    showToast('✅ Batch closed. Ready for a new batch.');
+  };
+  var safety = setTimeout(finish, 20000);
+  Promise.all(deletePromises).then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
 }
 function updateHomeBatchBanner() {
   var el = document.getElementById('batch-banner');
@@ -3017,8 +3027,12 @@ function emailReport(evalId){
   shareOrCopy('MEDI 045 Evaluation - '+r.student, text);
 }
 function deleteFromCloud(type) {
-  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return;
-  fetch(APPS_SCRIPT_URL, {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return Promise.resolve();
+  // Returns the fetch promise so callers that need the deletion to actually finish before
+  // proceeding (e.g. reloading the page, or refreshing views) can wait for it — this was
+  // previously fire-and-forget, which meant a page reload could happen before the server-side
+  // delete completed, and the very next cloud sync would pull the "deleted" data right back.
+  return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ _action: 'delete', type: type })
@@ -3058,47 +3072,67 @@ function clearStudentCases() {
   var cases = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)!==-1; });
   if (!cases.length) { showToast('No cases to clear'); return; }
   if (!confirm('Delete ALL ' + cases.length + ' student cases?\n\nEvaluations will be kept.\nThis cannot be undone.')) return;
-  records = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)===-1; });
-  Store.set('medi045_records', JSON.stringify(records));
-  CASE_TYPES.forEach(function(t){ deleteFromCloud(t); });
-  logAudit('clear_student_cases', 'Deleted ' + cases.length + ' student case(s)');
-  updateStats(); renderRecords(); renderDashboard(); renderResults();
-  showToast(cases.length + ' cases deleted');
+  showToast('⏳ Deleting cloud data — please wait...');
+  var deletePromises = CASE_TYPES.map(function(t){ return deleteFromCloud(t); });
+  var finish = function(){
+    records = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)===-1; });
+    Store.set('medi045_records', JSON.stringify(records));
+    logAudit('clear_student_cases', 'Deleted ' + cases.length + ' student case(s)');
+    updateStats(); renderRecords(); renderDashboard(); renderResults();
+    showToast(cases.length + ' cases deleted');
+  };
+  var safety = setTimeout(finish, 8000);
+  Promise.all(deletePromises).then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
 }
 function clearEvaluations() {
   if (isBatchActivePeriod()) { alert('🔒 Cannot clear evaluations — the current batch submission window is still active (until '+getBatchConfig().deadlineDate+').\n\nClose the batch first once the deadline has passed.'); return; }
   var evals = records.filter(function(r){ return r.type === 'evaluation'; });
   if (!evals.length) { showToast('No evaluations to clear'); return; }
   if (!confirm('Delete ALL ' + evals.length + ' evaluations?\n\nStudent cases will be kept.\nThis cannot be undone.')) return;
-  records = records.filter(function(r){ return r.type !== 'evaluation'; });
-  Store.set('medi045_records', JSON.stringify(records));
-  deleteFromCloud('evaluation');
-  logAudit('clear_evaluations', 'Deleted ' + evals.length + ' evaluation(s)');
-  updateStats(); renderRecords(); renderDashboard(); renderResults();
-  showToast(evals.length + ' evaluations deleted');
+  showToast('⏳ Deleting cloud data — please wait...');
+  var finish = function(){
+    records = records.filter(function(r){ return r.type !== 'evaluation'; });
+    Store.set('medi045_records', JSON.stringify(records));
+    logAudit('clear_evaluations', 'Deleted ' + evals.length + ' evaluation(s)');
+    updateStats(); renderRecords(); renderDashboard(); renderResults();
+    showToast(evals.length + ' evaluations deleted');
+  };
+  var safety = setTimeout(finish, 8000);
+  deleteFromCloud('evaluation').then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
 }
 function clearSurveys() {
   if (isBatchActivePeriod()) { alert('🔒 Cannot clear survey data — the current batch submission window is still active (until '+getBatchConfig().deadlineDate+').'); return; }
   var surveyCount = records.filter(function(r){ return r.type === 'survey'; }).length;
   if (!surveyCount) { showToast('No survey responses to clear'); return; }
   if (!confirm('Delete ALL ' + surveyCount + ' survey responses?\n\nThis cannot be undone.')) return;
-  records = records.filter(function(r){ return r.type !== 'survey'; });
-  Store.set('medi045_records', JSON.stringify(records));
-  Store.set('medi045_surveys', '[]');
-  deleteFromCloud('survey');
-  logAudit('clear_surveys', 'Cleared ' + surveyCount + ' survey response(s)');
-  showToast('Survey data cleared');
+  showToast('⏳ Deleting cloud data — please wait...');
+  var finish = function(){
+    records = records.filter(function(r){ return r.type !== 'survey'; });
+    Store.set('medi045_records', JSON.stringify(records));
+    Store.set('medi045_surveys', '[]');
+    logAudit('clear_surveys', 'Cleared ' + surveyCount + ' survey response(s)');
+    showToast('Survey data cleared');
+  };
+  var safety = setTimeout(finish, 8000);
+  deleteFromCloud('survey').then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
 }
 function resetEntireApp() {
   if (isBatchActivePeriod()) { alert('🔒 Cannot reset the app — the current batch submission window is still active (until '+getBatchConfig().deadlineDate+').\n\nClose the batch first once the deadline has passed.'); return; }
   if (!confirm('DELETE EVERYTHING?\n\nThis wipes ALL of the following, for ALL students, permanently:\n• All cases and evaluations\n• All survey responses\n• Your custom Supervisor PIN and Admin password (reset to defaults 1234 / ADMIN2025)\n• Grading configuration (required cases, scale)\n• Batch window settings\n• Supervisor names list\n• Announcements\n\nIf you only want to clear student data between batches, use "Close Batch & Reset" in Batch Management instead — it keeps your program settings intact.\n\nThis action cannot be undone.')) return;
   if (!confirm('Are you absolutely sure? Type OK to confirm.')) return;
   logAudit('full_app_reset', 'Full app reset performed — all data erased');
-  deleteFromCloud('all');
-  try { localStorage.clear(); } catch(e) {}
-  records = [];
-  showToast('App reset complete');
-  setTimeout(function(){ location.reload(); }, 500);
+  showToast('⏳ Deleting cloud data — please wait, do not close this page...');
+  // Wait for the server-side delete to actually finish before wiping local storage and
+  // reloading — otherwise the reload's own cloud sync can pull the "deleted" data straight
+  // back in if the delete request was still in flight.
+  var finish = function(){
+    try { localStorage.clear(); } catch(e) {}
+    records = [];
+    showToast('✅ App reset complete — reloading...');
+    setTimeout(function(){ location.reload(); }, 400);
+  };
+  var safety = setTimeout(finish, 25000); // full-sheet delete can take a while — don't hang forever, but give it real time first
+  deleteFromCloud('all').then(function(){ clearTimeout(safety); finish(); }).catch(function(){ clearTimeout(safety); finish(); });
 }
 
 function renderAdminResults() {
