@@ -2853,12 +2853,13 @@ function renderAuditLog() {
 
 // ==================== DATA MANAGEMENT ====================
 function clearStudentCases() {
-  var cases = records.filter(function(r){ return r.type === 'case'; });
+  var CASE_TYPES = ['clinic','intraop','pacu','ward','case'];
+  var cases = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)!==-1; });
   if (!cases.length) { showToast('No cases to clear'); return; }
   if (!confirm('Delete ALL ' + cases.length + ' student cases?\n\nEvaluations will be kept.\nThis cannot be undone.')) return;
-  records = records.filter(function(r){ return r.type !== 'case'; });
+  records = records.filter(function(r){ return CASE_TYPES.indexOf(r.type)===-1; });
   Store.set('medi045_records', JSON.stringify(records));
-  deleteFromCloud('case');
+  CASE_TYPES.forEach(function(t){ deleteFromCloud(t); });
   logAudit('clear_student_cases', 'Deleted ' + cases.length + ' student case(s)');
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast(cases.length + ' cases deleted');
@@ -3908,7 +3909,7 @@ function openDetailModal(evalId) {
   let html = '';
   
   // ===== STUDENT'S SUBMITTED CASE RECORDS =====
-  const studentCases = records.filter(x => x.type === 'case' && (x.studentId === r.sid || x.studentName === r.student));
+  const CASE_TYPES = ['clinic','intraop','pacu','ward','case']; const studentCases = records.filter(x => CASE_TYPES.indexOf(x.type)!==-1 && (x.studentId === r.sid || x.studentName === r.student));
   if (studentCases.length) {
     html += '<div style="margin-bottom:16px;border:2px solid #2ec4b6;border-radius:10px;overflow:hidden">';
     html += '<div style="background:#2ec4b6;color:white;padding:10px 14px;font-weight:700;font-size:13px">📋 Student\'s Submitted Case Records (' + studentCases.length + ')</div>';
