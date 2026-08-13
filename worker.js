@@ -84,10 +84,22 @@ function safeEqual(a, b) {
   return diff === 0;
 }
 
-function isStaff(request, env) {
+/**
+ * The token may arrive three ways. A custom header forces the browser to send
+ * a CORS preflight first, which some deployments cannot answer, so the body
+ * and query forms exist as preflight-free alternatives. All three are compared
+ * the same way.
+ */
+function isStaff(request, env, bodyToken) {
   if (!env.STAFF_TOKEN) return false; // fail closed if the secret is missing
   const header = request.headers.get('X-Staff-Token');
-  return safeEqual(header, env.STAFF_TOKEN);
+  if (safeEqual(header, env.STAFF_TOKEN)) return true;
+  if (bodyToken && safeEqual(bodyToken, env.STAFF_TOKEN)) return true;
+  try {
+    const q = new URL(request.url).searchParams.get('staff');
+    if (q && safeEqual(q, env.STAFF_TOKEN)) return true;
+  } catch (e) {}
+  return false;
 }
 
 function stripForbidden(obj) {
@@ -159,8 +171,6 @@ async function handleGet(request, env) {
 // ---------------------------------------------------------------- write
 
 async function handlePost(request, env) {
-  const staff = isStaff(request, env);
-
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) {
     return json(env, { success: false, error: 'Payload too large' }, 413);
@@ -175,6 +185,10 @@ async function handlePost(request, env) {
   if (!data || typeof data !== 'object') {
     return json(env, { success: false, error: 'Malformed record' }, 400);
   }
+
+  const staff = isStaff(request, env, data._staffToken);
+  // Never let the token itself be written into a record.
+  if ('_staffToken' in data) delete data._staffToken;
 
   await ensureTable(env);
 

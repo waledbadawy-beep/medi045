@@ -2009,16 +2009,23 @@ function getStaffToken() { try { return Store.get('medi045_staff_token') || ''; 
 function setStaffToken(t) { try { Store.set('medi045_staff_token', String(t || '').trim()); } catch (e) {} }
 function hasStaffToken() { return !!getStaffToken(); }
 
+// text/plain with no custom headers keeps this a "simple" request, so the
+// browser sends it straight through with no OPTIONS preflight. Do not add a
+// header here without also confirming the deployed Worker answers OPTIONS.
 function apiHeaders() {
-  var h = { 'Content-Type': 'application/json' };
+  return { 'Content-Type': 'text/plain' };
+}
+
+// The staff token rides in the body rather than a header, for the same reason.
+function withStaffToken(body) {
   var t = getStaffToken();
-  if (t) h['X-Staff-Token'] = t;
-  return h;
+  if (t) { try { body._staffToken = t; } catch (e) {} }
+  return body;
 }
 
 // Student reads are scoped by university ID; staff reads return everything.
 function apiGetUrl() {
-  if (hasStaffToken()) return APPS_SCRIPT_URL;
+  if (hasStaffToken()) return APPS_SCRIPT_URL + '?staff=' + encodeURIComponent(getStaffToken());
   var sid = '';
   try {
     var p = JSON.parse(Store.get('medi045_profile') || 'null');
@@ -2031,7 +2038,7 @@ function apiPost(body) {
   return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: apiHeaders(),
-    body: JSON.stringify(body)
+    body: JSON.stringify(withStaffToken(body))
   }).then(function (r) {
     if (r.status === 403) {
       return r.json().catch(function () { return {}; }).then(function (j) {
@@ -2057,7 +2064,7 @@ function postToCloud(record) {
   return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: apiHeaders(),
-    body: JSON.stringify(record)
+    body: JSON.stringify(withStaffToken(record))
   }).then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json().catch(function() { return { success: true }; });
@@ -2080,7 +2087,7 @@ function syncFromCloud(callback) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) { if (callback) callback(); return; }
   var el = document.getElementById('dash-list');
   if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:#2a5298;font-size:14px">\u23F3 Syncing student submissions...</div>';
-  fetch(apiGetUrl(), { headers: apiHeaders() })
+  fetch(apiGetUrl())
     .then(function(r) { return r.json(); })
     .then(function(cloudRecords) {
       if (!Array.isArray(cloudRecords)) { if (callback) callback(); return; }
@@ -2113,7 +2120,7 @@ function autoSyncToCloud() {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: apiHeaders(),
-      body: JSON.stringify(record)
+      body: JSON.stringify(withStaffToken(record))
     }).then(function(res) {
       return res.json();
     }).then(function(result) {
@@ -3264,7 +3271,13 @@ function deleteFromCloud(type) {
     return Promise.resolve({ success:false, error:'Staff access code required for server-side deletion' });
   }
   return apiPost({ _action: 'delete', type: type })
-    .catch(function(err){ return { success:false, error: (err && err.message) ? err.message : 'network error' }; });
+    .catch(function(err){
+      var m = (err && err.message) ? err.message : 'network error';
+      if (/failed to fetch|networkerror|load failed/i.test(m)) {
+        m = 'The request never reached the server. Either this device has no connection, or the backend Worker has not been updated yet. Nothing was deleted.';
+      }
+      return { success:false, error: m };
+    });
 }
 
 // ==================== AUDIT LOG ====================
