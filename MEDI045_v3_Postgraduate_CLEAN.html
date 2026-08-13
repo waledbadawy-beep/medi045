@@ -2830,8 +2830,41 @@ function saveProfile() {
   var group = document.getElementById('reg-group') ? document.getElementById('reg-group').value : '';
   var year = document.getElementById('reg-year') ? document.getElementById('reg-year').value : '2025–2026';
   if (!name || !uid) { showToast('⚠️ Please enter your name and University ID'); return; }
+  var prevId = studentProfile ? String(studentProfile.universityId || '') : '';
   studentProfile = { name: name, universityId: uid, group: group, year: year };
   Store.set('medi045_profile', JSON.stringify(studentProfile));
+
+  // This device now belongs to a student. Remove any staff credential left on
+  // it, so it cannot pull the whole cohort's data down on the next sync.
+  try {
+    if (Store.get('medi045_staff_token')) {
+      Store.set('medi045_staff_token', '');
+      evalUnlocked = false;
+    }
+  } catch (e) {}
+
+  // Drop records belonging to anyone else, so a shared computer does not carry
+  // one student's cases into another student's session. Shared items
+  // (announcements, batch and grading settings) are kept.
+  if (String(uid) !== prevId) {
+    try {
+      var KEEP = ['announcement', 'batch_config', 'grading_config', 'supervisor_list'];
+      var before = records.length;
+      records = records.filter(function (r) {
+        if (KEEP.indexOf(r.type) !== -1) return true;
+        var owner = String(r.studentId || r.sid || '');
+        return owner === '' ? false : owner === String(uid);
+      });
+      if (records.length !== before) Store.set('medi045_records', JSON.stringify(records));
+      Store.set('medi045_practical', '{}');
+      Store.set('medi045_practical_log', '{}');
+      Store.set('medi045_skills_log', '{}');
+      Store.set('medi045_surveys', '[]');
+      practicalData = {};
+      skillsLog = {};
+    } catch (e) {}
+  }
+
   autoFillProfile();
   showToast('✅ Profile saved!');
   goto('screen-home');
@@ -2984,7 +3017,7 @@ function touchStaffActivity() {
 })();
 
 // ==================== HELPER FUNCTIONS ====================
-function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var myId = studentProfile ? String(studentProfile.universityId||'') : ''; var mine = records.filter(function(r){return TYPES.indexOf(r.type)!==-1 && (!myId || String(r.studentId||'')===myId);}); var el=document.getElementById('stat-cases'); if(el) el.textContent=mine.length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway' && (!myId || String(r.studentId||'')===myId);}).length; updateUGBanner(); }
+function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var myId = studentProfile ? String(studentProfile.universityId||'') : ''; var mine = records.filter(function(r){return TYPES.indexOf(r.type)!==-1 && myId && String(r.studentId||'')===myId;}); var el=document.getElementById('stat-cases'); if(el) el.textContent=mine.length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway' && myId && String(r.studentId||'')===myId;}).length; updateUGBanner(); }
 function updateUGBanner() {
   var el = document.getElementById('ug-case-status');
   if (!el) return;
@@ -3034,7 +3067,7 @@ function renderRecords() {
   var TYPES = ['clinic','intraop','pacu','ward','case','airway'];
   var myId = studentProfile ? String(studentProfile.universityId||'') : '';
   let myRecords = records.filter(function(r){
-    return TYPES.indexOf(r.type)!==-1 && (!myId || String(r.studentId||'')===myId);
+    return TYPES.indexOf(r.type)!==-1 && myId && String(r.studentId||'')===myId;
   }).slice().reverse();
   document.getElementById('records-count').textContent = myRecords.length + ' record'+(myRecords.length!==1?'s':'')+' saved';
   let container=document.getElementById('records-container');
