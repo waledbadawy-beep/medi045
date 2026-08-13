@@ -1,4 +1,5 @@
 name = "cold-term-86d6"
+account_id = "b886108e19085b912cb7ae15d92a3f73"
 main = "worker.js"
 compatibility_date = "2026-08-13"
 
@@ -19,5 +20,9 @@ crons = ["0 2 * * 0"]
 #   BACKUP_EMAIL   = "<the verified sending address>"
 # Set as SECRETS (never in this file):
 #   STAFF_TOKEN, RESEND_API_KEY
+# NOTE: a wrangler deploy REPLACES the [vars] block on the Worker, so every
+# plain-text variable must be listed here. Secrets (STAFF_TOKEN,
+# RESEND_API_KEY) are NOT touched by a deploy and stay as set in the dashboard.
 [vars]
 ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
+BACKUP_EMAIL = "waledbadawy@gmail.com"
