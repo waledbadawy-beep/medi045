@@ -953,12 +953,12 @@
 <div style="padding:24px 16px">
 <div style="background:white;border-radius:16px;padding:24px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
 <div style="text-align:center;margin-bottom:24px">
-<div style="font-size:52px;margin-bottom:10px">🎓</div>
+<div id="reg-cap-icon" style="font-size:52px;margin-bottom:10px">🎓</div>
 <h2 style="color:#1a3a5c;font-size:18px;margin:0 0 6px">Welcome to MEDI 045 Logbook</h2>
 <p style="color:#6c757d;font-size:13px;margin:0">Register once to begin logging your anaesthesia cases</p>
 </div>
 <div class="admin-field">
-<label>Full Name <span style="color:#e63946">*</span></label>
+<label>Student Full Name <span style="color:#e63946">*</span></label>
 <input id="reg-name" placeholder="e.g. Mohammed Al-Otaibi" style="font-size:16px"/>
 </div>
 <div class="admin-field">
@@ -983,9 +983,23 @@
 <option>2027–2028</option>
 </select>
 </div>
-<button onclick="saveProfile()" style="width:100%;background:linear-gradient(135deg,#2a5298,#1a3a5c);color:white;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;letter-spacing:.5px">
+<div style="font-size:11px;font-weight:800;color:#9ca3af;letter-spacing:1px;margin-top:20px;padding-top:16px;border-top:1px solid #e3eaf2;text-align:center">STUDENTS</div>
+<div style="font-size:11.5px;color:#6c757d;text-align:center;margin:6px 0 2px">Fill in the form above, then tap below to register</div>
+<button onclick="saveProfile()" style="width:100%;background:linear-gradient(135deg,#2a5298,#1a3a5c);color:white;border:none;border-radius:12px;padding:18px;font-size:16px;font-weight:800;cursor:pointer;margin-top:12px;letter-spacing:.5px">
         Start Logbook →
       </button>
+</div>
+<div id="staff-entry-block" style="display:none;margin-top:20px;padding-top:18px;border-top:1px solid #e3eaf2">
+<div style="text-align:center;font-size:11px;font-weight:800;color:#9ca3af;letter-spacing:1px;margin-bottom:12px">SUPERVISORS &amp; ADMIN</div>
+<div onclick="staffLogin()" id="staff-login-link" style="display:flex;align-items:center;gap:12px;background:#f4f1fa;border:1.5px solid #ddd3ee;border-radius:12px;padding:14px 16px;cursor:pointer">
+<div style="font-size:24px;line-height:1">🩺</div>
+<div style="flex:1;min-width:0">
+<div style="font-weight:800;color:#5b3a8e;font-size:14px">I am a supervisor</div>
+<div style="font-size:11.5px;color:#7a6a95;margin-top:2px">Go straight to the panel — no student registration needed</div>
+</div>
+<div style="color:#5b3a8e;font-size:20px">›</div>
+</div>
+<div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:10px;padding-bottom:14px">🔒 Requires the supervisor PIN</div>
 </div>
 <div style="text-align:center;font-size:11px;color:#9ca3af;padding:0 16px 8px">
       © 2026 Dr. Walid Badwi · KSUMC Anaesthesia Training Programme · All rights reserved
@@ -1017,7 +1031,6 @@
 <div class="menu-card" onclick="goto('screen-course-ref')"><div class="menu-icon ic-gold">📖</div><div class="menu-card-info"><h3>Course Reference</h3><p>Topics, CLOs &amp; resources</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-elearning')"><div class="menu-icon ic-pink">🎥</div><div class="menu-card-info"><h3>eLearning Videos</h3><p>YouTube tutorials for practical skills</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-survey')"><div class="menu-icon" style="background:#e8f0fe;color:#1a73e8">📝</div><div class="menu-card-info"><h3>Program Evaluation</h3><p>Rate workshops, teaching &amp; resources</p></div><div class="menu-arrow">›</div></div>
-<div class="menu-card" onclick="gotoProtected('screen-dashboard')"><div class="menu-icon ic-purple">📊</div><div class="menu-card-info"><h3>Supervisor Panel</h3><p>Dashboard · Evaluate · Admin Settings</p><span class="lock-badge">🔒 Supervisor &amp; Admin Only</span></div><div class="menu-arrow">›</div></div>
 </div>
 <div class="bottom-nav">
 <div class="nav-item active" onclick="goto('screen-home')"><span class="nav-icon">🏠</span>Home</div>
@@ -1926,33 +1939,162 @@ const Store = (() => {
   const isAvailable = (() => { try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; } catch(e) { return false; } })();
   return {
     get(k) { try { return isAvailable ? localStorage.getItem(k) : (mem[k]||null); } catch(e) { return mem[k]||null; } },
-    set(k,v) { try { if (isAvailable) localStorage.setItem(k,v); else mem[k]=v; } catch(e) { mem[k]=v; } }
+    set(k,v) {
+      try {
+        if (isAvailable) { localStorage.setItem(k,v); mem[k]=v; return true; }
+        mem[k]=v; return false;
+      } catch(e) {
+        mem[k]=v;
+        if (!Store._quotaWarned) {
+          Store._quotaWarned = true;
+          try { alert('\u26A0\uFE0F This device is out of storage space.\n\nYour work is being held in memory only and WILL BE LOST if you close or reload this page.\n\nSubmit or export what you have now, then free up space on the device.'); } catch(_) {}
+        }
+        return false;
+      }
+    },
+    isPersistent() { return isAvailable; }
   };
 })();
 
 // ==================== CLOUD SYNC ====================
 const APPS_SCRIPT_URL = 'https://cold-term-86d6.waledbadawy7.workers.dev';
 
+function markUnsynced(recordId) {
+  try {
+    var idx = records.findIndex(function(r) { return String(r.id) === String(recordId); });
+    if (idx >= 0) { records[idx]._cloudSynced = false; Store.set('medi045_records', JSON.stringify(records)); }
+  } catch (e) {}
+  try {
+    var pend = JSON.parse(Store.get('medi045_unsynced') || '[]');
+    if (pend.indexOf(String(recordId)) === -1) { pend.push(String(recordId)); Store.set('medi045_unsynced', JSON.stringify(pend)); }
+  } catch (e) {}
+  if (typeof showToast === 'function') {
+    showToast('\u26A0\uFE0F Saved on this device only \u2014 not yet sent to the server. Stay on this device and try again when you have a connection.');
+  }
+  updateSyncBanner();
+}
+
+function updateSyncBanner() {
+  var el = document.getElementById('sync-warning-banner');
+  var pend = [];
+  try { pend = JSON.parse(Store.get('medi045_unsynced') || '[]'); } catch (e) {}
+  if (!el) {
+    if (!pend.length) return;
+    el = document.createElement('div');
+    el.id = 'sync-warning-banner';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#c0392b;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;box-shadow:0 -2px 12px rgba(0,0,0,.2)';
+    el.onclick = retryUnsynced;
+    document.body.appendChild(el);
+  }
+  if (!pend.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.textContent = '\u26A0\uFE0F ' + pend.length + ' item' + (pend.length !== 1 ? 's' : '') + ' saved on this device only \u2014 tap to retry sending';
+}
+
+function retryUnsynced() {
+  var pend = [];
+  try { pend = JSON.parse(Store.get('medi045_unsynced') || '[]'); } catch (e) {}
+  if (!pend.length) return;
+  if (typeof showToast === 'function') showToast('\u23F3 Retrying ' + pend.length + ' item(s)...');
+  pend.slice().forEach(function(id) {
+    var rec = records.find(function(r) { return String(r.id) === String(id); });
+    if (rec) postToCloud(rec);
+  });
+}
+
+// ---- staff token -------------------------------------------------------
+// Held on the device only. It is what proves to the backend that this
+// browser belongs to a supervisor; students never have one.
+function getStaffToken() { try { return Store.get('medi045_staff_token') || ''; } catch (e) { return ''; } }
+function setStaffToken(t) { try { Store.set('medi045_staff_token', String(t || '').trim()); } catch (e) {} }
+function hasStaffToken() { return !!getStaffToken(); }
+
+function apiHeaders() {
+  var h = { 'Content-Type': 'application/json' };
+  var t = getStaffToken();
+  if (t) h['X-Staff-Token'] = t;
+  return h;
+}
+
+// Student reads are scoped by university ID; staff reads return everything.
+function apiGetUrl() {
+  if (hasStaffToken()) return APPS_SCRIPT_URL;
+  var sid = '';
+  try {
+    var p = JSON.parse(Store.get('medi045_profile') || 'null');
+    if (p && p.universityId) sid = String(p.universityId).trim();
+  } catch (e) {}
+  return sid ? APPS_SCRIPT_URL + '?sid=' + encodeURIComponent(sid) : APPS_SCRIPT_URL;
+}
+
+function apiPost(body) {
+  return fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: apiHeaders(),
+    body: JSON.stringify(body)
+  }).then(function (r) {
+    if (r.status === 403) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        throw new Error(j.error || 'Not authorised — staff access code missing or wrong');
+      });
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json().catch(function () { return { success: true }; });
+  });
+}
+
+function promptStaffToken() {
+  var t = prompt('Staff access code\n\nEnter the code issued by the programme director. It is stored on this device only and you will not be asked again on this browser.');
+  if (t === null) return false;
+  if (!String(t).trim()) { showToast('\u26A0\uFE0F No code entered'); return false; }
+  setStaffToken(t);
+  showToast('\u2705 Staff access code saved on this device');
+  return true;
+}
+
 function postToCloud(record) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) return;
-  fetch(APPS_SCRIPT_URL, {
+  return fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+    headers: apiHeaders(),
     body: JSON.stringify(record)
-  }).catch(function() {});
+  }).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json().catch(function() { return { success: true }; });
+  }).then(function(res) {
+    if (res && res.success === false) throw new Error(res.error || 'server rejected');
+    try {
+      var pend = JSON.parse(Store.get('medi045_unsynced') || '[]');
+      var i = pend.indexOf(String(record.id));
+      if (i >= 0) { pend.splice(i, 1); Store.set('medi045_unsynced', JSON.stringify(pend)); }
+      var idx = records.findIndex(function(r) { return String(r.id) === String(record.id); });
+      if (idx >= 0) { records[idx]._cloudSynced = true; Store.set('medi045_records', JSON.stringify(records)); }
+    } catch (e) {}
+    updateSyncBanner();
+  }).catch(function() {
+    markUnsynced(record.id);
+  });
 }
 
 function syncFromCloud(callback) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) { if (callback) callback(); return; }
   var el = document.getElementById('dash-list');
   if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:#2a5298;font-size:14px">\u23F3 Syncing student submissions...</div>';
-  fetch(APPS_SCRIPT_URL)
+  fetch(apiGetUrl(), { headers: apiHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(cloudRecords) {
       if (!Array.isArray(cloudRecords)) { if (callback) callback(); return; }
       cloudRecords.forEach(function(cr) {
         var idx = records.findIndex(function(r) { return String(r.id) === String(cr.id); });
-        if (idx >= 0) { records[idx] = cr; }
+        if (idx >= 0) {
+          var local = records[idx];
+          var localPending = local && local._cloudSynced === false;
+          var localTime  = local && local.updated ? Date.parse(local.updated) : 0;
+          var cloudTime  = cr && cr.updated ? Date.parse(cr.updated) : 0;
+          if (localPending) { /* local edit not yet sent \u2014 keep it */ }
+          else if (!isNaN(localTime) && !isNaN(cloudTime) && localTime > cloudTime) { /* local is newer */ }
+          else { records[idx] = cr; }
+        }
         else { records.push(cr); }
       });
       Store.set('medi045_records', JSON.stringify(records));
@@ -1970,7 +2112,7 @@ function autoSyncToCloud() {
   unsynced.forEach(function(record) {
     fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: apiHeaders(),
       body: JSON.stringify(record)
     }).then(function(res) {
       return res.json();
@@ -2386,11 +2528,11 @@ function triggerBackupNow() {
   var status = document.getElementById('backup-status');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Backing up...'; }
   if (status) { status.textContent = ''; status.style.color = 'var(--muted)'; }
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ _action: 'backup_now' })
-  }).then(function(r){ return r.json(); })
+  if (!hasStaffToken() && !promptStaffToken()) {
+    if (btn) { btn.disabled = false; btn.textContent = '\uD83D\uDCE6 Backup Now'; }
+    return;
+  }
+  apiPost({ _action: 'backup_now' })
     .then(function(result){
       if (btn) { btn.disabled = false; btn.textContent = '📦 Backup Now'; }
       if (result && result.success) {
@@ -2400,7 +2542,7 @@ function triggerBackupNow() {
       } else {
         var err = result && result.error ? result.error : 'Unknown error';
         if (status) { status.style.color = '#c0392b'; status.textContent = '⚠️ Backup failed: ' + err; }
-        alert('⚠️ Backup failed.\n\nServer error: ' + err + '\n\nMake sure the Apps Script backend has been updated to the latest version (with the backup_now handler) and redeployed.');
+        alert('⚠️ Backup failed.\n\nServer error: ' + err + '\n\nMake sure the Cloudflare Worker (cold-term-86d6) is deployed with the latest code including the backup_now handler, and that its RESEND_API_KEY and BACKUP_EMAIL variables are still set.');
       }
     })
     .catch(function(err){
@@ -2449,11 +2591,10 @@ function forgotAdminPwdFlow() {
 
 function syncCredentialsFromCloud(callback) {
   syncFromCloud(function(){
-    var cred = records.find(function(r){ return r.type==='app_credentials'; });
-    if (cred) {
-      if (cred.evalPwd)  Store.set('medi045_eval_pwd', cred.evalPwd);
-      if (cred.adminPwd) Store.set('medi045_admin_pwd', cred.adminPwd);
-    }
+    // Credentials are no longer synced from the server by design. Passwords
+    // are per-device: changing one on this device does not change it on
+    // another. Config below is still shared.
+    records = records.filter(function(r){ return r.type !== 'app_credentials'; });
     var gc = records.find(function(r){ return r.type==='grading_config'; });
     if (gc) { Store.set('medi045_grading_config', JSON.stringify({requiredCases:gc.requiredCases, scale:gc.scale})); }
     var bc = records.find(function(r){ return r.type==='batch_config'; });
@@ -2508,7 +2649,7 @@ function postAnnouncement() {
       title: title, message: message, link: link,
       fileUrl: fileUrl || '', fileName: fileName || '',
       postedAt: new Date().toLocaleString('en-SA'),
-      postedBy: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Program Director'
+      postedBy: getPdName('Program Director')
     };
     records.push(entry);
     Store.set('medi045_records', JSON.stringify(records));
@@ -2530,23 +2671,19 @@ function postAnnouncement() {
 
   if (_annPendingFile) {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Uploading attachment...'; }
-    fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ _action:'upload_file', base64:_annPendingFile.base64, fileName:_annPendingFile.fileName, mimeType:_annPendingFile.mimeType })
-    }).then(function(r){ return r.json(); })
+    apiPost({ _action:'upload_file', base64:_annPendingFile.base64, fileName:_annPendingFile.fileName, mimeType:_annPendingFile.mimeType })
       .then(function(result){
         if (result && result.success && result.url) {
           finish(result.url, result.fileName);
         } else if (result && result.success && !result.url) {
-          // Backend responded OK but has no file-upload support — old Apps Script version is deployed.
+          // Backend responded OK but returned no file URL — an older Worker version without R2 attachment support is deployed.
           if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
-          alert('⚠️ Attachment was NOT uploaded.\n\nYour Google Apps Script backend needs to be updated to the latest version to support file attachments.\n\nGo to script.google.com, replace the code with the latest MEDI045_Backend.gs, then Deploy → Manage Deployments → Edit → New Version → Deploy.\n\nThe announcement will now post WITHOUT the attachment — you can delete and repost once the script is updated.');
+          alert('⚠️ Attachment was NOT uploaded.\n\nThe backend Worker did not return a file URL, so the deployed Worker may be an older version without R2 attachment support.\n\nOpen the Cloudflare dashboard → Workers & Pages → cold-term-86d6, confirm the R2 bucket medi045-files is bound, then redeploy the latest Worker code.\n\nThe announcement will now post WITHOUT the attachment — you can delete and repost once the Worker is updated.');
           finish('', '');
         } else {
           if (btn) { btn.disabled = false; btn.textContent = '📢 Post to All Students'; }
           var errDetail = (result && result.error) ? result.error : 'Unknown error (no response detail)';
-          alert('⚠️ Attachment upload FAILED.\n\nServer error: ' + errDetail + '\n\nThis usually means Google Drive permission was not granted when you last deployed the script. Go to script.google.com → Deploy → Test deployments (or re-run the script once manually) and accept the Drive permission prompt if one appears.\n\nThe announcement will now post WITHOUT the attachment.');
+          alert('⚠️ Attachment upload FAILED.\n\nServer error: ' + errDetail + '\n\nThis usually means the Worker could not write to R2 storage. Open the Cloudflare dashboard → Workers & Pages → cold-term-86d6 → Settings → Bindings and confirm the R2 bucket medi045-files is still bound to the Worker.\n\nThe announcement will now post WITHOUT the attachment.');
           finish('', '');
         }
       })
@@ -2700,6 +2837,7 @@ function saveProfile() {
   goto('screen-home');
 }
 function editProfile() {
+  _staffRevealed = false;
   loadStudentProfile();
   if (studentProfile) {
     var n = document.getElementById('reg-name'); if(n) n.value = studentProfile.name || '';
@@ -2743,7 +2881,7 @@ var _pendingPinCheck = null;
 function checkEvalPin() {
   if (!_credsReady) { _pendingPinCheck = checkEvalPin; return; }
   const correct = Store.get('medi045_eval_pwd') || '1234';
-  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); setTimeout(()=>evalUnlocked=false,30*60*1000); }
+  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); touchStaffActivity(); }
   else { document.getElementById('pwd-error').style.display='block'; pwdVal=''; updatePwdDots(); }
 }
 function closePasswordModal() { document.getElementById('pwd-modal').style.display='none'; pwdVal=''; updatePwdDots(); }
@@ -2757,8 +2895,93 @@ function showPasswordModal() {
 }
 
 // ==================== NAVIGATION ====================
-function goto(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
+function _gotoBase(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
+function goto(id) {
+  var leavingStaff = STAFF_SCREENS.some(function (s) {
+    var el = document.getElementById(s);
+    return el && el.classList.contains('active');
+  });
+  if (leavingStaff && STAFF_SCREENS.indexOf(id) === -1) lockStaff(false);
+  _gotoBase(id);
+  if (id === 'screen-register') updateStaffEntryVisibility();
+  if (STAFF_SCREENS.indexOf(id) !== -1) touchStaffActivity();
+}
 function gotoProtected(id) { if (evalUnlocked) goto(id); else showPasswordModal(); }
+
+// ==================== STAFF ACCESS ====================
+// Staff reach the panel from the registration screen only. The panel is not
+// advertised anywhere a student sees. This is a usability and tidiness
+// measure: the real controls are the PIN below and the staff token on the
+// backend, because everything in this page is readable by anyone.
+var _staffIdleTimer = null;
+var STAFF_IDLE_MS = 10 * 60 * 1000;   // re-lock after 10 minutes of no activity
+var STAFF_SCREENS = ['screen-dashboard', 'screen-eval'];
+
+// The supervisor entry is shown only on a device that has not been registered
+// to a student. Once a student registers, it disappears entirely so there is
+// nothing on screen inviting them to try for their grade.
+function isStudentDevice() {
+  try { return !!JSON.parse(Store.get('medi045_profile') || 'null'); } catch (e) { return false; }
+}
+
+function updateStaffEntryVisibility() {
+  var el = document.getElementById('staff-entry-block');
+  if (!el) return;
+  el.style.display = (isStudentDevice() && !_staffRevealed) ? 'none' : 'block';
+}
+
+// Fallback for a shared computer a student has already registered on: press
+// and hold the cap icon for two seconds. Deliberately undiscoverable — it is
+// for staff who have been told about it, not something a student stumbles on.
+var _staffRevealed = false;
+function initStaffReveal() {
+  var cap = document.getElementById('reg-cap-icon');
+  if (!cap) return;
+  var t = null;
+  var start = function () {
+    t = setTimeout(function () {
+      _staffRevealed = true;
+      updateStaffEntryVisibility();
+      if (typeof showToast === 'function') showToast('\uD83E\uDE7A Staff entry shown');
+    }, 2000);
+  };
+  var stop = function () { if (t) { clearTimeout(t); t = null; } };
+  ['mousedown', 'touchstart'].forEach(function (e) { cap.addEventListener(e, start, { passive: true }); });
+  ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(function (e) { cap.addEventListener(e, stop, { passive: true }); });
+}
+
+function staffLogin() {
+  // Always ask for the PIN. Nothing about a previous session is remembered.
+  evalUnlocked = false;
+  showPasswordModal();
+}
+
+function isStaffScreen(id) { return STAFF_SCREENS.indexOf(id) !== -1; }
+
+function lockStaff(reason) {
+  if (!evalUnlocked) return;
+  evalUnlocked = false;
+  if (_staffIdleTimer) { clearTimeout(_staffIdleTimer); _staffIdleTimer = null; }
+  try { if (typeof lockAdminPanel === 'function') lockAdminPanel(); } catch (e) {}
+  if (reason && typeof showToast === 'function') showToast('\uD83D\uDD12 Supervisor panel locked');
+}
+
+function touchStaffActivity() {
+  if (!evalUnlocked) return;
+  if (_staffIdleTimer) clearTimeout(_staffIdleTimer);
+  _staffIdleTimer = setTimeout(function () { lockStaff(true); goto('screen-home'); }, STAFF_IDLE_MS);
+}
+
+// Any interaction resets the idle countdown; leaving a staff screen relocks
+// immediately, so walking away from a shared ward computer does not leave the
+// panel open behind you. (The relock on navigation lives in goto() itself.)
+(function () {
+  ['click', 'keydown', 'touchstart'].forEach(function (ev) {
+    document.addEventListener(ev, function () {
+      if (evalUnlocked) touchStaffActivity();
+    }, { passive: true });
+  });
+})();
 
 // ==================== HELPER FUNCTIONS ====================
 function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; var myId = studentProfile ? String(studentProfile.universityId||'') : ''; var mine = records.filter(function(r){return TYPES.indexOf(r.type)!==-1 && (!myId || String(r.studentId||'')===myId);}); var el=document.getElementById('stat-cases'); if(el) el.textContent=mine.length; var el2=document.getElementById('stat-skills'); if(el2) el2.textContent=records.filter(function(r){return r.type==='airway' && (!myId || String(r.studentId||'')===myId);}).length; updateUGBanner(); }
@@ -2816,7 +3039,7 @@ function renderRecords() {
   document.getElementById('records-count').textContent = myRecords.length + ' record'+(myRecords.length!==1?'s':'')+' saved';
   let container=document.getElementById('records-container');
   if(myRecords.length===0){ container.innerHTML='<div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div>'; return; }
-  container.innerHTML=myRecords.map(r=>`<div class="record-card" style="cursor:pointer" onclick="openCaseDetail('${r.id}')"><div class="rc-top"><div class="rc-name">${r.type==='airway'?'🫁':'📋'} Case #${r.caseNo||'?'} · ${r.patientName||'Unknown'}</div><div class="rc-date">${r.caseDate||r.date}</div></div><div class="rc-tags">${r.type==='airway'?'<span class="tag tag-red">Airway</span>':'<span class="tag tag-blue">Full Case</span>'}${r.status==='submitted'?'<span class="tag" style="background:#e8f8f0;color:#1a7a4a">✓ Submitted</span>':'<span class="tag" style="background:#fff8e8;color:#c67a00">Draft</span>'}${r.dx?`<span class="tag tag-orange">${r.dx}</span>`:''}${r.asa?`<span class="tag tag-green">ASA ${r.asa}</span>`:''}</div></div>`).join('');
+  container.innerHTML=myRecords.map(r=>`<div class="record-card" style="cursor:pointer" onclick="openCaseDetail('${r.id}')"><div class="rc-top"><div class="rc-name">${r.type==='airway'?'🫁':'📋'} Case #${r.caseNo||'?'} · ${_esc(r.patientName||'Unknown')}</div><div class="rc-date">${r.caseDate||r.date}</div></div><div class="rc-tags">${r.type==='airway'?'<span class="tag tag-red">Airway</span>':'<span class="tag tag-blue">Full Case</span>'}${r.status==='submitted'?'<span class="tag" style="background:#e8f8f0;color:#1a7a4a">✓ Submitted</span>':'<span class="tag" style="background:#fff8e8;color:#c67a00">Draft</span>'}${r.dx?`<span class="tag tag-orange">${r.dx}</span>`:''}${r.asa?`<span class="tag tag-green">ASA ${r.asa}</span>`:''}</div></div>`).join('');
 }
 
 function updateLEMON() {
@@ -2908,7 +3131,7 @@ function renderDashboard() {
   var html = '';
   Object.keys(studentMap).sort(function(a,b){ return studentMap[a].studentId.localeCompare(studentMap[b].studentId); }).forEach(function(sid) {
     var s = studentMap[sid];
-    var totalCases = casesAll.filter(function(c){ return (c.studentId||c.studentName||'Unknown')===sid; }).length;
+    var totalCases = casesAll.filter(function(c){ return (c.studentId||('__noid__'+(c.studentName||'')+'__'+c.id))===sid; }).length;
     var approved = s.evals.filter(function(e){ return e.status==='approved'; });
     var finalGrade5 = null;
     var gc = getGradingConfig();
@@ -2955,7 +3178,11 @@ function renderDashboard() {
 
 function loadCaseForEval(caseId) { if(!evalUnlocked){ showPasswordModal(); pendingEvalCaseId=caseId; return; } let r=records.find(x=>String(x.id)===String(caseId)); if(r){ const el=document.getElementById('ev-student'); if(el) el.value=r.studentName||r.patientName||''; const el2=document.getElementById('ev-sid'); if(el2) el2.value=r.studentId||''; goto('screen-eval'); switchEvalTab(0); showToast('📋 Case loaded'); } }
 let pendingEvalCaseId=null;
-function _esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function getPdName(fallback) {
+  try { var v = Store.get('medi045_pd_name'); if (v && String(v).trim()) return String(v).trim(); } catch (e) {}
+  return fallback;
+}
+function _esc(s){ return String(s==null?'':s).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c])); }
 function exportEvalPDF(evalId){
   let r=records.find(x=>String(x.id)===String(evalId)&&x.type==='evaluation'); if(!r) return;
   const doc=`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Evaluation Report</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:24px;color:#1a1a2e;max-width:700px;margin:0 auto}h2{color:#1a3a5c;border-bottom:2px solid #2a5298;padding-bottom:8px}table{width:100%;border-collapse:collapse;margin:16px 0}th,td{padding:10px 12px;border:1px solid #ddd;text-align:left}th{background:#1a3a5c;color:white}tr:nth-child(even){background:#f8fafc}.mark{font-size:24px;font-weight:800;color:#1a3a5c;text-align:center;margin:20px 0;padding:16px;background:#eaf1fa;border-radius:10px}</style></head><body><h2>MEDI 045 – Student Evaluation Report</h2><table><tr><th>Student</th><td>${_esc(r.student)}</td><th>Computer No.</th><td>${_esc(r.sid)}</td></tr><tr><th>Supervisor</th><td>${_esc(r.supervisor)}</td><th>Date</th><td>${_esc(r.date)}</td></tr></table><table><tr><th>Domain</th><th>Max</th><th>Score</th></tr>
@@ -3000,11 +3227,10 @@ function deleteFromCloud(type) {
   // deleted:12}), not just "the request finished" — callers can inspect exactly what the backend
   // claims it did, which is essential for diagnosing whether a "still see old data" report is a
   // real server-side deletion failure vs. a client-side re-sync/caching issue.
-  return fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ _action: 'delete', type: type })
-  }).then(function(r){ return r.json(); })
+  if (!hasStaffToken() && !promptStaffToken()) {
+    return Promise.resolve({ success:false, error:'Staff access code required for server-side deletion' });
+  }
+  return apiPost({ _action: 'delete', type: type })
     .catch(function(err){ return { success:false, error: (err && err.message) ? err.message : 'network error' }; });
 }
 
@@ -3013,7 +3239,7 @@ function logAudit(action, details) {
   var entry = {
     type: 'audit_log', id: Date.now() + Math.random(),
     action: action, details: details || '',
-    admin: (typeof pdName !== 'undefined' && pdName) ? pdName : 'Admin',
+    admin: getPdName('Admin'),
     timestamp: new Date().toLocaleString('en-SA')
   };
   records.push(entry);
@@ -3098,7 +3324,7 @@ function resetEntireApp() {
     setTimeout(function(){ location.reload(); }, 400);
   };
   var safety = setTimeout(function(){
-    alert('⚠️ No response from the server after 25 seconds.\n\nThe deletion may not have completed. Check your internet connection and Apps Script deployment before assuming the reset worked.');
+    alert('⚠️ No response from the server after 25 seconds.\n\nThe deletion may not have completed. Check your internet connection and the Cloudflare Worker status before assuming the reset worked.');
     finish();
   }, 25000);
   deleteFromCloud('all').then(function(result){
@@ -3108,12 +3334,12 @@ function resetEntireApp() {
     if (result && result.success) {
       alert('✅ Server confirmed: ' + (typeof result.deleted === 'number' ? result.deleted + ' row(s) deleted.' : 'deletion request succeeded.') + '\n\nThe app will now reload. If old data still appears after this, the problem is NOT server deletion — it would point to a caching or re-sync issue instead, and we would investigate that specifically.');
     } else {
-      alert('🔴 SERVER-SIDE DELETION FAILED.\n\nThe backend reported: ' + (result && result.error ? result.error : 'unknown error — no success flag returned') + '\n\nThis means the data was NOT deleted from Google Sheets at all. This is the root cause — the Apps Script backend needs to be checked/updated, not the browser cache.\n\nThe app will still reload and clear your LOCAL device data, but the cloud data remains and will resync back.');
+      alert('🔴 SERVER-SIDE DELETION FAILED.\n\nThe backend reported: ' + (result && result.error ? result.error : 'unknown error — no success flag returned') + '\n\nThis means the data was NOT deleted from the D1 database at all. This is the root cause — the Cloudflare Worker backend needs to be checked, not the browser cache.\n\nThe app will still reload and clear your LOCAL device data, but the cloud data remains and will resync back.');
     }
     finish();
   }).catch(function(err){
     clearTimeout(safety);
-    alert('🔴 Could not reach the server at all: ' + (err && err.message ? err.message : 'network error') + '\n\nThe cloud data was NOT deleted. Check your internet connection or the Apps Script deployment URL.');
+    alert('🔴 Could not reach the server at all: ' + (err && err.message ? err.message : 'network error') + '\n\nThe cloud data was NOT deleted. Check your internet connection or the Worker URL (cold-term-86d6.waledbadawy7.workers.dev).');
     finish();
   });
 }
@@ -3822,8 +4048,9 @@ function saveAdminSettings() {
       errors.push('Supervisor PIN must be at least 4 digits — not saved');
     } else {
       Store.set('medi045_eval_pwd', newEval);
-      postToCloud({type:'app_credentials', id:'app_credentials_singleton', evalPwd:newEval, adminPwd: Store.get('medi045_admin_pwd')||'ADMIN2025', status:'active', updatedAt:new Date().toISOString()});
-      logAudit('change_supervisor_pin', 'Supervisor PIN changed');
+      // Credentials are deliberately NOT sent to the server. They are held on
+      // this device only, so the backend can never serve them to anyone.
+      logAudit('change_supervisor_pin', 'Supervisor PIN changed (this device)');
       savedSomething = true;
     }
   }
@@ -3832,8 +4059,8 @@ function saveAdminSettings() {
       errors.push('Admin password must be at least 6 characters — not saved');
     } else {
       Store.set('medi045_admin_pwd', newAdmin);
-      postToCloud({type:'app_credentials', id:'app_credentials_singleton', evalPwd: Store.get('medi045_eval_pwd')||'1234', adminPwd:newAdmin, status:'active', updatedAt:new Date().toISOString()});
-      logAudit('change_admin_password', 'Admin password changed');
+      // Not sent to the server — see the note above.
+      logAudit('change_admin_password', 'Admin password changed (this device)');
       savedSomething = true;
     }
   }
@@ -4015,7 +4242,7 @@ function submitEvaluation() {
   if (!student || !sid) { showToast('⚠️ Student name and Computer No. are required'); return; }
   const entry = buildEvalEntry('pending_review');
   if (!confirm(`Submit for review: ${student}?\n\nCase Score: ${entry.c1Score}/50\nFinal Mark: ${entry.finalMark}/5\n\nThe supervisor/PD must approve before the grade is final.`)) return;
-  const draftIdx = records.findIndex(r => r.type === 'evaluation' && r.status === 'draft' && r.student === student);
+  const draftIdx = records.findIndex(r => r.type === 'evaluation' && r.status === 'draft' && String(r.sid||'') === String(sid||'') && String(r.sid||'') !== '');
   if (draftIdx >= 0) records.splice(draftIdx, 1);
   records.push(entry); Store.set('medi045_records', JSON.stringify(records)); postToCloud(entry);
   updateStats(); renderRecords(); renderDashboard(); renderResults();
@@ -4038,13 +4265,18 @@ function renderResults() {
     <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;font-weight:800;color:var(--primary)">${r.finalMark||'—'}</td>
   </tr>`).join('');
 }
+function csvCell(v) {
+  var s = String(v == null ? '' : v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
 function exportResultsExcel() {
   const evals = records.filter(r => r.type === 'evaluation');
   if (!evals.length) { showToast('⚠️ No evaluations to export'); return; }
   let csv = 'Student Name,University ID,Status,Pre-op(/10),Intra-op(/15),Technical(/10),Post-op(/10),Professionalism(/5),Case Score(/50),Auto Mark(/5),Final Mark(/5),Overridden,Supervisor,Date\n';
   evals.forEach(r => {
     const d1=r.c1Domains||{};
-    csv += `"${(r.student||'').replace(/"/g,'""')}","${r.sid||''}","${r.status||''}",${d1.preop||0},${d1.intra||0},${d1.tech||0},${d1.postop||0},${d1.prof||0},${r.c1Score||0},${r.autoOut5||0},${r.finalMark||0},${r.overridden?'YES':'NO'},"${(r.supervisor||'').replace(/"/g,'""')}","${r.date||''}"\n`;
+    csv += `${csvCell(r.student||'')},${csvCell(r.sid||'')},${csvCell(r.status||'')},${d1.preop||0},${d1.intra||0},${d1.tech||0},${d1.postop||0},${d1.prof||0},${r.c1Score||0},${r.autoOut5||0},${r.finalMark||0},${r.overridden?'YES':'NO'},"${(r.supervisor||'').replace(/"/g,'""')}","${r.date||''}"\n`;
   });
   const blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -4081,7 +4313,7 @@ function loadSupervisorDropdown() {
   const sel = document.getElementById('ev-supervisor');
   if (!sel) return;
   const list = (Store.get('medi045_supervisors') || 'Dr. Walid Badwi').split('\n').map(s => s.trim()).filter(Boolean);
-  sel.innerHTML = '<option value="">Select supervisor...</option>' + list.map(n => `<option value="${n}">${n}</option>`).join('');
+  sel.innerHTML = '<option value="">Select supervisor...</option>' + list.map(n => `<option value="${_esc(n)}">${_esc(n)}</option>`).join('');
 }
 
 // ==================== v3: DRAFT EVALUATION ====================
@@ -4106,7 +4338,16 @@ function buildEvalEntry(status) {
   const c1Score = Object.values(c1d).reduce((a,b)=>a+b,0);
   const autoOut5 = Math.round((c1Score / 50) * 5 * 10) / 10;
   const override = document.getElementById('ev-final-override').value;
-  const finalMark = (override !== '' && !isNaN(parseFloat(override))) ? parseFloat(override) : autoOut5;
+  var finalMark = autoOut5;
+  if (override !== '' && override !== null) {
+    var ovNum = parseFloat(override);
+    if (isNaN(ovNum) || ovNum < 0 || ovNum > 5) {
+      showToast('\u26A0\uFE0F Final mark override must be between 0 and 5 \u2014 override ignored');
+      document.getElementById('ev-final-override').value = '';
+    } else {
+      finalMark = Math.round(ovNum * 10) / 10;
+    }
+  }
   return {
     type: 'evaluation', id: window._currentEvalRecordId || Date.now(), status: status || 'pending_review',
     caseId: window._currentEvalCaseId || null,
@@ -4409,6 +4650,8 @@ function _initApp() {
   syncAnnouncementsFromCloud();
   syncSupervisorListFromCloud();
   syncCredentialsFromCloud();
+  _safe('staffreveal', initStaffReveal);
+  _safe('staffvis', updateStaffEntryVisibility);
 
   // iOS-safe date (no toISOString timezone offset issue)
   _safe('today', () => {

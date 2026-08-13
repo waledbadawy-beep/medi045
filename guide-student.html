@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a3a5c">
+<title>MEDI 045 · Student Guide · دليل الطالب</title>
+<style>
+:root{
+  --primary:#1a3a5c; --primary-light:#2a5298; --accent:#e63946; --accent2:#2ec4b6;
+  --bg:#f0f4f8; --card:#ffffff; --text:#1a1a2e; --muted:#6b7a8d; --border:#d0dbe8;
+  --success:#2ecc71; --warning:#f39c12; --section-bg:#e8f0fe;
+  --radius:14px; --shadow:0 2px 16px rgba(26,58,92,.10); --shadow-lg:0 8px 32px rgba(26,58,92,.16);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  line-height:1.6; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 56px}
+header.top{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;padding:26px 16px 22px;margin-bottom:22px;
+}
+header.top .wrap{padding-bottom:0}
+header.top h1{margin:0 0 4px;font-size:1.35rem;font-weight:800;letter-spacing:-.2px}
+header.top p{margin:0;opacity:.85;font-size:.9rem}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;
+}
+h2{font-size:1.05rem;margin:0 0 12px;color:var(--primary);font-weight:800}
+h3{font-size:.95rem;margin:18px 0 6px;color:var(--primary-light);font-weight:700}
+p,li{font-size:.95rem}
+ol,ul{padding-inline-start:22px;margin:8px 0}
+li{margin-bottom:7px}
+a{color:var(--primary-light)}
+.applink{
+  display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.applink:hover,.applink:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.applink .ico{font-size:1.7rem;line-height:1}
+.applink b{display:block;font-size:1rem}
+.applink span{color:var(--muted);font-size:.85rem}
+.applink .go{margin-inline-start:auto;color:var(--primary-light);font-size:1.3rem}
+.note{background:var(--section-bg);border-inline-start:4px solid var(--primary-light);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+.warn{background:#fff4e5;border-inline-start:4px solid var(--warning);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+.stop{background:#fdecee;border-inline-start:4px solid var(--accent);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.9rem}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:start}
+th{background:var(--section-bg);font-weight:700;color:var(--primary)}
+code{background:var(--section-bg);padding:1px 6px;border-radius:5px;font-size:.88em}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:22px 16px 40px}
+.ar{direction:rtl;text-align:right;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,Arial,sans-serif}
+.ar ol,.ar ul{padding-inline-start:22px}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{body{background:#fff}.card{box-shadow:none;break-inside:avoid}header.top{background:var(--primary)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+.qrgrid{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.qrbox{flex:1 1 220px;border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;background:var(--card)}
+.qrbox svg{width:150px;height:150px;display:block;margin:0 auto 10px}
+.qrbox b{display:block;font-size:.95rem;color:var(--primary)}
+.qrbox .u{display:block;font-size:.68rem;color:var(--muted);word-break:break-all;margin-top:6px;line-height:1.35}
+.qrbox a{font-size:.85rem;font-weight:700;text-decoration:none;display:inline-block;margin-top:8px;
+  background:var(--primary-light);color:#fff;padding:7px 16px;border-radius:8px}
+@media print{.qrbox{break-inside:avoid}}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>📖 Student Guide · دليل الطالب</h1>
+    <p>MEDI 045 Anaesthesia Clinical Log Book · KSUMC</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>Open the log book · افتح السجل</h2>
+    <p style="margin-top:0">Scan the code for your level, or type the address into your browser.<br>
+      <span class="ar" style="display:inline-block">امسح الرمز الخاص بمستواك، أو اكتب العنوان في المتصفح.</span></p>
+    <div class="qrgrid">
+      <div class="qrbox">
+        <svg viewBox="0 0 41 41" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M2 2h7v1h-7zM10 2h1v1h-1zM12 2h2v1h-2zM16 2h1v1h-1zM18 2h3v1h-3zM23 2h2v1h-2zM27 2h1v1h-1zM29 2h2v1h-2zM32 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM15 3h1v1h-1zM18 3h2v1h-2zM21 3h4v1h-4zM27 3h1v1h-1zM30 3h1v1h-1zM32 3h1v1h-1zM38 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM12 4h2v1h-2zM16 4h2v1h-2zM19 4h2v1h-2zM22 4h5v1h-5zM29 4h1v1h-1zM32 4h1v1h-1zM34 4h3v1h-3zM38 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM10 5h1v1h-1zM12 5h3v1h-3zM16 5h3v1h-3zM25 5h1v1h-1zM27 5h4v1h-4zM32 5h1v1h-1zM34 5h3v1h-3zM38 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM10 6h2v1h-2zM15 6h1v1h-1zM19 6h2v1h-2zM23 6h1v1h-1zM25 6h6v1h-6zM32 6h1v1h-1zM34 6h3v1h-3zM38 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h2v1h-2zM13 7h1v1h-1zM15 7h1v1h-1zM17 7h1v1h-1zM21 7h1v1h-1zM23 7h2v1h-2zM26 7h1v1h-1zM28 7h1v1h-1zM30 7h1v1h-1zM32 7h1v1h-1zM38 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM28 8h1v1h-1zM30 8h1v1h-1zM32 8h7v1h-7zM10 9h2v1h-2zM13 9h1v1h-1zM15 9h1v1h-1zM19 9h2v1h-2zM23 9h1v1h-1zM25 9h1v1h-1zM29 9h2v1h-2zM2 10h1v1h-1zM6 10h1v1h-1zM8 10h3v1h-3zM12 10h2v1h-2zM15 10h1v1h-1zM18 10h2v1h-2zM24 10h1v1h-1zM26 10h1v1h-1zM31 10h5v1h-5zM38 10h1v1h-1zM3 11h1v1h-1zM5 11h3v1h-3zM9 11h2v1h-2zM12 11h3v1h-3zM19 11h2v1h-2zM25 11h1v1h-1zM27 11h5v1h-5zM34 11h2v1h-2zM37 11h1v1h-1zM3 12h1v1h-1zM5 12h5v1h-5zM11 12h5v1h-5zM17 12h1v1h-1zM20 12h1v1h-1zM25 12h1v1h-1zM29 12h2v1h-2zM33 12h2v1h-2zM36 12h1v1h-1zM4 13h1v1h-1zM6 13h2v1h-2zM11 13h1v1h-1zM13 13h1v1h-1zM17 13h4v1h-4zM23 13h1v1h-1zM25 13h2v1h-2zM28 13h2v1h-2zM32 13h3v1h-3zM36 13h2v1h-2zM2 14h1v1h-1zM5 14h1v1h-1zM8 14h2v1h-2zM13 14h2v1h-2zM18 14h2v1h-2zM22 14h3v1h-3zM31 14h2v1h-2zM37 14h2v1h-2zM5 15h3v1h-3zM10 15h1v1h-1zM12 15h4v1h-4zM17 15h1v1h-1zM19 15h2v1h-2zM25 15h1v1h-1zM27 15h1v1h-1zM29 15h2v1h-2zM34 15h2v1h-2zM38 15h1v1h-1zM2 16h1v1h-1zM4 16h1v1h-1zM7 16h2v1h-2zM11 16h1v1h-1zM13 16h1v1h-1zM16 16h5v1h-5zM24 16h7v1h-7zM33 16h4v1h-4zM2 17h1v1h-1zM6 17h1v1h-1zM10 17h2v1h-2zM13 17h1v1h-1zM15 17h3v1h-3zM19 17h1v1h-1zM21 17h3v1h-3zM25 17h2v1h-2zM28 17h1v1h-1zM30 17h5v1h-5zM36 17h1v1h-1zM3 18h1v1h-1zM6 18h4v1h-4zM12 18h1v1h-1zM14 18h2v1h-2zM20 18h1v1h-1zM22 18h1v1h-1zM24 18h1v1h-1zM32 18h1v1h-1zM34 18h4v1h-4zM2 19h1v1h-1zM4 19h1v1h-1zM12 19h1v1h-1zM16 19h1v1h-1zM18 19h3v1h-3zM23 19h1v1h-1zM25 19h1v1h-1zM27 19h1v1h-1zM29 19h3v1h-3zM34 19h2v1h-2zM37 19h1v1h-1zM2 20h2v1h-2zM6 20h1v1h-1zM8 20h2v1h-2zM11 20h4v1h-4zM18 20h3v1h-3zM23 20h9v1h-9zM33 20h1v1h-1zM35 20h2v1h-2zM5 21h1v1h-1zM7 21h1v1h-1zM9 21h1v1h-1zM11 21h1v1h-1zM13 21h2v1h-2zM19 21h5v1h-5zM25 21h1v1h-1zM28 21h1v1h-1zM33 21h1v1h-1zM36 21h2v1h-2zM4 22h1v1h-1zM6 22h5v1h-5zM12 22h3v1h-3zM17 22h3v1h-3zM22 22h3v1h-3zM26 22h1v1h-1zM29 22h1v1h-1zM31 22h3v1h-3zM5 23h1v1h-1zM7 23h1v1h-1zM10 23h2v1h-2zM13 23h1v1h-1zM15 23h1v1h-1zM17 23h1v1h-1zM19 23h2v1h-2zM22 23h4v1h-4zM27 23h1v1h-1zM29 23h2v1h-2zM33 23h2v1h-2zM38 23h1v1h-1zM5 24h4v1h-4zM11 24h1v1h-1zM13 24h1v1h-1zM15 24h1v1h-1zM17 24h2v1h-2zM20 24h1v1h-1zM23 24h1v1h-1zM25 24h3v1h-3zM29 24h3v1h-3zM33 24h4v1h-4zM2 25h1v1h-1zM7 25h1v1h-1zM12 25h2v1h-2zM17 25h2v1h-2zM21 25h1v1h-1zM23 25h4v1h-4zM29 25h1v1h-1zM32 25h3v1h-3zM36 25h1v1h-1zM38 25h1v1h-1zM5 26h5v1h-5zM11 26h1v1h-1zM13 26h1v1h-1zM15 26h1v1h-1zM18 26h1v1h-1zM21 26h2v1h-2zM24 26h1v1h-1zM26 26h1v1h-1zM31 26h2v1h-2zM35 26h3v1h-3zM2 27h1v1h-1zM4 27h1v1h-1zM6 27h1v1h-1zM10 27h2v1h-2zM16 27h1v1h-1zM20 27h1v1h-1zM22 27h1v1h-1zM25 27h1v1h-1zM28 27h7v1h-7zM36 27h1v1h-1zM4 28h1v1h-1zM6 28h4v1h-4zM17 28h1v1h-1zM19 28h2v1h-2zM23 28h1v1h-1zM25 28h2v1h-2zM29 28h1v1h-1zM32 28h1v1h-1zM36 28h1v1h-1zM4 29h3v1h-3zM10 29h1v1h-1zM12 29h2v1h-2zM15 29h12v1h-12zM28 29h2v1h-2zM31 29h1v1h-1zM33 29h1v1h-1zM35 29h4v1h-4zM2 30h4v1h-4zM7 30h10v1h-10zM18 30h2v1h-2zM22 30h3v1h-3zM26 30h1v1h-1zM28 30h1v1h-1zM30 30h8v1h-8zM10 31h1v1h-1zM12 31h1v1h-1zM14 31h1v1h-1zM16 31h2v1h-2zM20 31h1v1h-1zM25 31h1v1h-1zM27 31h2v1h-2zM30 31h1v1h-1zM34 31h1v1h-1zM2 32h7v1h-7zM10 32h1v1h-1zM12 32h2v1h-2zM15 32h3v1h-3zM19 32h1v1h-1zM22 32h2v1h-2zM25 32h1v1h-1zM30 32h1v1h-1zM32 32h1v1h-1zM34 32h1v1h-1zM37 32h1v1h-1zM2 33h1v1h-1zM8 33h1v1h-1zM11 33h3v1h-3zM16 33h5v1h-5zM22 33h2v1h-2zM28 33h1v1h-1zM30 33h1v1h-1zM34 33h3v1h-3zM2 34h1v1h-1zM4 34h3v1h-3zM8 34h1v1h-1zM10 34h1v1h-1zM12 34h2v1h-2zM16 34h2v1h-2zM20 34h3v1h-3zM24 34h1v1h-1zM30 34h9v1h-9zM2 35h1v1h-1zM4 35h3v1h-3zM8 35h1v1h-1zM11 35h2v1h-2zM14 35h1v1h-1zM18 35h1v1h-1zM21 35h1v1h-1zM23 35h1v1h-1zM25 35h1v1h-1zM28 35h2v1h-2zM31 35h3v1h-3zM38 35h1v1h-1zM2 36h1v1h-1zM4 36h3v1h-3zM8 36h1v1h-1zM12 36h3v1h-3zM16 36h1v1h-1zM18 36h3v1h-3zM22 36h4v1h-4zM28 36h1v1h-1zM30 36h3v1h-3zM35 36h2v1h-2zM2 37h1v1h-1zM8 37h1v1h-1zM14 37h1v1h-1zM19 37h1v1h-1zM23 37h4v1h-4zM28 37h1v1h-1zM30 37h1v1h-1zM32 37h1v1h-1zM34 37h4v1h-4zM2 38h7v1h-7zM10 38h1v1h-1zM12 38h1v1h-1zM15 38h1v1h-1zM17 38h1v1h-1zM19 38h1v1h-1zM21 38h1v1h-1zM23 38h2v1h-2zM26 38h1v1h-1zM29 38h1v1h-1zM31 38h1v1h-1zM33 38h1v1h-1zM35 38h4v1h-4z" fill="#1a3a5c"/></svg>
+        <b>Undergraduate · طلاب البكالوريوس</b>
+        <a href="https://waledbadawy-beep.github.io/medi045/MEDI045_v3_Undergraduate_CLEAN.html">Open</a>
+        <span class="u">https://waledbadawy-beep.github.io/medi045/MEDI045_v3_Undergraduate_CLEAN.html</span>
+      </div>
+      <div class="qrbox">
+        <svg viewBox="0 0 41 41" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QR code" shape-rendering="crispEdges"><rect width="41" height="41" fill="#fff"/><path d="M2 2h7v1h-7zM11 2h3v1h-3zM16 2h1v1h-1zM18 2h5v1h-5zM30 2h1v1h-1zM32 2h7v1h-7zM2 3h1v1h-1zM8 3h1v1h-1zM12 3h1v1h-1zM15 3h1v1h-1zM19 3h1v1h-1zM22 3h1v1h-1zM24 3h1v1h-1zM28 3h2v1h-2zM32 3h1v1h-1zM38 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM8 4h1v1h-1zM10 4h2v1h-2zM13 4h1v1h-1zM15 4h1v1h-1zM17 4h2v1h-2zM22 4h2v1h-2zM25 4h1v1h-1zM29 4h2v1h-2zM32 4h1v1h-1zM34 4h3v1h-3zM38 4h1v1h-1zM2 5h1v1h-1zM4 5h3v1h-3zM8 5h1v1h-1zM10 5h2v1h-2zM13 5h1v1h-1zM16 5h6v1h-6zM24 5h6v1h-6zM32 5h1v1h-1zM34 5h3v1h-3zM38 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM8 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM15 6h3v1h-3zM19 6h5v1h-5zM25 6h2v1h-2zM30 6h1v1h-1zM32 6h1v1h-1zM34 6h3v1h-3zM38 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM12 7h4v1h-4zM22 7h1v1h-1zM26 7h5v1h-5zM32 7h1v1h-1zM38 7h1v1h-1zM2 8h7v1h-7zM10 8h1v1h-1zM12 8h1v1h-1zM14 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM20 8h1v1h-1zM22 8h1v1h-1zM24 8h1v1h-1zM26 8h1v1h-1zM28 8h1v1h-1zM30 8h1v1h-1zM32 8h7v1h-7zM10 9h1v1h-1zM12 9h3v1h-3zM16 9h1v1h-1zM20 9h1v1h-1zM23 9h2v1h-2zM26 9h1v1h-1zM28 9h2v1h-2zM2 10h1v1h-1zM4 10h5v1h-5zM11 10h1v1h-1zM13 10h3v1h-3zM20 10h2v1h-2zM23 10h2v1h-2zM27 10h4v1h-4zM32 10h5v1h-5zM2 11h1v1h-1zM4 11h1v1h-1zM6 11h1v1h-1zM11 11h2v1h-2zM16 11h8v1h-8zM28 11h1v1h-1zM30 11h2v1h-2zM33 11h1v1h-1zM37 11h1v1h-1zM2 12h1v1h-1zM4 12h2v1h-2zM8 12h1v1h-1zM10 12h2v1h-2zM13 12h1v1h-1zM19 12h1v1h-1zM24 12h1v1h-1zM29 12h6v1h-6zM37 12h2v1h-2zM2 13h1v1h-1zM7 13h1v1h-1zM9 13h1v1h-1zM11 13h2v1h-2zM18 13h1v1h-1zM22 13h3v1h-3zM28 13h1v1h-1zM31 13h1v1h-1zM33 13h2v1h-2zM38 13h1v1h-1zM5 14h2v1h-2zM8 14h2v1h-2zM12 14h3v1h-3zM16 14h1v1h-1zM18 14h2v1h-2zM24 14h1v1h-1zM27 14h3v1h-3zM31 14h5v1h-5zM37 14h2v1h-2zM3 15h1v1h-1zM5 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM15 15h2v1h-2zM19 15h4v1h-4zM25 15h1v1h-1zM28 15h1v1h-1zM30 15h1v1h-1zM33 15h1v1h-1zM38 15h1v1h-1zM3 16h1v1h-1zM5 16h1v1h-1zM7 16h2v1h-2zM11 16h3v1h-3zM15 16h1v1h-1zM17 16h1v1h-1zM19 16h1v1h-1zM23 16h2v1h-2zM27 16h1v1h-1zM29 16h1v1h-1zM31 16h5v1h-5zM37 16h2v1h-2zM3 17h3v1h-3zM9 17h2v1h-2zM12 17h2v1h-2zM17 17h7v1h-7zM33 17h2v1h-2zM37 17h2v1h-2zM2 18h4v1h-4zM7 18h2v1h-2zM10 18h2v1h-2zM13 18h2v1h-2zM17 18h2v1h-2zM21 18h4v1h-4zM26 18h5v1h-5zM32 18h2v1h-2zM36 18h2v1h-2zM2 19h3v1h-3zM9 19h2v1h-2zM13 19h1v1h-1zM17 19h1v1h-1zM19 19h4v1h-4zM25 19h1v1h-1zM30 19h2v1h-2zM33 19h1v1h-1zM37 19h1v1h-1zM4 20h1v1h-1zM8 20h2v1h-2zM16 20h3v1h-3zM23 20h1v1h-1zM26 20h5v1h-5zM32 20h2v1h-2zM35 20h1v1h-1zM37 20h2v1h-2zM5 21h3v1h-3zM9 21h1v1h-1zM11 21h2v1h-2zM17 21h1v1h-1zM23 21h2v1h-2zM28 21h1v1h-1zM30 21h4v1h-4zM38 21h1v1h-1zM2 22h5v1h-5zM8 22h4v1h-4zM14 22h2v1h-2zM17 22h3v1h-3zM21 22h1v1h-1zM24 22h1v1h-1zM26 22h3v1h-3zM31 22h2v1h-2zM34 22h2v1h-2zM7 23h1v1h-1zM11 23h1v1h-1zM13 23h4v1h-4zM20 23h2v1h-2zM23 23h3v1h-3zM28 23h1v1h-1zM30 23h1v1h-1zM35 23h1v1h-1zM38 23h1v1h-1zM2 24h4v1h-4zM8 24h1v1h-1zM12 24h1v1h-1zM14 24h1v1h-1zM17 24h1v1h-1zM20 24h1v1h-1zM23 24h2v1h-2zM29 24h1v1h-1zM32 24h4v1h-4zM37 24h2v1h-2zM2 25h1v1h-1zM5 25h1v1h-1zM9 25h1v1h-1zM12 25h2v1h-2zM15 25h3v1h-3zM21 25h1v1h-1zM23 25h2v1h-2zM28 25h4v1h-4zM33 25h2v1h-2zM37 25h1v1h-1zM6 26h4v1h-4zM11 26h7v1h-7zM20 26h1v1h-1zM23 26h2v1h-2zM27 26h3v1h-3zM31 26h4v1h-4zM36 26h2v1h-2zM2 27h1v1h-1zM4 27h1v1h-1zM6 27h1v1h-1zM9 27h2v1h-2zM13 27h1v1h-1zM17 27h2v1h-2zM21 27h3v1h-3zM25 27h1v1h-1zM27 27h1v1h-1zM30 27h3v1h-3zM35 27h2v1h-2zM2 28h1v1h-1zM6 28h1v1h-1zM8 28h3v1h-3zM12 28h3v1h-3zM16 28h1v1h-1zM23 28h2v1h-2zM29 28h1v1h-1zM31 28h1v1h-1zM37 28h2v1h-2zM2 29h1v1h-1zM6 29h1v1h-1zM14 29h1v1h-1zM16 29h1v1h-1zM18 29h1v1h-1zM21 29h3v1h-3zM26 29h1v1h-1zM28 29h2v1h-2zM32 29h2v1h-2zM35 29h1v1h-1zM37 29h2v1h-2zM2 30h1v1h-1zM5 30h1v1h-1zM7 30h3v1h-3zM11 30h1v1h-1zM13 30h1v1h-1zM18 30h2v1h-2zM21 30h1v1h-1zM24 30h1v1h-1zM26 30h2v1h-2zM29 30h6v1h-6zM36 30h2v1h-2zM10 31h1v1h-1zM13 31h2v1h-2zM16 31h1v1h-1zM19 31h5v1h-5zM25 31h1v1h-1zM29 31h2v1h-2zM34 31h2v1h-2zM2 32h7v1h-7zM11 32h1v1h-1zM14 32h6v1h-6zM22 32h2v1h-2zM26 32h1v1h-1zM28 32h1v1h-1zM30 32h1v1h-1zM32 32h1v1h-1zM34 32h1v1h-1zM36 32h1v1h-1zM38 32h1v1h-1zM2 33h1v1h-1zM8 33h1v1h-1zM10 33h4v1h-4zM15 33h1v1h-1zM17 33h1v1h-1zM19 33h2v1h-2zM22 33h5v1h-5zM30 33h1v1h-1zM34 33h2v1h-2zM37 33h2v1h-2zM2 34h1v1h-1zM4 34h3v1h-3zM8 34h1v1h-1zM10 34h2v1h-2zM14 34h1v1h-1zM18 34h1v1h-1zM23 34h2v1h-2zM26 34h9v1h-9zM36 34h3v1h-3zM2 35h1v1h-1zM4 35h3v1h-3zM8 35h1v1h-1zM10 35h6v1h-6zM17 35h1v1h-1zM20 35h2v1h-2zM25 35h1v1h-1zM27 35h2v1h-2zM31 35h2v1h-2zM34 35h2v1h-2zM38 35h1v1h-1zM2 36h1v1h-1zM4 36h3v1h-3zM8 36h1v1h-1zM10 36h1v1h-1zM12 36h7v1h-7zM23 36h1v1h-1zM28 36h1v1h-1zM35 36h1v1h-1zM37 36h2v1h-2zM2 37h1v1h-1zM8 37h1v1h-1zM11 37h2v1h-2zM14 37h2v1h-2zM17 37h1v1h-1zM20 37h4v1h-4zM28 37h1v1h-1zM31 37h1v1h-1zM34 37h2v1h-2zM38 37h1v1h-1zM2 38h7v1h-7zM10 38h3v1h-3zM14 38h1v1h-1zM17 38h1v1h-1zM19 38h1v1h-1zM21 38h2v1h-2zM24 38h1v1h-1zM26 38h3v1h-3zM31 38h1v1h-1zM34 38h1v1h-1zM36 38h3v1h-3z" fill="#1a3a5c"/></svg>
+        <b>Postgraduate · الأطباء المقيمون</b>
+        <a href="https://waledbadawy-beep.github.io/medi045/MEDI045_v3_Postgraduate_CLEAN.html">Open</a>
+        <span class="u">https://waledbadawy-beep.github.io/medi045/MEDI045_v3_Postgraduate_CLEAN.html</span>
+      </div>
+    </div>
+    <div class="note">Save the page to your home screen on first visit: <b>iPhone</b> — Share ⎙ → Add to Home
+      Screen. <b>Android</b> — ⋮ menu → Add to Home screen. Use the same device and browser for the whole
+      rotation; your drafts are held on the device you registered on.
+      <div class="ar" style="margin-top:8px">احفظ الصفحة على شاشتك الرئيسية عند أول زيارة: في الآيفون عبر
+        Share ⎙ ثم Add to Home Screen، وفي الأندرويد عبر قائمة ⋮ ثم Add to Home screen. استخدم الجهاز والمتصفح
+        نفسه طوال الدورة، فمسوداتك محفوظة على الجهاز الذي سجّلت منه.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>1 · Register — once only</h2>
+    <ol>
+      <li>Open the log book link and complete the registration screen.</li>
+      <li>Enter your <b>full name</b> and <b>university ID</b>. Both are required.</li>
+      <li>Select your <b>group</b> (A1, A2, B1, B2, F1 or F2) and the <b>academic year</b>.</li>
+      <li>Tap <b>Start Logbook →</b>.</li>
+    </ol>
+    <div class="warn"><b>Your university ID is what links every case to you in the supervisor panel.</b> Type it
+      exactly as it appears on your student card. A wrong ID means your cases will not appear under your name and
+      cannot be marked.</div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Your home screen</h2>
+    <p>The home screen shows your <b>Cases</b> count, <b>Skills</b> count and your <b>Target</b>, plus any
+      announcements posted by the programme. Check announcements at the start of each week — memos, regulations
+      and deadlines are posted there.</p>
+  </div>
+
+  <div class="card">
+    <h2>3 · Log a case</h2>
+    <p>Tap <b>New Case Record</b> and choose the setting you were in:</p>
+    <table>
+      <tr><th>Type</th><th>What it records</th></tr>
+      <tr><td>🏥 Pre-operative Anaesthesia Clinic</td><td>Pre-op assessment, airway, LEMON, anaesthetic plan</td></tr>
+      <tr><td>⚕️ Intraoperative</td><td>Technique, medications, fluids, events</td></tr>
+      <tr><td>🫁 PACU / Recovery Room</td><td>Vitals, Aldrete score, discharge decision</td></tr>
+      <tr><td>🛏️ Ward / Pain Round</td><td>CLO 2.3, pain, WHO ladder, satisfaction</td></tr>
+    </table>
+    <ol>
+      <li>Complete the form while the case is still fresh — same day if possible.</li>
+      <li>Tap <b>💾 Save Draft</b> if you need to finish later. Drafts can still be edited.</li>
+      <li>Tap <b>✓ Submit Case</b> when it is complete. Once submitted it goes to your supervisor for marking.</li>
+    </ol>
+    <div class="note">Review everything before submitting. A submitted case is in the supervisor's queue and you
+      should not expect to edit it yourself.</div>
+  </div>
+
+  <div class="card">
+    <h2>4 · Practical Sessions — Skill Lab</h2>
+    <p>Ten stations, each with learning objectives and a step-by-step checklist. After each station, tap every
+      step and rate yourself honestly:</p>
+    <ul>
+      <li><b>✓ Confident</b> — performed it correctly and unaided</li>
+      <li><b>~ Needs Practice</b> — performed it partially or with help</li>
+      <li><b>✗ Not Performed</b> — not yet attempted</li>
+    </ul>
+    <p>Record the <b>date</b>, the <b>supervisor</b> present, the number of <b>attempts</b> and any notes. Your
+      KPI score builds from these ratings. Tap <b>Save</b> before leaving the station.</p>
+    <div class="note">Marking a step "Confident" when you needed help removes the only signal your supervisor has
+      that you need more time on it. Rate yourself accurately — the score is a teaching tool, not an exam.</div>
+  </div>
+
+  <div class="card">
+    <h2>5 · Portfolio, reference and videos</h2>
+    <ul>
+      <li><b>🗂️ Student Portfolio</b> — every case and assessment you have saved, in one place.</li>
+      <li><b>📖 Course Reference</b> — topics, CLOs and resources.</li>
+      <li><b>🎥 eLearning Videos</b> — tutorials for the practical skills.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>6 · Programme evaluation</h2>
+    <p>At the end of the rotation, open <b>📝 Program Evaluation</b> and rate the workshops, teaching and
+      resources, then tap <b>📨 Submit Evaluation</b>. Your feedback shapes the next rotation.</p>
+  </div>
+
+  <div class="card">
+    <h2>7 · Deadlines</h2>
+    <p>The programme sets a submission window for each batch. <b>You cannot submit before the start date or after
+      the deadline.</b> The dates are shown on your home screen — do not leave your cases to the final day.</p>
+    <div class="stop"><b>📊 Supervisor Panel is not for students.</b> It is password-protected and used by teaching
+      staff to mark your work.</div>
+  </div>
+
+  <hr style="border:none;border-top:2px dashed var(--border);margin:32px 0">
+
+  <div class="ar">
+    <div class="card">
+      <h2>١ · التسجيل — مرة واحدة فقط</h2>
+      <ol>
+        <li>افتح رابط السجل السريري وأكمل شاشة التسجيل.</li>
+        <li>أدخل <b>الاسم الكامل</b> و<b>الرقم الجامعي</b>، وكلاهما مطلوب.</li>
+        <li>اختر <b>المجموعة</b> (A1 أو A2 أو B1 أو B2 أو F1 أو F2) و<b>السنة الدراسية</b>.</li>
+        <li>اضغط <b>Start Logbook →</b>.</li>
+      </ol>
+      <div class="warn"><b>الرقم الجامعي هو ما يربط كل حالة باسمك في لوحة المشرف.</b> أدخله تماماً كما هو في
+        البطاقة الجامعية؛ فالرقم الخاطئ يعني أن حالاتك لن تظهر تحت اسمك ولن يمكن تقييمها.</div>
+    </div>
+
+    <div class="card">
+      <h2>٢ · الشاشة الرئيسية</h2>
+      <p>تعرض الشاشة الرئيسية عدد <b>الحالات</b> وعدد <b>المهارات</b> و<b>الهدف المطلوب</b>، إضافة إلى الإعلانات
+        التي ينشرها البرنامج. راجع الإعلانات في بداية كل أسبوع، فهي مكان نشر التعاميم واللوائح والمواعيد النهائية.</p>
+    </div>
+
+    <div class="card">
+      <h2>٣ · تسجيل حالة</h2>
+      <p>اضغط <b>New Case Record</b> ثم اختر مكان الحالة:</p>
+      <table>
+        <tr><th>النوع</th><th>ما يوثقه</th></tr>
+        <tr><td>🏥 عيادة التخدير قبل العملية</td><td>التقييم قبل الجراحة، المجرى الهوائي، LEMON، خطة التخدير</td></tr>
+        <tr><td>⚕️ أثناء العملية</td><td>الأسلوب، الأدوية، السوائل، الأحداث</td></tr>
+        <tr><td>🫁 غرفة الإفاقة PACU</td><td>العلامات الحيوية، مقياس Aldrete، قرار الخروج</td></tr>
+        <tr><td>🛏️ جولة القسم / الألم</td><td>CLO 2.3، الألم، سلّم منظمة الصحة العالمية، رضا المريض</td></tr>
+      </table>
+      <ol>
+        <li>أكمل النموذج والحالة ما تزال حاضرة في ذهنك، ويفضّل في اليوم نفسه.</li>
+        <li>اضغط <b>💾 Save Draft</b> إن أردت الإكمال لاحقاً؛ فالمسودة تبقى قابلة للتعديل.</li>
+        <li>اضغط <b>✓ Submit Case</b> عند الاكتمال، فتنتقل الحالة إلى المشرف للتقييم.</li>
+      </ol>
+      <div class="note">راجع كل شيء قبل الإرسال؛ فالحالة المرسلة تدخل قائمة المشرف ولا يُتوقع أن تعدّلها بنفسك.</div>
+    </div>
+
+    <div class="card">
+      <h2>٤ · الجلسات العملية — مختبر المهارات</h2>
+      <p>عشر محطات، لكل منها أهداف تعليمية وقائمة خطوات. بعد كل محطة اضغط على كل خطوة وقيّم نفسك بصدق:</p>
+      <ul>
+        <li><b>✓ Confident</b> — أدّيتها بشكل صحيح ودون مساعدة</li>
+        <li><b>~ Needs Practice</b> — أدّيتها جزئياً أو بمساعدة</li>
+        <li><b>✗ Not Performed</b> — لم تُجرَّب بعد</li>
+      </ul>
+      <p>سجّل <b>التاريخ</b> و<b>المشرف</b> الحاضر وعدد <b>المحاولات</b> وأي ملاحظات. يُحتسب مؤشر أدائك KPI من
+        هذه التقييمات. اضغط <b>Save</b> قبل مغادرة المحطة.</p>
+      <div class="note">اختيار «Confident» لخطوة احتجت فيها إلى مساعدة يحرم مشرفك من المؤشر الوحيد الذي يخبره أنك
+        تحتاج وقتاً أطول فيها. قيّم نفسك بدقة؛ فالدرجة أداة تعليمية وليست اختباراً.</div>
+    </div>
+
+    <div class="card">
+      <h2>٥ · الملف والمراجع والفيديوهات</h2>
+      <ul>
+        <li><b>🗂️ Student Portfolio</b> — جميع الحالات والتقييمات المحفوظة في مكان واحد.</li>
+        <li><b>📖 Course Reference</b> — المواضيع ومخرجات التعلم والمصادر.</li>
+        <li><b>🎥 eLearning Videos</b> — دروس مصوّرة للمهارات العملية.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>٦ · تقييم البرنامج</h2>
+      <p>في نهاية الدورة افتح <b>📝 Program Evaluation</b> وقيّم ورش العمل والتدريس والمصادر، ثم اضغط
+        <b>📨 Submit Evaluation</b>. ملاحظاتك تسهم في تحسين الدورة القادمة.</p>
+    </div>
+
+    <div class="card">
+      <h2>٧ · المواعيد النهائية</h2>
+      <p>يحدد البرنامج فترة إرسال لكل دفعة. <b>لا يمكن الإرسال قبل تاريخ البداية ولا بعد الموعد النهائي.</b>
+        التواريخ ظاهرة على شاشتك الرئيسية، فلا تؤجل حالاتك إلى اليوم الأخير.</p>
+      <div class="stop"><b>📊 لوحة المشرف ليست للطلاب.</b> فهي محمية بكلمة مرور ويستخدمها أعضاء هيئة التدريس
+        لتقييم أعمالكم.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>© 2026 Dr. Walid Badwi · KSUMC Anaesthesia Training Programme</footer>
+</body>
+</html>

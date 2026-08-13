@@ -1,0 +1,23 @@
+name = "cold-term-86d6"
+main = "worker.js"
+compatibility_date = "2026-08-13"
+
+[[d1_databases]]
+binding = "MEDI045_DB"
+database_name = "medi045-db"
+database_id = "3d4d46ad-ebca-4cf3-9a03-01f5faf71615"
+
+[[r2_buckets]]
+binding = "MEDI045_FILES"
+bucket_name = "medi045-files"
+
+[triggers]
+crons = ["0 2 * * 0"]
+
+# Set as plain text variables in the dashboard or here:
+#   ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
+#   BACKUP_EMAIL   = "<the verified sending address>"
+# Set as SECRETS (never in this file):
+#   STAFF_TOKEN, RESEND_API_KEY
+[vars]
+ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
