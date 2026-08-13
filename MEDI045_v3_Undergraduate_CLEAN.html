@@ -2088,11 +2088,37 @@ function postToCloud(record) {
 function syncFromCloud(callback) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE')) { if (callback) callback(); return; }
   var el = document.getElementById('dash-list');
+
+  // Reading every student's submissions requires the staff access code. Without
+  // it the server returns only announcements and settings, and the dashboard
+  // would look empty rather than unauthorised.
+  if (evalUnlocked && !hasStaffToken()) {
+    if (el) el.innerHTML = '<div style="text-align:center;padding:26px;color:#c0392b;font-size:14px;line-height:1.6">' +
+      '<b>\uD83D\uDD11 Staff access code needed</b><br>' +
+      'Student submissions are held on the server and cannot be read without it.<br>' +
+      '<button onclick="promptStaffToken(); syncFromCloud(renderDashboard);" style="margin-top:14px;background:#2a5298;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Enter access code</button>' +
+      '</div>';
+    if (callback) callback();
+    return;
+  }
+
   if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:#2a5298;font-size:14px">\u23F3 Syncing student submissions...</div>';
   fetch(apiGetUrl())
     .then(function(r) { return r.json(); })
     .then(function(cloudRecords) {
       if (!Array.isArray(cloudRecords)) { if (callback) callback(); return; }
+      if (evalUnlocked && hasStaffToken()) {
+        var gotStudentData = cloudRecords.some(function (r) {
+          return ['clinic','intraop','pacu','ward','case','airway','evaluation','survey'].indexOf(r.type) !== -1;
+        });
+        if (!gotStudentData && el) {
+          el.innerHTML = '<div style="text-align:center;padding:26px;color:#6b7a8d;font-size:13px;line-height:1.6">' +
+            'No student submissions returned by the server.<br>' +
+            'If you expect submissions here, the access code may be wrong \u2014 ' +
+            '<button onclick="promptStaffToken(); syncFromCloud(renderDashboard);" style="margin-top:10px;background:transparent;color:#2a5298;border:none;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit">re-enter it</button>' +
+            '</div>';
+        }
+      }
       cloudRecords.forEach(function(cr) {
         var idx = records.findIndex(function(r) { return String(r.id) === String(cr.id); });
         if (idx >= 0) {
@@ -2876,7 +2902,13 @@ var _pendingPinCheck = null;
 function checkEvalPin() {
   if (!_credsReady) { _pendingPinCheck = checkEvalPin; return; }
   const correct = Store.get('medi045_eval_pwd') || '1234';
-  if (pwdVal === correct) { evalUnlocked=true; closePasswordModal(); syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); }); touchStaffActivity(); }
+  if (pwdVal === correct) {
+    evalUnlocked = true;
+    closePasswordModal();
+    if (!hasStaffToken()) promptStaffToken();
+    syncCredentialsFromCloud(function(){ renderDashboard(); goto('screen-dashboard'); });
+    touchStaffActivity();
+  }
   else { document.getElementById('pwd-error').style.display='block'; pwdVal=''; updatePwdDots(); }
 }
 function closePasswordModal() { document.getElementById('pwd-modal').style.display='none'; pwdVal=''; updatePwdDots(); }
