@@ -2655,13 +2655,47 @@ function syncCredentialsFromCloud(callback) {
 // ==================== ANNOUNCEMENTS ====================
 // ---- File attachment handling ----
 var _annPendingFile = null; // {base64, fileName, mimeType}
+// A photo straight from a phone camera is several megabytes, and base64 makes
+// it a third larger again on the way up. Images are therefore scaled down and
+// re-encoded before sending: a 4 MB photo becomes a few hundred kilobytes, and
+// stays perfectly readable for a notice. PDFs are sent untouched.
+function _compressImage(file, cb) {
+  var MAX_EDGE = 1600;   // long edge in pixels — ample for a notice or a form
+  var QUALITY  = 0.82;
+  try {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        var scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+        var cw = Math.round(w * scale), ch = Math.round(h * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+        URL.revokeObjectURL(url);
+        var b64 = dataUrl.split(',')[1];
+        // If shrinking somehow made it bigger, keep the original.
+        if (!b64 || b64.length >= file.size * 1.33) { cb(null); return; }
+        cb({ base64: b64, mimeType: 'image/jpeg', bytes: Math.round(b64.length * 0.75) });
+      } catch (e) { cb(null); }
+    };
+    img.onerror = function () { try { URL.revokeObjectURL(url); } catch (e) {} cb(null); };
+    img.src = url;
+  } catch (e) { cb(null); }
+}
+
+function _kb(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB'; }
+
 function handleAnnFileChange() {
   var input = document.getElementById('ann-file');
   var status = document.getElementById('ann-file-status');
   if (!input.files || !input.files[0]) { _annPendingFile = null; status.textContent=''; return; }
   var file = input.files[0];
-  if (file.size > 8 * 1024 * 1024) {
-    status.textContent = '⚠️ File too large — please keep under 8 MB';
+  if (file.size > 10 * 1024 * 1024) {
+    status.textContent = '⚠️ File too large (' + _kb(file.size) + ') — please keep under 10 MB';
     status.style.color = '#e63946';
     input.value = '';
     _annPendingFile = null;
@@ -2669,6 +2703,24 @@ function handleAnnFileChange() {
   }
   status.textContent = '⏳ Preparing ' + file.name + '...';
   status.style.color = 'var(--muted)';
+
+  if (/^image\//i.test(file.type || '')) {
+    _compressImage(file, function (out) {
+      if (out) {
+        var newName = String(file.name).replace(/\.[^.]+$/, '') + '.jpg';
+        _annPendingFile = { base64: out.base64, fileName: newName, mimeType: 'image/jpeg' };
+        status.textContent = '✅ Ready to attach: ' + newName + ' (' + _kb(file.size) + ' → ' + _kb(out.bytes) + ')';
+        status.style.color = 'var(--success, #2ecc71)';
+        return;
+      }
+      _readAnnFileRaw(file, status);   // compression failed — send as-is
+    });
+    return;
+  }
+  _readAnnFileRaw(file, status);
+}
+
+function _readAnnFileRaw(file, status) {
   var reader = new FileReader();
   reader.onload = function() {
     var base64 = reader.result.split(',')[1];

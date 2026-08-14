@@ -49,8 +49,12 @@ const FORBIDDEN_TYPES = new Set(['app_credentials']);
 // Field names stripped from every incoming record as a second line of defence.
 const FORBIDDEN_FIELDS = ['evalPwd', 'adminPwd', 'password', 'pin', 'recoveryCode'];
 
-const MAX_BODY_BYTES = 512 * 1024;   // 512 KB per record
-const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8 MB per attachment
+// An ordinary record is small; an attachment arrives base64-encoded in the same
+// body, which is about a third larger than the file itself. Two limits, so a
+// photo is not rejected by the record limit before the file limit is reached.
+const MAX_BODY_BYTES = 512 * 1024;        // 512 KB for a normal record
+const MAX_UPLOAD_BODY_BYTES = 14 * 1024 * 1024; // 14 MB for an upload request
+const MAX_FILE_BYTES = 10 * 1024 * 1024;  // 10 MB per attachment once decoded
 
 // ---------------------------------------------------------------- helpers
 
@@ -172,8 +176,17 @@ async function handleGet(request, env) {
 
 async function handlePost(request, env) {
   const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) {
-    return json(env, { success: false, error: 'Payload too large' }, 413);
+  // The upload path is allowed a larger body; everything else is not.
+  const looksLikeUpload = raw.indexOf('"_action":"upload_file"') !== -1 ||
+                          raw.indexOf('"_action": "upload_file"') !== -1;
+  const bodyCap = looksLikeUpload ? MAX_UPLOAD_BODY_BYTES : MAX_BODY_BYTES;
+  if (raw.length > bodyCap) {
+    return json(env, {
+      success: false,
+      error: looksLikeUpload
+        ? 'That attachment is too large. Please use a file under 10 MB.'
+        : 'Record too large.'
+    }, 413);
   }
 
   let data;
@@ -216,7 +229,7 @@ async function handlePost(request, env) {
       return json(env, { success: false, error: 'Attachment is not valid base64' }, 400);
     }
     if (bytes.length > MAX_FILE_BYTES) {
-      return json(env, { success: false, error: 'Attachment exceeds 8 MB' }, 413);
+      return json(env, { success: false, error: 'Attachment exceeds 10 MB' }, 413);
     }
     const safeName = String(data.fileName || 'attachment')
       .replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 120);
