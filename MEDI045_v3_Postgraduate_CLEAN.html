@@ -2290,10 +2290,10 @@ function loadSupervisorDropdownFor(prefix) {
 
 function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
 
-// A log book should record a range of patients, so the same patient must not be
-// entered twice for the same kind of case. The same patient legitimately appears
-// across different settings - seen in clinic, then in theatre, then in recovery -
-// so this checks within one case type rather than across the whole log book.
+// Residents follow patients through the peri-operative course, so the same
+// patient may legitimately appear in clinic, then theatre, then recovery. The
+// check therefore runs within a single case type: the same patient must not be
+// logged twice as the same activity, but may appear across different ones.
 // It is scoped to this student: two students may of course see the same patient.
 function checkPatientNotRepeated(type, prefix) {
   var mrn   = String(gv(prefix + '-mrn') || '').trim();

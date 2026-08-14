@@ -2245,10 +2245,10 @@ function loadSupervisorDropdownFor(prefix) {
 
 function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
 
-// A log book should record a range of patients, so the same patient must not be
-// entered twice for the same kind of case. The same patient legitimately appears
-// across different settings - seen in clinic, then in theatre, then in recovery -
-// so this checks within one case type rather than across the whole log book.
+// The undergraduate rotation is short, so students are not expected to follow a
+// single patient from clinic through theatre to recovery. Every activity must be
+// a DIFFERENT patient, and the check therefore runs across the whole log book
+// rather than within one case type.
 // It is scoped to this student: two students may of course see the same patient.
 function checkPatientNotRepeated(type, prefix) {
   var mrn   = String(gv(prefix + '-mrn') || '').trim();
@@ -2257,9 +2257,10 @@ function checkPatientNotRepeated(type, prefix) {
   if (!myId) return { ok: true };
 
   var clash = null;
+  var CASE_TYPES = ['clinic', 'intraop', 'pacu', 'ward', 'case'];
   for (var i = 0; i < records.length; i++) {
     var r = records[i];
-    if (r.type !== type) continue;
+    if (CASE_TYPES.indexOf(r.type) === -1) continue;   // any case type, not just this one
     if (String(r.studentId || '') !== myId) continue;
     if (r.status === 'deleted') continue;
 
@@ -2272,10 +2273,10 @@ function checkPatientNotRepeated(type, prefix) {
 
   return {
     ok: false,
-    msg: '\u26A0\uFE0F This ' + clash.on + ' is already used in another case of this type' +
+    msg: '\u26A0\uFE0F This ' + clash.on + ' is already used in another case' +
          (clash.r.caseNo ? ' (Case No. ' + clash.r.caseNo + ')' : '') + '.\n\n' +
-         'Each case of the same type must be a different patient. If this is the same patient in a ' +
-         'different setting, log it under that setting instead.'
+         'Every activity must be logged with a different patient. Please enter a new patient, ' +
+         'a new Hospital ID and a new Case No.'
   };
 }
 
@@ -4997,7 +4998,7 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="cl-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8;color:#555"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="cl-patient" placeholder="e.g. A.M. or MRN"/></div>
+<div><label>Patient Name / Initials</label><input id="cl-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="cl-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="cl-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -5139,7 +5140,7 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="io-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8;color:#555"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="io-patient" placeholder="e.g. A.M. or MRN"/></div>
+<div><label>Patient Name / Initials</label><input id="io-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="io-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="io-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -5211,7 +5212,7 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="pacu-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8;color:#555"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="pacu-patient" placeholder="e.g. A.M. or MRN"/></div>
+<div><label>Patient Name / Initials</label><input id="pacu-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="pacu-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="pacu-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -5648,7 +5649,7 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="wd-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8;color:#555"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="wd-patient" placeholder="e.g. A.M. or MRN"/></div>
+<div><label>Patient Name / Initials</label><input id="wd-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="wd-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="wd-case-no" placeholder="e.g. 1"/></div>
 </div>
