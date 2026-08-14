@@ -1831,6 +1831,7 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
         ⚠️ <b>Important:</b> Write down any new passwords before saving. Lost passwords cannot be recovered without resetting the app.
       </div>
 <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
+<button onclick="promptStaffToken()" style="width:100%;background:#f4f1fa;color:#5b3a8e;border:1.5px solid #ddd3ee;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">🔑 Set / change staff access code</button>
 <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
 </div>
 <!-- Section: Backup -->
@@ -2052,13 +2053,71 @@ function apiPost(body) {
   });
 }
 
-function promptStaffToken() {
-  var t = prompt('Staff access code\n\nEnter the code issued by the programme director. It is stored on this device only and you will not be asked again on this browser.');
-  if (t === null) return false;
-  if (!String(t).trim()) { showToast('\u26A0\uFE0F No code entered'); return false; }
-  setStaffToken(t);
-  showToast('\u2705 Staff access code saved on this device');
+// A real in-app modal rather than window.prompt(): mobile browsers suppress
+// prompt() in several situations, and when they do the code is silently never
+// stored - which looks exactly like "the dashboard is empty". The markup is
+// built here rather than in the page so it cannot be lost to an edit.
+var _staffTokenThen = null;
+
+function buildStaffTokenModal() {
+  if (document.getElementById('staff-token-modal')) return;
+  var m = document.createElement('div');
+  m.id = 'staff-token-modal';
+  m.style.cssText = 'display:none;position:fixed;inset:0;z-index:100000;background:rgba(10,20,35,.72);align-items:center;justify-content:center;padding:20px';
+  m.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)">' +
+      '<div style="font-size:17px;font-weight:800;color:#1a3a5c;margin-bottom:6px">\uD83D\uDD11 Staff access code</div>' +
+      '<div style="font-size:13px;color:#6b7a8d;line-height:1.55;margin-bottom:14px">Required to load student submissions from the server. Issued by the programme director. Stored on this device only \u2014 you will not be asked again on this browser.</div>' +
+      '<input id="staff-token-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste the code here" style="width:100%;padding:13px;font-size:14px;border:1.5px solid #d0dbe8;border-radius:10px;font-family:monospace;-webkit-appearance:none;box-sizing:border-box">' +
+      '<div id="staff-token-error" style="display:none;color:#c0392b;font-size:12.5px;font-weight:600;margin-top:8px">Please paste the code.</div>' +
+      '<div style="display:flex;gap:10px;margin-top:16px">' +
+        '<button id="staff-token-cancel" style="flex:1;background:#f0f4f8;color:#6b7a8d;border:1.5px solid #d0dbe8;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Cancel</button>' +
+        '<button id="staff-token-save" style="flex:2;background:linear-gradient(135deg,#2a5298,#1a3a5c);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">Save code</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(m);
+  document.getElementById('staff-token-cancel').onclick = closeStaffTokenModal;
+  document.getElementById('staff-token-save').onclick = submitStaffToken;
+  document.getElementById('staff-token-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') submitStaffToken();
+  });
+}
+
+function promptStaffToken(then) {
+  _staffTokenThen = (typeof then === 'function') ? then : null;
+  try { buildStaffTokenModal(); } catch (e) {}
+  var m = document.getElementById('staff-token-modal');
+  if (!m) {
+    var t = window.prompt('Staff access code');
+    if (t && String(t).trim()) { setStaffToken(t); if (_staffTokenThen) { var c = _staffTokenThen; _staffTokenThen = null; c(); } return true; }
+    return false;
+  }
+  var inp = document.getElementById('staff-token-input');
+  if (inp) inp.value = getStaffToken() || '';
+  var err = document.getElementById('staff-token-error');
+  if (err) err.style.display = 'none';
+  m.style.display = 'flex';
+  setTimeout(function () { if (inp) { inp.focus(); inp.select(); } }, 60);
   return true;
+}
+
+function closeStaffTokenModal() {
+  var m = document.getElementById('staff-token-modal');
+  if (m) m.style.display = 'none';
+}
+
+function submitStaffToken() {
+  var inp = document.getElementById('staff-token-input');
+  var v = inp ? String(inp.value || '').trim() : '';
+  if (!v) { var e = document.getElementById('staff-token-error'); if (e) e.style.display = 'block'; return; }
+  setStaffToken(v);
+  closeStaffTokenModal();
+  showToast('\u2705 Access code saved on this device');
+  var cb = _staffTokenThen; _staffTokenThen = null;
+  if (cb) { cb(); return; }
+  if (typeof syncFromCloud === 'function') {
+    syncFromCloud(function () { if (typeof renderDashboard === 'function') renderDashboard(); });
+  }
 }
 
 function postToCloud(record) {
