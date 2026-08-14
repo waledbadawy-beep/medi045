@@ -2290,13 +2290,48 @@ function loadSupervisorDropdownFor(prefix) {
 
 function gv(id) { var el=document.getElementById(id); return el ? el.value : ''; }
 
+// A log book should record a range of patients, so the same patient must not be
+// entered twice for the same kind of case. The same patient legitimately appears
+// across different settings - seen in clinic, then in theatre, then in recovery -
+// so this checks within one case type rather than across the whole log book.
+// It is scoped to this student: two students may of course see the same patient.
+function checkPatientNotRepeated(type, prefix) {
+  var mrn   = String(gv(prefix + '-mrn') || '').trim();
+  var pname = String(gv(prefix + '-patient') || '').trim();
+  var myId  = studentProfile ? String(studentProfile.universityId || '') : '';
+  if (!myId) return { ok: true };
+
+  var clash = null;
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    if (r.type !== type) continue;
+    if (String(r.studentId || '') !== myId) continue;
+    if (r.status === 'deleted') continue;
+
+    var rm = String(r.patientMRN || '').trim();
+    var rn = String(r.patientName || '').trim();
+    if (mrn && rm && rm.toLowerCase() === mrn.toLowerCase()) { clash = { r: r, on: 'Hospital ID' }; break; }
+    if (!mrn && pname && rn && rn.toLowerCase() === pname.toLowerCase()) { clash = { r: r, on: 'patient name' }; break; }
+  }
+  if (!clash) return { ok: true };
+
+  return {
+    ok: false,
+    msg: '\u26A0\uFE0F This ' + clash.on + ' is already used in another case of this type' +
+         (clash.r.caseNo ? ' (Case No. ' + clash.r.caseNo + ')' : '') + '.\n\n' +
+         'Each case of the same type must be a different patient. If this is the same patient in a ' +
+         'different setting, log it under that setting instead.'
+  };
+}
+
 function buildCaseEntry(type, prefix, status) {
   return {
     type: type, id: Date.now(), status: status || 'submitted',
     submittedAt: new Date().toLocaleString('en-SA'),
     studentName: gv(prefix+'-student'), studentId: gv(prefix+'-id'),
     studentGroup: gv(prefix+'-group'),
-    patientName: gv(prefix+'-patient'), caseNo: gv(prefix+'-case-no'),
+    patientName: gv(prefix+'-patient'), patientMRN: gv(prefix+'-mrn'),
+    caseNo: gv(prefix+'-case-no'),
     caseDate: gv(prefix+'-date'), supervisor: gv(prefix+'-supervisor'),
     feedback: gv(prefix+'-feedback')
   };
@@ -2307,6 +2342,9 @@ function submit_cl() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('cl-patient'), caseNo = gv('cl-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('cl-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_cl = checkPatientNotRepeated('clinic','cl');
+  if (!_dup_cl.ok) { alert(_dup_cl.msg); return; }
   if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
   var entry = buildCaseEntry('clinic','cl');
   // Clinic-specific fields
@@ -2332,6 +2370,9 @@ function submit_io() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('io-patient'), caseNo = gv('io-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('io-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_io = checkPatientNotRepeated('intraop','io');
+  if (!_dup_io.ok) { alert(_dup_io.msg); return; }
   if (!confirm('Submit this Intraoperative case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
   var entry = buildCaseEntry('intraop','io');
   entry.asa=gv('c-asa'); entry.operation=gv('c-operation');
@@ -2350,6 +2391,9 @@ function submit_pacu() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('pacu-patient'), caseNo = gv('pacu-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('pacu-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_pacu = checkPatientNotRepeated('pacu','pacu');
+  if (!_dup_pacu.ok) { alert(_dup_pacu.msg); return; }
   if (!confirm('Submit this PACU case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
   var entry = buildCaseEntry('pacu','pacu');
   entry.pacuAirway=gv('c-pacu-airway'); entry.pacuAdjunct=gv('c-pacu-adjunct');
@@ -2373,6 +2417,9 @@ function submit_wd() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('wd-patient'), caseNo = gv('wd-case-no');
   if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('wd-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_wd = checkPatientNotRepeated('ward','wd');
+  if (!_dup_wd.ok) { alert(_dup_wd.msg); return; }
   if (!confirm('Submit this Ward/Pain case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
   var entry = buildCaseEntry('ward','wd');
   entry.painType=gv('c-pain-type'); entry.painSite=gv('c-pain-site');
@@ -4745,7 +4792,7 @@ function openCaseDetail(caseId) {
     var myId = studentProfile ? String(studentProfile.universityId||'') : '';
     if (!myId || String(r.studentId||'') !== myId) { showToast('⚠️ You can only view your own cases'); return; }
   }
-  document.getElementById('dm-name').textContent = 'Case #' + (r.caseNo||'?') + ' · ' + (r.patientName||'');
+  document.getElementById('dm-name').textContent = 'Case #' + (r.caseNo||'?') + ' · MRN ' + (r.patientMRN||'—') + ' · ' + (r.patientName||'');
   document.getElementById('dm-meta').textContent = (r.studentName||'') + ' · ' + (r.caseDate||r.date||'') + ' · ' + (r.status==='submitted'?'SUBMITTED':'DRAFT');
   
   function row(label, val) { return val ? '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;font-weight:600;color:var(--muted);width:35%">' + label + '</td><td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:13px">' + _esc(String(val)) + '</td></tr>' : ''; }
@@ -4899,6 +4946,7 @@ setInterval(() => {
 <div class="form-row"><div><label>Group</label><input id="cl-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="cl-patient" placeholder="e.g. A.M."/></div>
+<div><label>Hospital ID (MRN)</label><input id="cl-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="cl-case-no" placeholder="e.g. 1"/></div>
 </div>
 <div class="form-row two-col">
@@ -5029,6 +5077,7 @@ setInterval(() => {
 <div class="form-row"><div><label>Group</label><input id="io-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="io-patient" placeholder="e.g. A.M."/></div>
+<div><label>Hospital ID (MRN)</label><input id="io-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="io-case-no" placeholder="e.g. 1"/></div>
 </div>
 <div class="form-row two-col">
@@ -5091,6 +5140,7 @@ setInterval(() => {
 <div class="form-row"><div><label>Group</label><input id="pacu-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="pacu-patient" placeholder="e.g. A.M."/></div>
+<div><label>Hospital ID (MRN)</label><input id="pacu-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="pacu-case-no" placeholder="e.g. 1"/></div>
 </div>
 <div class="form-row two-col">
@@ -5519,6 +5569,7 @@ setInterval(() => {
 <div class="form-row"><div><label>Group</label><input id="wd-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
 <div><label>Patient Name / Initials</label><input id="wd-patient" placeholder="e.g. A.M."/></div>
+<div><label>Hospital ID (MRN)</label><input id="wd-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="wd-case-no" placeholder="e.g. 1"/></div>
 </div>
 <div class="form-row two-col">
