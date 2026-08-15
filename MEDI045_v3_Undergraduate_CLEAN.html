@@ -1865,14 +1865,22 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">🎯 Grading Configuration</div>
 <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Set the program's grading policy. Every student's grade on the dashboard recalculates automatically — no manual regrading needed when the committee changes the rules.</div>
-<div class="admin-field">
-<label>Required Cases per Student</label>
-<input id="gc-required-cases" type="number" min="1" placeholder="e.g. 10"/>
+<div style="font-size:12px;font-weight:800;color:var(--primary);margin:4px 0 8px">Required cases per activity</div>
+<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.5">Set how many cases of each type a student must submit. Change these each cycle to match the regulation — every student's progress and grade updates automatically.</div>
+<div class="form-row two-col">
+<div class="admin-field"><label>🏥 Anaesthesia Clinic</label><input id="gc-req-clinic" type="number" min="0" placeholder="2"/></div>
+<div class="admin-field"><label>⚕️ Intraoperative</label><input id="gc-req-intraop" type="number" min="0" placeholder="3"/></div>
 </div>
+<div class="form-row two-col">
+<div class="admin-field"><label>🫁 PACU / Recovery</label><input id="gc-req-pacu" type="number" min="0" placeholder="3"/></div>
+<div class="admin-field"><label>🛏️ Ward / Pain Round</label><input id="gc-req-ward" type="number" min="0" placeholder="2"/></div>
+</div>
+<div id="gc-total-preview" style="background:var(--section-bg);border-radius:10px;padding:11px 13px;font-size:13px;font-weight:700;color:var(--primary);margin:4px 0 14px">Total required: 10 cases</div>
 <div class="admin-field">
 <label>Total Grade Scale (out of)</label>
 <input id="gc-scale" type="number" min="1" step="any" placeholder="e.g. 5, 10, or 100"/>
 </div>
+<input id="gc-required-cases" type="hidden"/>
 <button onclick="saveGradingConfig()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">🎯 Save Grading Rules</button>
 </div>
 <!-- Section: Announcements -->
@@ -2580,21 +2588,103 @@ function addSupervisorToList(prefix) {
   setTimeout(function(){ box.style.display='none'; }, 2000);
 }
 
+// The four activities a student must cover, with the default distribution.
+// Totals are derived, never stored separately, so they cannot drift apart.
+var CASE_ACTIVITIES = [
+  { key: 'clinic',  label: 'Anaesthesia Clinic',  icon: '\uD83C\uDFE5', def: 2 },
+  { key: 'intraop', label: 'Intraoperative',      icon: '\u2695\uFE0F',  def: 3 },
+  { key: 'pacu',    label: 'PACU / Recovery',     icon: '\uD83E\uDEC1', def: 3 },
+  { key: 'ward',    label: 'Ward / Pain Round',   icon: '\uD83D\uDECF\uFE0F', def: 2 }
+];
+
 function getGradingConfig() {
   var raw = Store.get('medi045_grading_config');
-  var def = { requiredCases: 10, scale: 5 };
+  var def = { scale: 5, perActivity: {} };
+  CASE_ACTIVITIES.forEach(function (a) { def.perActivity[a.key] = a.def; });
+  def.requiredCases = CASE_ACTIVITIES.reduce(function (s, a) { return s + a.def; }, 0);
+
   if (!raw) return def;
-  try { var c = JSON.parse(raw); return { requiredCases: c.requiredCases||def.requiredCases, scale: c.scale||def.scale }; } catch(e) { return def; }
+  try {
+    var c = JSON.parse(raw);
+    var per = {};
+    CASE_ACTIVITIES.forEach(function (a) {
+      var v = (c.perActivity && c.perActivity[a.key] !== undefined) ? parseInt(c.perActivity[a.key], 10) : a.def;
+      per[a.key] = (isNaN(v) || v < 0) ? a.def : v;
+    });
+    var total = CASE_ACTIVITIES.reduce(function (s, a) { return s + per[a.key]; }, 0);
+    return {
+      perActivity: per,
+      // An older config with only a total and no breakdown keeps its total.
+      requiredCases: (c.perActivity ? total : (c.requiredCases || total)),
+      scale: c.scale || def.scale
+    };
+  } catch (e) { return def; }
 }
+
+/** How many cases of each activity this student has, against the requirement. */
+function getActivityProgress(studentId) {
+  var cfg = getGradingConfig();
+  var myId = String(studentId || (studentProfile ? studentProfile.universityId : '') || '');
+  var out = [];
+  CASE_ACTIVITIES.forEach(function (a) {
+    var n = 0;
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
+      if (r.type !== a.key) continue;
+      if (r.status === 'deleted' || r.status === 'draft') continue;
+      if (myId && String(r.studentId || '') !== myId) continue;
+      n++;
+    }
+    var need = cfg.perActivity[a.key];
+    out.push({ key: a.key, label: a.label, icon: a.icon, done: n, need: need, met: n >= need });
+  });
+  return out;
+}
+function fillActivityQuotaFields(cfg) {
+  cfg = cfg || getGradingConfig();
+  CASE_ACTIVITIES.forEach(function (a) {
+    var f = document.getElementById('gc-req-' + a.key);
+    if (!f) return;
+    f.value = (cfg.perActivity && cfg.perActivity[a.key] !== undefined) ? cfg.perActivity[a.key] : a.def;
+    if (!f._wired) { f._wired = true; f.addEventListener('input', updateGcTotalPreview); }
+  });
+  updateGcTotalPreview();
+}
+
+function updateGcTotalPreview() {
+  var el = document.getElementById('gc-total-preview');
+  if (!el) return;
+  var total = 0, parts = [];
+  CASE_ACTIVITIES.forEach(function (a) {
+    var f = document.getElementById('gc-req-' + a.key);
+    var v = f ? parseInt(f.value, 10) : NaN;
+    if (isNaN(v) || v < 0) v = a.def;
+    total += v;
+    parts.push(a.label + ' ' + v);
+  });
+  el.textContent = 'Total required: ' + total + ' case' + (total === 1 ? '' : 's') +
+                   '  \u2014  ' + parts.join(' \u00B7 ');
+}
+
 function saveGradingConfig() {
-  var rc = parseInt(document.getElementById('gc-required-cases').value, 10);
   var sc = parseFloat(document.getElementById('gc-scale').value);
-  if (!rc || rc < 1) { showToast('⚠️ Required Cases must be at least 1'); return; }
-  if (!sc || sc <= 0) { showToast('⚠️ Grade Scale must be greater than 0'); return; }
-  var cfg = { requiredCases: rc, scale: sc };
+  if (!sc || sc <= 0) { showToast('\u26A0\uFE0F Grade Scale must be greater than 0'); return; }
+
+  var per = {}, rc = 0, bad = false;
+  CASE_ACTIVITIES.forEach(function (a) {
+    var f = document.getElementById('gc-req-' + a.key);
+    var v = f ? parseInt(f.value, 10) : NaN;
+    if (isNaN(v) || v < 0) { bad = true; return; }
+    per[a.key] = v; rc += v;
+  });
+  if (bad) { showToast('\u26A0\uFE0F Enter a number (0 or more) for every activity'); return; }
+  if (rc < 1) { showToast('\u26A0\uFE0F The total required cases cannot be zero'); return; }
+
+  var cfg = { requiredCases: rc, scale: sc, perActivity: per };
   Store.set('medi045_grading_config', JSON.stringify(cfg));
-  postToCloud({type:'grading_config', id:'grading_config_singleton', requiredCases:rc, scale:sc, status:'active', updatedAt:new Date().toISOString()});
-  logAudit('update_grading_config', 'Set Required Cases='+rc+', Scale=/'+sc+' — all grades recalculate live');
+  postToCloud({type:'grading_config', id:'grading_config_singleton', requiredCases:rc, scale:sc,
+               perActivity:per, status:'active', updatedAt:new Date().toISOString()});
+  logAudit('update_grading_config', 'Set Required Cases='+rc+' ('+CASE_ACTIVITIES.map(function(a){return a.label+' '+per[a.key];}).join(', ')+'), Scale=/'+sc+' — all grades recalculate live');
   renderDashboard();
   showToast('✅ Grading rules saved — all grades updated automatically');
 }
@@ -2605,6 +2695,7 @@ function syncGradingConfigFromCloud() {
       Store.set('medi045_grading_config', JSON.stringify({requiredCases:cfg.requiredCases, scale:cfg.scale}));
       var rc = document.getElementById('gc-required-cases'); if(rc) rc.value = cfg.requiredCases;
       var sc = document.getElementById('gc-scale'); if(sc) sc.value = cfg.scale;
+      fillActivityQuotaFields(cfg);
       renderDashboard();
     }
   });
@@ -2819,7 +2910,9 @@ function syncCredentialsFromCloud(callback) {
     if (cred && cred.salt && (cred.evalPwdHash || cred.adminPwdHash)) setStoredCredMeta(cred);
     records = records.filter(function(r){ return r.type !== 'app_credentials'; });
     var gc = records.find(function(r){ return r.type==='grading_config'; });
-    if (gc) { Store.set('medi045_grading_config', JSON.stringify({requiredCases:gc.requiredCases, scale:gc.scale})); }
+    if (gc) { Store.set('medi045_grading_config', JSON.stringify({
+      requiredCases: gc.requiredCases, scale: gc.scale, perActivity: gc.perActivity || null
+    })); }
     var bc = records.find(function(r){ return r.type==='batch_config'; });
     if (bc && bc.status !== 'deleted') { Store.set('medi045_batch_config', JSON.stringify({batchName:bc.batchName, startDate:bc.startDate, deadlineDate:bc.deadlineDate})); }
     else if (bc && bc.status === 'deleted') { Store.set('medi045_batch_config', ''); }
@@ -3306,9 +3399,31 @@ function updateStats() { var TYPES=['clinic','intraop','pacu','ward','case']; va
 function updateUGBanner() {
   var el = document.getElementById('ug-case-status');
   if (!el) return;
-  var TYPES = ['clinic','intraop','pacu','ward','case'];
-  var submitted = records.filter(function(r){ return TYPES.indexOf(r.type)!==-1 && r.status==='submitted'; }).length;
-  el.innerHTML = '📋 Cases submitted: <b>' + submitted + '</b>';
+
+  // Show progress per activity, not just a total. A student who has submitted
+  // ten cases but all of one kind has not met the requirement, and a bare
+  // count would hide that.
+  var prog = getActivityProgress();
+  var cfg  = getGradingConfig();
+  var done = prog.reduce(function (s, a) { return s + Math.min(a.done, a.need); }, 0);
+  var allMet = prog.every(function (a) { return a.met; });
+
+  var rows = prog.map(function (a) {
+    var colour = a.met ? '#2ecc71' : (a.done > 0 ? '#f39c12' : '#9ca3af');
+    var mark   = a.met ? '\u2713' : (a.done + '/' + a.need);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px">' +
+             '<span style="width:18px;text-align:center">' + a.icon + '</span>' +
+             '<span style="flex:1;color:#4a5a6b">' + a.label + '</span>' +
+             '<span style="font-weight:800;color:' + colour + '">' + mark + '</span>' +
+             (a.met ? '' : '<span style="color:#9ca3af;font-size:11px">need ' + (a.need - a.done) + ' more</span>') +
+           '</div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div style="font-weight:800;color:' + (allMet ? '#2ecc71' : '#2a5298') + ';margin-bottom:6px">' +
+      (allMet ? '\u2705 All required cases submitted' :
+                '\uD83D\uDCCB Cases submitted: <b>' + done + ' of ' + cfg.requiredCases + '</b>') +
+    '</div>' + rows;
   el.style.color = '#2a5298';
 }
 function toggleSkill(header) { let content=header.nextElementSibling; content.classList.toggle('open'); header.querySelector('span:last-child').textContent=content.classList.contains('open')?'∨':'›'; }
@@ -4310,6 +4425,7 @@ function switchDashTab(idx) {
     var gc = getGradingConfig();
     var rcEl = document.getElementById('gc-required-cases'); if(rcEl) rcEl.value = gc.requiredCases;
     var scEl = document.getElementById('gc-scale'); if(scEl) scEl.value = gc.scale;
+    fillActivityQuotaFields(gc);
     renderBatchStatus();
   }
   window.scrollTo(0,0);
