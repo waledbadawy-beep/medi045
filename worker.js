@@ -41,13 +41,19 @@ const PUBLIC_CONFIG = new Set([
 
 // Types a student must never receive, even for their own records. Marks are
 // released by the programme, not read out of the app before moderation.
-const STAFF_ONLY_TYPES = ['evaluation', 'audit_log'];
+const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials'];
 
-// Never stored, never returned, under any circumstances.
-const FORBIDDEN_TYPES = new Set(['app_credentials']);
+// Nothing is forbidden outright any more, but credentials are special: see
+// STAFF_ONLY_TYPES below and the plain-text guard in handlePost. The record may
+// hold only PBKDF2 hashes, never a password.
+const FORBIDDEN_TYPES = new Set([]);
 
-// Field names stripped from every incoming record as a second line of defence.
+// Plain-text credential fields are stripped from every incoming record. A
+// password must never reach the database in a readable form, whatever sends it.
 const FORBIDDEN_FIELDS = ['evalPwd', 'adminPwd', 'password', 'pin', 'recoveryCode'];
+
+// Only a staff-authenticated request may write these.
+const STAFF_WRITABLE_ONLY = new Set(['app_credentials']);
 
 // An ordinary record is small; an attachment arrives base64-encoded in the same
 // body, which is about a third larger than the file itself. Two limits, so a
@@ -136,7 +142,7 @@ async function handleGet(request, env) {
   if (staff) {
     // Full read — supervisors and the director.
     rows = await env.MEDI045_DB
-      .prepare(`SELECT json FROM records WHERE type NOT IN ('app_credentials')`)
+      .prepare(`SELECT json FROM records`)
       .all();
   } else if (sid) {
     // Scoped read — this student's own records, plus shared config.
@@ -164,7 +170,7 @@ async function handleGet(request, env) {
   for (const r of (rows.results || [])) {
     try {
       const parsed = JSON.parse(r.json);
-      if (parsed && !FORBIDDEN_TYPES.has(parsed.type) && parsed.status !== 'deleted') {
+      if (parsed && parsed.status !== 'deleted') {
         out.push(stripForbidden(parsed));
       }
     } catch (e) { /* skip unparseable row rather than failing the whole read */ }
@@ -253,11 +259,23 @@ async function handlePost(request, env) {
   // ---- ordinary record upsert
   const type = String(data.type || '');
 
-  if (FORBIDDEN_TYPES.has(type)) {
-    return json(env, {
-      success: false,
-      error: 'Credentials are not stored on the server. Passwords are held on the device only.'
-    }, 403);
+  if (STAFF_WRITABLE_ONLY.has(type) && !staff) {
+    return json(env, { success: false, error: 'Not authorised to write credentials' }, 403);
+  }
+
+  // Credentials may be stored only as a hash. If anything resembling a readable
+  // password arrives, refuse the whole record rather than store it.
+  if (type === 'app_credentials') {
+    const allowed = new Set(['type', 'id', 'status', 'updated', 'updatedAt',
+                             'evalPwdHash', 'adminPwdHash', 'salt', 'iterations', 'algo']);
+    for (const k of Object.keys(data)) {
+      if (!allowed.has(k)) {
+        return json(env, {
+          success: false,
+          error: 'Credential records may contain only hashed values, not passwords.'
+        }, 400);
+      }
+    }
   }
 
   if (!staff && !STUDENT_WRITABLE.has(type)) {
