@@ -13,7 +13,7 @@ binding = "MEDI045_FILES"
 bucket_name = "medi045-files"
 
 [triggers]
-crons = ["0 2 * * 0"]
+crons = ["0 21 * * *"]  # 00:00 Riyadh daily (UTC+3)
 
 # Set as plain text variables in the dashboard or here:
 #   ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
