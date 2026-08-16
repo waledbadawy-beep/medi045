@@ -359,6 +359,12 @@ async function runBackup(env) {
   for (let i = 0; i < utf8.length; i++) binary += String.fromCharCode(utf8[i]);
   const b64 = btoa(binary);
 
+  // Both deployments send to the same inbox, so the mail has to say which one
+  // it came from. Set APP_LABEL as a plain variable on each Worker
+  // ("Undergraduate" / "Postgraduate"); unset, the mail reads as before.
+  const label = (env.APP_LABEL || '').trim();
+  const slug  = label ? label.replace(/[^A-Za-z0-9]+/g, '') : 'Backup';
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -368,9 +374,9 @@ async function runBackup(env) {
     body: JSON.stringify({
       from: 'onboarding@resend.dev',
       to: [env.BACKUP_EMAIL],
-      subject: `MEDI 045 backup — ${stamp} (${count} records)`,
-      text: `Automatic backup of the MEDI 045 log book.\n\nRecords: ${count}\nGenerated: ${new Date().toISOString()}\n\nThe CSV is attached.`,
-      attachments: [{ filename: `MEDI045_Backup_${stamp}.csv`, content: b64 }]
+      subject: `MEDI 045 ${label} backup — ${stamp} (${count} records)`,
+      text: `Automatic backup of the MEDI 045 ${label} log book.\n\nRecords: ${count}\nGenerated: ${new Date().toISOString()}\n\nThe CSV is attached.`,
+      attachments: [{ filename: `MEDI045_${slug}_Backup_${stamp}.csv`, content: b64 }]
     })
   });
 

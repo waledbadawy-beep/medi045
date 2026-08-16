@@ -26,3 +26,4 @@ crons = ["0 21 * * *"]  # 00:00 Riyadh daily (UTC+3)
 [vars]
 ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
 BACKUP_EMAIL = "waledbadawy@gmail.com"
+APP_LABEL = "Undergraduate"

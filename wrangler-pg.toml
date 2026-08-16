@@ -1,0 +1,36 @@
+# Postgraduate deployment. Same worker.js as the undergraduate Worker — the two
+# are distinguished only by their bindings and variables, so there is one piece
+# of backend code to maintain, not two.
+#
+# The undergraduate deployment stays in wrangler.toml (cold-term-86d6 /
+# medi045-db / medi045-files) and is not touched by anything here.
+name = "medi045-pg"
+account_id = "b886108e19085b912cb7ae15d92a3f73"
+main = "worker.js"
+compatibility_date = "2026-08-13"
+
+[[d1_databases]]
+binding = "MEDI045_DB"
+database_name = "medi045-pg-db"
+database_id = "87ad9500-bbb5-4cb1-962f-0914e1c8613d"
+
+[[r2_buckets]]
+binding = "MEDI045_FILES"
+bucket_name = "medi045-pg-files"
+
+[triggers]
+crons = ["0 21 * * *"]  # 00:00 Riyadh daily (UTC+3)
+
+# Set as SECRETS in the dashboard, never here:
+#   STAFF_TOKEN     — must be DIFFERENT from the undergraduate Worker's token.
+#                     A shared token would undo the separation: it is the only
+#                     thing standing between a holder and full read/delete on
+#                     whichever database the Worker is bound to.
+#   RESEND_API_KEY  — the same key is fine; it identifies the sender, not the app.
+#
+# NOTE: a wrangler deploy REPLACES the [vars] block on the Worker, so every
+# plain-text variable must be listed here.
+[vars]
+ALLOWED_ORIGIN = "https://waledbadawy-beep.github.io"
+BACKUP_EMAIL = "waledbadawy@gmail.com"
+APP_LABEL = "Postgraduate"
