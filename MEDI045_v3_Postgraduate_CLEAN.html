@@ -3840,6 +3840,27 @@ function deleteSingleCase(caseId) {
   msg += '\n\nIt will disappear on every device. This cannot be undone.';
   if (!confirm(msg)) return;
 
+  // While the submission window is open, the cases on screen are live student
+  // work, and this button sits directly beside the evaluate button. A single
+  // mis-tap would destroy a submission with no undo and no import path, so
+  // inside the window the confirmation has to be typed rather than clicked.
+  // Outside the window a plain confirm is enough - nothing is in flight.
+  if (isBatchActivePeriod()) {
+    var b = getBatchConfig() || {};
+    var expect = String(c.caseNo || '');
+    var typed = prompt(
+      '\u26A0\uFE0F The submission window is still OPEN (' + (b.batchName || 'current batch') +
+      ' closes ' + (b.deadlineDate || 'unknown') + ').\n\n' +
+      'This is live student work. To confirm deletion of Case #' + expect +
+      ' (' + (c.patientName || '') + '), type the case number below.'
+    );
+    if (typed === null) return;
+    if (String(typed).trim() !== expect) {
+      showToast('\u274C Case number did not match \u2014 nothing deleted');
+      return;
+    }
+  }
+
   c.status = 'deleted';
   c.updated = new Date().toISOString();
 
