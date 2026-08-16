@@ -1615,7 +1615,7 @@
 <div class="nav-item" onclick="goto('screen-home')"><span class="nav-icon">🏠</span>Home</div>
 <div class="nav-item" onclick="openCaseScreen('screen-pg-clinic','cl')"><span class="nav-icon">➕</span>New Case</div>
 <div class="nav-item active"><span class="nav-icon">🔬</span>Practical</div>
-<div class="nav-item" onclick="goto('screen-eval')"><span class="nav-icon">🎓</span>Evaluate</div>
+<div class="nav-item" id="nav-evaluate" style="display:none" onclick="gotoProtected('screen-eval')"><span class="nav-icon">🎓</span>Evaluate</div>
 </div>
 </div>
 <!-- ===================== COURSE REFERENCE ===================== -->
@@ -1963,7 +1963,7 @@ const Store = (() => {
 })();
 
 // ==================== CLOUD SYNC ====================
-const APPS_SCRIPT_URL = 'https://cold-term-86d6.waledbadawy7.workers.dev';
+const APPS_SCRIPT_URL = 'https://medi045-pg.waledbadawy7.workers.dev';
 
 function markUnsynced(recordId) {
   try {
@@ -3437,6 +3437,13 @@ function showPasswordModal() {
 // ==================== NAVIGATION ====================
 function _gotoBase(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
 function goto(id) {
+  // A staff screen is never reachable without an unlock, whatever route asks
+  // for it. goto() used to relock only when LEAVING a staff screen, so any
+  // caller that named one directly walked straight in - which is how the
+  // Evaluate tab in the practical bottom bar opened the supervisor screen for
+  // a student with no PIN at all.
+  if (STAFF_SCREENS.indexOf(id) !== -1 && !evalUnlocked) { showPasswordModal(); return; }
+
   var leavingStaff = STAFF_SCREENS.some(function (s) {
     var el = document.getElementById(s);
     return el && el.classList.contains('active');
@@ -3445,6 +3452,15 @@ function goto(id) {
   _gotoBase(id);
   if (id === 'screen-register') updateStaffEntryVisibility();
   if (STAFF_SCREENS.indexOf(id) !== -1) touchStaffActivity();
+  updateEvalNavVisibility();
+}
+
+// The Evaluate tab is a supervisor control sitting in a bar students use. It is
+// hidden unless a supervisor is actually unlocked, so students are not offered
+// a door they cannot open.
+function updateEvalNavVisibility() {
+  var el = document.getElementById('nav-evaluate');
+  if (el) el.style.display = evalUnlocked ? '' : 'none';
 }
 function gotoProtected(id) { if (evalUnlocked) goto(id); else showPasswordModal(); }
 
@@ -3508,6 +3524,7 @@ function isStaffScreen(id) { return STAFF_SCREENS.indexOf(id) !== -1; }
 function lockStaff(reason) {
   if (!evalUnlocked) return;
   evalUnlocked = false;
+  try { updateEvalNavVisibility(); } catch (e) {}
   if (_staffIdleTimer) { clearTimeout(_staffIdleTimer); _staffIdleTimer = null; }
   try { if (typeof lockAdminPanel === 'function') lockAdminPanel(); } catch (e) {}
   if (reason && typeof showToast === 'function') showToast('\uD83D\uDD12 Supervisor panel locked');
