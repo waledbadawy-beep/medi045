@@ -3703,6 +3703,7 @@ function renderDashboard() {
         html += '<div style="display:flex;gap:6px;flex-shrink:0">';
         html += '<button onclick="openCaseDetail('+c.id+')" style="background:#eaf1fa;color:#1a3a5c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">👁</button>';
         html += '<button onclick="loadCaseForEval('+c.id+')" style="background:'+evBg+';color:white;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">'+evLabel+'</button>';
+        html += '<button onclick="deleteSingleCase('+c.id+')" title="Delete this case" style="background:#fdecea;color:#a32b1c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\uD83D\uDDD1</button>';
         html += '</div></div>';
       });
       // Pending approvals for this type
@@ -3835,6 +3836,53 @@ function renderAuditLog() {
       + '<div style="color:var(--muted);font-size:10px;margin-top:3px">'+_esc(l.timestamp)+' · '+_esc(l.admin)+'</div>'
       + '</div>';
   }).join('');
+}
+
+// ==================== SINGLE-RECORD DELETE ====================
+// The bulk "clear all cases" buttons are gated on the batch window because they
+// destroy a whole intake's work. Deleting one named case is a different act: it
+// is what a director does to remove a test entry or a duplicate, and gating it
+// the same way pushed people into moving the batch deadline just to tidy up,
+// which silently reopens or closes submissions for every student.
+//
+// Deletion is soft: the record is stamped 'deleted' and pushed. handleGet on the
+// Worker never returns a record in that state, and syncFromCloud now prunes what
+// the server withholds, so the case disappears on every device. That also means
+// no Worker redeploy is needed for this to work.
+function deleteSingleCase(caseId) {
+  if (!evalUnlocked) { showPasswordModal(); return; }
+  if (!hasStaffToken() && !promptStaffToken()) return;
+
+  var idx = records.findIndex(function (r) { return String(r.id) === String(caseId); });
+  if (idx < 0) { showToast('\u26A0\uFE0F Case not found'); return; }
+  var c = records[idx];
+
+  var ev = records.find(function (r) {
+    return r.type === 'evaluation' && String(r.caseId) === String(caseId);
+  });
+
+  var msg = 'Delete this case permanently?\n\n' +
+            'Case #' + (c.caseNo || '') + ' \u00B7 ' + (c.patientName || '') +
+            '\nStudent: ' + (c.studentName || c.studentId || 'unknown') +
+            '\nDate: ' + (c.caseDate || 'unknown');
+  if (ev) {
+    msg += '\n\n\u26A0\uFE0F This case has an evaluation' +
+           (ev.status === 'approved' ? ' with an APPROVED mark of ' + ev.finalMark + '/5' : '') +
+           '. The evaluation is NOT deleted and will be left with no case attached.';
+  }
+  msg += '\n\nIt will disappear on every device. This cannot be undone.';
+  if (!confirm(msg)) return;
+
+  c.status = 'deleted';
+  c.updated = new Date().toISOString();
+
+  postToCloud(c);
+  records.splice(idx, 1);
+  Store.set('medi045_records', JSON.stringify(records));
+  logAudit('delete_case', 'Deleted case #' + (c.caseNo || '') + ' (' + (c.patientName || '') +
+                          ') of student ' + (c.studentId || 'unknown'));
+  updateStats(); renderRecords(); renderDashboard(); renderResults();
+  showToast('\uD83D\uDDD1 Case deleted');
 }
 
 // ==================== DATA MANAGEMENT ====================
