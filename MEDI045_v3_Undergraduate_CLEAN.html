@@ -2872,30 +2872,50 @@ function getSupervisorNames() {
 var MASTER_RECOVERY_CODE = 'MEDI045RESET';
 
 function forgotPinFlow() {
-  var code = prompt('Enter the master recovery code to reset the Supervisor PIN to its default (1234):');
+  var code = prompt('Enter the master recovery code to reset the Supervisor PIN:');
   if (code === null) return;
-  if (code.trim() === MASTER_RECOVERY_CODE) {
-    Store.set('medi045_eval_pwd', '1234');
+  if (code.trim() !== MASTER_RECOVERY_CODE) { showToast('❌ Incorrect recovery code'); return; }
+
+  // Same defect as the admin flow: clear the shared hash and push the reset,
+  // otherwise the cloud record silently restores the old PIN.
+  try { localStorage.removeItem('medi045_cred_meta'); } catch (e) {}
+  Store.set('medi045_eval_pwd', '1234');
+
+  setSharedPassword('eval', '1234', function (shared) {
     logAudit('pin_recovery', 'Supervisor PIN reset to default via recovery code');
     closePasswordModal();
-    showToast('✅ Supervisor PIN reset to default (1234)');
-  } else {
-    showToast('❌ Incorrect recovery code');
-  }
+    if (shared) {
+      showToast('✅ Supervisor PIN reset on all devices');
+    } else {
+      showToast('⚠️ Reset on THIS device only - the server was not updated.');
+    }
+  });
 }
 
 function forgotAdminPwdFlow() {
-  var code = prompt('Enter the master recovery code to reset the Admin password to its default (ADMIN2025):');
+  var code = prompt('Enter the master recovery code to reset the Admin password:');
   if (code === null) return;
-  if (code.trim() === MASTER_RECOVERY_CODE) {
-    Store.set('medi045_admin_pwd', 'ADMIN2025');
+  if (code.trim() !== MASTER_RECOVERY_CODE) { showToast('❌ Incorrect recovery code'); return; }
+
+  // A shared PBKDF2 hash, once present, is the ONLY authority verifyPassword()
+  // consults - the local plain value is deliberately ignored. Resetting only
+  // that local value therefore did nothing, and the cloud record would be
+  // re-pulled by syncCredentialsFromCloud() on the next sync. The reset must
+  // clear the local hash AND overwrite the server record, or it is cosmetic.
+  try { localStorage.removeItem('medi045_cred_meta'); } catch (e) {}
+  Store.set('medi045_admin_pwd', 'ADMIN2025');
+
+  setSharedPassword('admin', 'ADMIN2025', function (shared) {
     logAudit('admin_pwd_recovery', 'Admin password reset to default via recovery code');
-    showToast('✅ Admin password reset to default (ADMIN2025)');
+    if (shared) {
+      showToast('✅ Admin password reset on all devices - sign in with the default');
+    } else {
+      showToast('⚠️ Reset on THIS device only - the server was not updated. ' +
+                'Other devices keep the old password and a sync may undo this.');
+    }
     var input = document.getElementById('admin-password-input');
     if (input) input.value = '';
-  } else {
-    showToast('❌ Incorrect recovery code');
-  }
+  });
 }
 
 function syncCredentialsFromCloud(callback) {
