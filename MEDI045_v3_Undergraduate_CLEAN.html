@@ -2084,59 +2084,83 @@ function verifyPassword(which, typed) {
 }
 
 /**
- * Stores a new password: locally for this device, and as a hash on the server so
- * every other supervisor device picks it up on their next sync.
+ * Writes the credential record. Both hashes live in ONE singleton row, so both
+ * must be written in ONE operation.
+ *
+ * The previous version took a single credential and reconstructed the other
+ * one's hash from whatever this device happened to hold. Saving the supervisor
+ * PIN and the admin password together therefore fired two of these at once:
+ * each read the same old record, each wrote a full row, and the slower one
+ * landed last and carried the OTHER credential's stale hash with it. The result
+ * was one new password working and the other silently reverting to its previous
+ * value - which is exactly what happened to the admin password.
+ *
+ * Pass every credential being changed in one call. Anything not named keeps its
+ * existing hash untouched.
  */
-function setSharedPassword(which, newPwd, done) {
-  var localKey = (which === 'admin') ? 'medi045_admin_pwd' : 'medi045_eval_pwd';
-  Store.set(localKey, newPwd);
-
+function setSharedCredentials(next, done) {
+  next = next || {};
   var meta = getStoredCredMeta() || {};
   var salt = meta.salt || (_hasCrypto() ? _randomSalt() : '');
+
+  if (next.eval)  Store.set('medi045_eval_pwd', next.eval);
+  if (next.admin) Store.set('medi045_admin_pwd', next.admin);
+
   if (!_hasCrypto()) {
     showToast('\u26A0\uFE0F Saved on this device only \u2014 this browser cannot sync passwords securely');
     if (done) done(false);
     return;
   }
 
-  var otherField = (which === 'admin') ? 'evalPwdHash' : 'adminPwdHash';
-  var otherLocal = (which === 'admin') ? (Store.get('medi045_eval_pwd') || '1234')
-                                       : (Store.get('medi045_admin_pwd') || 'ADMIN2025');
+  // A credential that is not being changed keeps its stored hash. Only when no
+  // hash exists yet is one derived from this device's current value.
+  var evalHash = next.eval
+    ? hashPassword(next.eval, salt, PWD_ITERATIONS)
+    : (meta.evalPwdHash ? Promise.resolve(meta.evalPwdHash)
+                        : hashPassword(Store.get('medi045_eval_pwd') || '1234', salt, PWD_ITERATIONS));
+  var adminHash = next.admin
+    ? hashPassword(next.admin, salt, PWD_ITERATIONS)
+    : (meta.adminPwdHash ? Promise.resolve(meta.adminPwdHash)
+                         : hashPassword(Store.get('medi045_admin_pwd') || 'ADMIN2025', salt, PWD_ITERATIONS));
 
-  hashPassword(newPwd, salt, PWD_ITERATIONS).then(function (h) {
-    if (!h) { if (done) done(false); return; }
-    // Keep the other credential's hash consistent with this device's value.
-    return hashPassword(otherLocal, salt, PWD_ITERATIONS).then(function (oh) {
-      var rec = {
-        type: 'app_credentials',
-        id: 'app_credentials_singleton',
-        status: 'active',
-        salt: salt,
-        iterations: PWD_ITERATIONS,
-        algo: 'PBKDF2-SHA256',
-        updatedAt: new Date().toISOString()
-      };
-      rec[(which === 'admin') ? 'adminPwdHash' : 'evalPwdHash'] = h;
-      rec[otherField] = meta[otherField] || oh;
+  Promise.all([evalHash, adminHash]).then(function (h) {
+    if (!h[0] || !h[1]) { if (done) done(false); return; }
+    var rec = {
+      type: 'app_credentials',
+      id: 'app_credentials_singleton',
+      status: 'active',
+      salt: salt,
+      iterations: PWD_ITERATIONS,
+      algo: 'PBKDF2-SHA256',
+      evalPwdHash: h[0],
+      adminPwdHash: h[1],
+      updatedAt: new Date().toISOString()
+    };
 
-      setStoredCredMeta(rec);
-      apiPost(rec).then(function (res) {
-        if (res && res.success) {
-          showToast('\u2705 Password updated on all devices');
-          if (done) done(true);
-        } else {
-          showToast('\u26A0\uFE0F Changed on this device, but NOT shared \u2014 ' +
-                    ((res && res.error) ? res.error : 'the server refused it') +
-                    '. Other devices keep the old password.');
-          if (done) done(false);
-        }
-      }).catch(function () {
-        showToast('\u26A0\uFE0F Changed on this device only \u2014 no connection to the server. ' +
-                  'Other devices keep the old password until this syncs.');
+    setStoredCredMeta(rec);
+    return apiPost(rec).then(function (res) {
+      if (res && res.success) {
+        showToast('\u2705 Password updated on all devices');
+        if (done) done(true);
+      } else {
+        showToast('\u26A0\uFE0F Changed on this device, but NOT shared \u2014 ' +
+                  ((res && res.error) ? res.error : 'the server refused it') +
+                  '. Other devices keep the old password.');
         if (done) done(false);
-      });
+      }
     });
+  }).catch(function () {
+    showToast('\u26A0\uFE0F Changed on this device only \u2014 no connection to the server. ' +
+              'Other devices keep the old password until this syncs.');
+    if (done) done(false);
   });
+}
+
+// Kept for the recovery flows, which change exactly one credential.
+function setSharedPassword(which, newPwd, done) {
+  var next = {};
+  next[(which === 'admin') ? 'admin' : 'eval'] = newPwd;
+  setSharedCredentials(next, done);
 }
 
 function getStaffToken() { try { return Store.get('medi045_staff_token') || ''; } catch (e) { return ''; } }
@@ -3399,7 +3423,14 @@ function isStudentDevice() {
 function updateStaffEntryVisibility() {
   var el = document.getElementById('staff-entry-block');
   if (!el) return;
-  el.style.display = (isStudentDevice() && !_staffRevealed) ? 'none' : 'block';
+  // Hidden for everyone unless a member of staff reveals it with the
+  // press-and-hold gesture on the cap icon.
+  //
+  // It used to appear on any device with no student profile stored. That is
+  // precisely the state every student's phone is in the first time they open
+  // the app, so the entry was shown to the whole intake before they registered
+  // and hidden only afterwards - the opposite of the intent.
+  el.style.display = _staffRevealed ? 'block' : 'none';
 }
 
 // Fallback for a shared computer a student has already registered on: press
@@ -4693,13 +4724,14 @@ function saveAdminSettings() {
   var errors = [];
   var savedSomething = false;
 
+  // Both credentials share one record, so they are collected and written once.
+  // Two separate writes race each other and one silently loses.
+  var credChange = {};
   if (newEval) {
     if (newEval.length < 4) {
       errors.push('Supervisor PIN must be at least 4 digits — not saved');
     } else {
-      // Stored locally and shared as a hash, so every supervisor device picks
-      // the new PIN up on its next sync.
-      setSharedPassword('eval', newEval);
+      credChange.eval = newEval;
       logAudit('change_supervisor_pin', 'Supervisor PIN changed');
       savedSomething = true;
     }
@@ -4708,11 +4740,12 @@ function saveAdminSettings() {
     if (newAdmin.length < 6) {
       errors.push('Admin password must be at least 6 characters — not saved');
     } else {
-      setSharedPassword('admin', newAdmin);
+      credChange.admin = newAdmin;
       logAudit('change_admin_password', 'Admin password changed');
       savedSomething = true;
     }
   }
+  if (credChange.eval || credChange.admin) setSharedCredentials(credChange);
   if (pdEmail) { Store.set('medi045_pd_email', pdEmail); savedSomething = true; }
   const supervisors = document.getElementById('admin-supervisors').value.trim();
   if (supervisors) {
