@@ -2158,13 +2158,17 @@ function withStaffToken(body) {
 }
 
 // Student reads are scoped by university ID; staff reads return everything.
-function apiGetUrl() {
-  if (hasStaffToken()) return APPS_SCRIPT_URL + '?staff=' + encodeURIComponent(getStaffToken());
-  var sid = '';
+function currentStudentSid() {
   try {
     var p = JSON.parse(Store.get('medi045_profile') || 'null');
-    if (p && p.universityId) sid = String(p.universityId).trim();
+    if (p && p.universityId) return String(p.universityId).trim();
   } catch (e) {}
+  return '';
+}
+
+function apiGetUrl() {
+  if (hasStaffToken()) return APPS_SCRIPT_URL + '?staff=' + encodeURIComponent(getStaffToken());
+  var sid = currentStudentSid();
   return sid ? APPS_SCRIPT_URL + '?sid=' + encodeURIComponent(sid) : APPS_SCRIPT_URL;
 }
 
@@ -2322,6 +2326,46 @@ function syncFromCloud(callback) {
         }
         else { records.push(cr); }
       });
+
+      // ---- Prune records the server no longer has.
+      // This merge used to only add and update, so a delete performed on one
+      // device never reached any other: the record was simply absent from the
+      // response and nothing removed it locally. Deletions therefore appeared
+      // to work on the device that made them and nowhere else.
+      //
+      // Absence only proves deletion for records this caller was entitled to
+      // receive, so the scope of the request just answered decides what may be
+      // pruned. Pruning wider than the scope would destroy live student work.
+      var cloudIds = Object.create(null);
+      cloudRecords.forEach(function (cr) {
+        if (cr && cr.id !== undefined && cr.id !== null) cloudIds[String(cr.id)] = true;
+      });
+
+      var PUBLIC_TYPES = ['announcement', 'batch_config', 'grading_config', 'supervisor_list'];
+      // The server withholds these from a student by design (marks are released
+      // by the programme, not read out of the app), so their absence is expected.
+      var WITHHELD_FROM_STUDENT = ['evaluation', 'audit_log', 'app_credentials'];
+      var mySid = currentStudentSid();
+      var scope = hasStaffToken() ? 'staff' : (mySid ? 'student' : 'none');
+
+      // Unregistered device: the server returned public config only. Nothing
+      // can be concluded about anything else, so prune nothing.
+      if (scope !== 'none') {
+        records = records.filter(function (r) {
+          if (!r || r.id === undefined || r.id === null) return true;
+          if (r._cloudSynced === false) return true;   // queued locally, never accepted
+          if (r.status === 'draft') return true;       // drafts are never uploaded at all
+          if (cloudIds[String(r.id)]) return true;     // still on the server
+          if (scope === 'student') {
+            if (WITHHELD_FROM_STUDENT.indexOf(r.type) !== -1) return true;
+            var isPublic = PUBLIC_TYPES.indexOf(r.type) !== -1;
+            var isMine = String(r.studentId || r.student || '') === String(mySid);
+            if (!isPublic && !isMine) return true;     // outside the scoped read
+          }
+          return false;                                 // deleted on the server
+        });
+      }
+
       Store.set('medi045_records', JSON.stringify(records));
       if (callback) callback();
     })
