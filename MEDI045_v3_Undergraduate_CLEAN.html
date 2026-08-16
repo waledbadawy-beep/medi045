@@ -906,6 +906,9 @@
 @keyframes annPulse { 0%,100% { box-shadow:0 0 0 0 rgba(230,57,70,0.5); } 50% { box-shadow:0 0 0 8px rgba(230,57,70,0); } }
 @keyframes annPop { from { transform:scale(0.9); opacity:0; } to { transform:scale(1); opacity:1; } }
 
+.station-group{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.station-group::after{content:"";flex:1;height:1px;background:var(--border)}
+.station-group .sg-count{text-transform:none;letter-spacing:0;font-weight:600;opacity:.75}
 </style>
 </head>
 <body>
@@ -1040,7 +1043,7 @@
 <div class="menu-card primary-card" onclick="openCaseScreen('screen-pacu','pacu')" style="border-left:5px solid #2e7d5e;margin-bottom:8px"><div class="menu-icon" style="color:#2e7d5e">🫁</div><div class="menu-card-info"><h3>PACU / Recovery Room</h3><p>Vitals · Aldrete score · Discharge decision</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card primary-card" onclick="openCaseScreen('screen-ward','wd')" style="border-left:5px solid #8b5e2e"><div class="menu-icon" style="color:#8b5e2e">🛏️</div><div class="menu-card-info"><h3>Ward / Pain Round</h3><p>CLO 2.3 · Pain · WHO ladder · Satisfaction</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-records')"><div class="menu-icon ic-green">🗂️</div><div class="menu-card-info"><h3>Student Portfolio</h3><p>View all saved cases &amp; assessments</p></div><div class="menu-arrow">›</div></div>
-<div class="menu-card" onclick="goto('screen-practical')"><div class="menu-icon ic-orange">🔬</div><div class="menu-card-info"><h3>Practical Sessions – Skill Lab</h3><p>10 Stations · Steps · Self-Assessment · KPIs</p></div><div class="menu-arrow">›</div></div>
+<div class="menu-card" onclick="goto('screen-practical')"><div class="menu-icon ic-orange">🔬</div><div class="menu-card-info"><h3>Practical Sessions – Skill Lab</h3><p>13 Stations · Steps · Self-Assessment · KPIs</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-course-ref')"><div class="menu-icon ic-gold">📖</div><div class="menu-card-info"><h3>Course Reference</h3><p>Topics, CLOs &amp; resources</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-elearning')"><div class="menu-icon ic-pink">🎥</div><div class="menu-card-info"><h3>eLearning Videos</h3><p>YouTube tutorials for practical skills</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-survey')"><div class="menu-icon" style="background:#e8f0fe;color:#1a73e8">📝</div><div class="menu-card-info"><h3>Program Evaluation</h3><p>Rate workshops, teaching &amp; resources</p></div><div class="menu-arrow">›</div></div>
@@ -1140,7 +1143,7 @@
 <div class="screen" id="screen-practical">
 <div class="app-bar">
 <button class="back-btn" onclick="goto('screen-home')">‹</button>
-<div class="app-bar-title"><h1>Practical Sessions – Skill Lab</h1><p>MEDI 045 · 10 Stations · Self-Assessment Checklist</p></div>
+<div class="app-bar-title"><h1>Practical Sessions – Skill Lab</h1><p>MEDI 045 · 13 Stations · Self-Assessment Checklist</p></div>
 <button class="save-btn" onclick="savePractical()">Save</button>
 </div>
 <!-- LEGEND -->
@@ -1166,6 +1169,7 @@
 </div>
 <div style="padding-top:10px;padding-bottom:10px">
 <!-- ===== STATION 1: OPA ===== -->
+<div class="station-group">Airway Management <span class="sg-count">5 stations</span></div>
 <div class="station-card" id="station-1">
 <div class="station-header" onclick="toggleStation('station-1')">
 <div class="station-icon" style="background:#fef3e8">🟠</div>
@@ -1280,6 +1284,7 @@
 </div>
 </div>
 <!-- ===== STATION 6: IV CANNULATION ===== -->
+<div class="station-group">Vascular Access <span class="sg-count">2 stations</span></div>
 <div class="station-card" id="station-6">
 <div class="station-header" onclick="toggleStation('station-6')">
 <div class="station-icon" style="background:#e8f8f0">💉</div>
@@ -1319,6 +1324,7 @@
 </div>
 </div>
 <!-- ===== STATION 8: SPINAL ANAESTHESIA ===== -->
+<div class="station-group">Regional Anaesthesia <span class="sg-count">2 stations</span></div>
 <div class="station-card" id="station-8">
 <div class="station-header" onclick="toggleStation('station-8')">
 <div class="station-icon" style="background:#fff0e8">🩺</div>
@@ -1357,6 +1363,7 @@
 </div>
 </div>
 <!-- ===== STATION 10: ANAESTHESIA MACHINE ===== -->
+<div class="station-group">Equipment &amp; Safety <span class="sg-count">1 station</span></div>
 <div class="station-card" id="station-10">
 <div class="station-header" onclick="toggleStation('station-10')">
 <div class="station-icon" style="background:#e8f0fe">⚙️</div>
@@ -1377,6 +1384,7 @@
 </div>
 </div><!-- end padding wrapper -->
 <!-- ===== STATION 11: OR FULL SIMULATION ===== -->
+<div class="station-group">Simulation &amp; Communication <span class="sg-count">3 stations</span></div>
 <div class="station-card" id="station-11" style="margin:0 16px 14px">
 <div class="station-header" onclick="toggleStation('station-11')">
 <div class="station-icon" style="background:#fde8f8">🎭</div>
@@ -1617,7 +1625,7 @@
 <div class="nav-item" onclick="goto('screen-home')"><span class="nav-icon">🏠</span>Home</div>
 <div class="nav-item" onclick="openCaseScreen('screen-clinic','cl')"><span class="nav-icon">➕</span>New Case</div>
 <div class="nav-item active"><span class="nav-icon">🔬</span>Practical</div>
-<div class="nav-item" onclick="goto('screen-eval')"><span class="nav-icon">🎓</span>Evaluate</div>
+<div class="nav-item" id="nav-evaluate" style="display:none" onclick="gotoProtected('screen-eval')"><span class="nav-icon">🎓</span>Evaluate</div>
 </div>
 </div>
 <!-- ===================== COURSE REFERENCE ===================== -->
@@ -3393,6 +3401,13 @@ function showPasswordModal() {
 // ==================== NAVIGATION ====================
 function _gotoBase(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
 function goto(id) {
+  // A staff screen is never reachable without an unlock, whatever route asks
+  // for it. goto() used to relock only when LEAVING a staff screen, so any
+  // caller that named one directly walked straight in - which is how the
+  // Evaluate tab in the practical bottom bar opened the supervisor screen for
+  // a student with no PIN at all.
+  if (STAFF_SCREENS.indexOf(id) !== -1 && !evalUnlocked) { showPasswordModal(); return; }
+
   var leavingStaff = STAFF_SCREENS.some(function (s) {
     var el = document.getElementById(s);
     return el && el.classList.contains('active');
@@ -3401,6 +3416,15 @@ function goto(id) {
   _gotoBase(id);
   if (id === 'screen-register') updateStaffEntryVisibility();
   if (STAFF_SCREENS.indexOf(id) !== -1) touchStaffActivity();
+  updateEvalNavVisibility();
+}
+
+// The Evaluate tab is a supervisor control sitting in a bar students use. It is
+// hidden unless a supervisor is actually unlocked, so students are not offered
+// a door they cannot open.
+function updateEvalNavVisibility() {
+  var el = document.getElementById('nav-evaluate');
+  if (el) el.style.display = evalUnlocked ? '' : 'none';
 }
 function gotoProtected(id) { if (evalUnlocked) goto(id); else showPasswordModal(); }
 
@@ -3464,6 +3488,7 @@ function isStaffScreen(id) { return STAFF_SCREENS.indexOf(id) !== -1; }
 function lockStaff(reason) {
   if (!evalUnlocked) return;
   evalUnlocked = false;
+  try { updateEvalNavVisibility(); } catch (e) {}
   if (_staffIdleTimer) { clearTimeout(_staffIdleTimer); _staffIdleTimer = null; }
   try { if (typeof lockAdminPanel === 'function') lockAdminPanel(); } catch (e) {}
   if (reason && typeof showToast === 'function') showToast('\uD83D\uDD12 Supervisor panel locked');
