@@ -2108,17 +2108,25 @@ function verifyPassword(which, typed) {
  */
 function setSharedCredentials(next, done) {
   next = next || {};
-  var meta = getStoredCredMeta() || {};
-  var salt = meta.salt || (_hasCrypto() ? _randomSalt() : '');
-
-  if (next.eval)  Store.set('medi045_eval_pwd', next.eval);
-  if (next.admin) Store.set('medi045_admin_pwd', next.admin);
 
   if (!_hasCrypto()) {
-    showToast('\u26A0\uFE0F Saved on this device only \u2014 this browser cannot sync passwords securely');
+    showToast('\u26A0\uFE0F This browser cannot hash passwords \u2014 nothing was changed');
     if (done) done(false);
     return;
   }
+
+  // The Worker accepts an app_credentials write only from a staff-authenticated
+  // request. Without the code the write is refused, the server keeps the old
+  // password, and the next sync pulls that old record back - which is why a
+  // password could appear to change and then quietly revert to the default.
+  // Ask for the code before doing anything.
+  if (!hasStaffToken()) {
+    promptStaffToken(function () { setSharedCredentials(next, done); });
+    return;
+  }
+
+  var meta = getStoredCredMeta() || {};
+  var salt = meta.salt || _randomSalt();
 
   // A credential that is not being changed keeps its stored hash. Only when no
   // hash exists yet is one derived from this device's current value.
@@ -2145,21 +2153,28 @@ function setSharedCredentials(next, done) {
       updatedAt: new Date().toISOString()
     };
 
-    setStoredCredMeta(rec);
     return apiPost(rec).then(function (res) {
       if (res && res.success) {
+        // Local state is written only once the server has accepted the change.
+        // Writing it first left this device trusting a password no other device
+        // knew, until a sync pulled the old record back and reverted it - with
+        // nothing on screen to say the change had never really taken.
+        if (next.eval)  Store.set('medi045_eval_pwd', next.eval);
+        if (next.admin) Store.set('medi045_admin_pwd', next.admin);
+        setStoredCredMeta(rec);
         showToast('\u2705 Password updated on all devices');
         if (done) done(true);
       } else {
-        showToast('\u26A0\uFE0F Changed on this device, but NOT shared \u2014 ' +
+        showToast('\u274C NOT changed \u2014 ' +
                   ((res && res.error) ? res.error : 'the server refused it') +
-                  '. Other devices keep the old password.');
+                  '. The old password is still in force everywhere.');
         if (done) done(false);
       }
     });
-  }).catch(function () {
-    showToast('\u26A0\uFE0F Changed on this device only \u2014 no connection to the server. ' +
-              'Other devices keep the old password until this syncs.');
+  }).catch(function (err) {
+    showToast('\u274C NOT changed \u2014 ' +
+              ((err && err.message) ? err.message : 'no connection to the server') +
+              '. The old password is still in force everywhere.');
     if (done) done(false);
   });
 }
@@ -3907,7 +3922,7 @@ function renderAuditLog() {
 // no Worker redeploy is needed for this to work.
 function deleteSingleCase(caseId) {
   if (!evalUnlocked) { showPasswordModal(); return; }
-  if (!hasStaffToken() && !promptStaffToken()) return;
+  if (!hasStaffToken()) { promptStaffToken(function () { deleteSingleCase(caseId); }); return; }
 
   var idx = records.findIndex(function (r) { return String(r.id) === String(caseId); });
   if (idx < 0) { showToast('\u26A0\uFE0F Case not found'); return; }
