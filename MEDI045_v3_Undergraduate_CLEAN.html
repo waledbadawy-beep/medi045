@@ -2611,8 +2611,76 @@ function saveDraft_wd() {
   _saveDraftEntry(entry);
 }
 
+// Generated from the submit_* collectors: every field they read is listed here
+// with the element it came from, so a draft can be poured back into its form.
+// Computed/display-only fields (e.g. the neonatal PMA readout) are omitted -
+// they recalculate from the inputs that are restored.
+var CASE_FORMS = {
+  clinic: { screen: 'screen-clinic', fields: { age:'c-age', airwayDevice:'c-airway-device', allergy:'c-allergy', asa:'c-asa', bp:'c-bp', caseDate:'cl-date', caseNo:'cl-case-no', cvs:'c-cvs', dx:'c-dx', endo:'c-endo', feedback:'cl-feedback', hr:'c-hr', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', mallampati:'c-mallampati', meds:'c-meds', neoCA:'c-neo-ca', neoGA:'c-neo-ga', neoSurgDate:'c-neo-surgdate', neuro:'c-neuro', npo:'c-npo', operation:'c-operation', otherHx:'c-other-hx', patientMRN:'cl-mrn', patientName:'cl-patient', premed:'c-premed', prevAnaes:'c-prev-anaes', procedure:'c-procedure', renal:'c-renal', resp:'c-resp', sex:'c-sex', spo2:'c-spo2', studentGroup:'cl-group', studentId:'cl-id', studentName:'cl-student', supervisor:'cl-supervisor', temp:'c-temp', weight:'c-weight' } },
+  intraop: { screen: 'screen-intraop', fields: { airwayDevice:'c-airway-device', asa:'c-asa', caseDate:'io-date', caseNo:'io-case-no', ettSize:'c-ett-size', events:'c-events', feedback:'io-feedback', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', operation:'c-operation', patientMRN:'io-mrn', patientName:'io-patient', studentGroup:'io-group', studentId:'io-id', studentName:'io-student', supervisor:'io-supervisor' } },
+  pacu: { screen: 'screen-pacu', fields: { aldrete:'c-aldrete', caseDate:'pacu-date', caseNo:'pacu-case-no', feedback:'pacu-feedback', pacuAVPU:'c-pacu-avpu', pacuAdjunct:'c-pacu-adjunct', pacuAirway:'c-pacu-airway', pacuBP:'c-pacu-bp', pacuBreathing:'c-pacu-breathing', pacuDischarge:'c-pacu-discharge', pacuHR:'c-pacu-hr', pacuIvIn:'c-pacu-iv-in', pacuNRS:'c-pacu-nrs', pacuNotes:'c-pacu-notes', pacuO2Req:'c-pacu-o2-req', pacuPONV:'c-pacu-ponv', pacuRR:'c-pacu-rr', pacuRamsay:'c-pacu-ramsay', pacuRhythm:'c-pacu-rhythm', pacuShiver:'c-pacu-shiver', pacuSpo2:'c-pacu-spo2', pacuTemp:'c-pacu-temp', pacuUrine:'c-pacu-urine', pacuWound:'c-pacu-wound', patientMRN:'pacu-mrn', patientName:'pacu-patient', studentGroup:'pacu-group', studentId:'pacu-id', studentName:'pacu-student', supervisor:'pacu-supervisor' } },
+  ward: { screen: 'screen-ward', fields: { caseDate:'wd-date', caseNo:'wd-case-no', faces:'c-faces', feedback:'wd-feedback', nonPharmaMod:'c-nonpharma-mod', nrs:'c-nrs', painSite:'c-pain-site', painType:'c-pain-type', patientMRN:'wd-mrn', patientName:'wd-patient', pharmaMod:'c-pharma-mod', postopComp:'c-postop-comp', satisfaction:'c-satisfaction', studentGroup:'wd-group', studentId:'wd-id', studentName:'wd-student', supervisor:'wd-supervisor', vas:'c-vas', vrs:'c-vrs', whoStep:'c-who-step' } },
+};
+
+// ── DRAFT RESUME ─────────────────────────────────────────────────────────
+// A draft used to be a dead end: the portfolio opened it read-only with an
+// empty action bar, and nothing anywhere loaded a record back into its form,
+// so the only way to submit was to retype the whole case.
+//
+// _editingDraftId marks the draft being continued. It is cleared the moment the
+// student navigates off that form, so an abandoned edit can never delete a
+// draft that a later, unrelated save happens to commit.
+var _editingDraftId = null;
+var _editingScreen  = null;
+
+function _setFormField(id, val) {
+  var el = document.getElementById(id);
+  if (!el || val === undefined || val === null) return;
+  el.value = val;
+  // Conditional sections (neonatal block, device-specific rows) are driven by
+  // change handlers, so restoring a value silently would leave them collapsed.
+  try { el.dispatchEvent(new Event('change', { bubbles: true })); } catch (e) {}
+}
+
+function continueDraft(caseId) {
+  var r = records.find(function (x) { return String(x.id) === String(caseId); });
+  if (!r) { showToast('\u26A0\uFE0F Case not found'); return; }
+  if (r.status !== 'draft') { showToast('\u26A0\uFE0F Only drafts can be continued'); return; }
+
+  if (!evalUnlocked) {
+    var myId = studentProfile ? String(studentProfile.universityId || '') : '';
+    if (!myId || String(r.studentId || '') !== myId) {
+      showToast('\u26A0\uFE0F You can only edit your own cases'); return;
+    }
+  }
+
+  var form = CASE_FORMS[r.type];
+  if (!form) { showToast('\u26A0\uFE0F This case type cannot be reopened'); return; }
+
+  closeDetailModal();
+  goto(form.screen);
+  _editingDraftId = r.id;
+  _editingScreen  = form.screen;
+
+  setTimeout(function () {
+    Object.keys(form.fields).forEach(function (f) { _setFormField(form.fields[f], r[f]); });
+    showToast('\u270F\uFE0F Draft loaded \u2014 finish it, then press Submit Case');
+  }, 80);
+}
+
+// Replaces the draft being continued, so finishing it does not leave the old
+// copy behind as a duplicate.
+function _consumeEditedDraft() {
+  if (_editingDraftId === null) return;
+  var i = records.findIndex(function (r) { return String(r.id) === String(_editingDraftId); });
+  if (i >= 0) records.splice(i, 1);
+  _editingDraftId = null;
+  _editingScreen  = null;
+}
+
 // ── SHARED SUBMIT/DRAFT ──────────────────────────────────────────────────
 function _submitEntry(entry, fromScreen) {
+  _consumeEditedDraft();
   records.push(entry);
   Store.set('medi045_records', JSON.stringify(records));
   updateStats(); renderRecords(); renderDashboard(); postToCloud(entry);
@@ -2621,6 +2689,7 @@ function _submitEntry(entry, fromScreen) {
   setTimeout(function(){ goto('screen-records'); }, 1400);
 }
 function _saveDraftEntry(entry) {
+  _consumeEditedDraft();
   records.push(entry);
   Store.set('medi045_records', JSON.stringify(records));
   updateStats(); renderRecords();
@@ -3428,6 +3497,7 @@ function goto(id) {
     return el && el.classList.contains('active');
   });
   if (leavingStaff && STAFF_SCREENS.indexOf(id) === -1) lockStaff(false);
+  _clearDraftEditIfLeaving(id);
   _gotoBase(id);
   if (id === 'screen-register') updateStaffEntryVisibility();
   if (STAFF_SCREENS.indexOf(id) !== -1) touchStaffActivity();
@@ -3496,6 +3566,10 @@ function staffLogin() {
   // Always ask for the PIN. Nothing about a previous session is remembered.
   evalUnlocked = false;
   showPasswordModal();
+}
+
+function _clearDraftEditIfLeaving(id) {
+  if (_editingScreen && id !== _editingScreen) { _editingDraftId = null; _editingScreen = null; }
 }
 
 function isStaffScreen(id) { return STAFF_SCREENS.indexOf(id) !== -1; }
@@ -5344,7 +5418,17 @@ function openCaseDetail(caseId) {
   html += '</table>';
   
   document.getElementById('dm-body').innerHTML = html;
-  document.getElementById('dm-actions').innerHTML = '';
+  var acts = document.getElementById('dm-actions');
+  var mine = evalUnlocked || (studentProfile &&
+             String(r.studentId || '') === String(studentProfile.universityId || ''));
+  if (r.status === 'draft' && mine && CASE_FORMS[r.type]) {
+    acts.innerHTML = '<button onclick="continueDraft(\'' + r.id + '\')" ' +
+      'style="width:100%;background:#1a3a5c;color:white;border:none;border-radius:10px;' +
+      'padding:14px;font-size:14px;font-weight:800;cursor:pointer">' +
+      '\u270F\uFE0F Continue editing this draft</button>';
+  } else {
+    acts.innerHTML = '';
+  }
   document.getElementById('eval-detail-modal').style.display = 'block';
 }
 
