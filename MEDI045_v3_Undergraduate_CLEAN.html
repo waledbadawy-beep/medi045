@@ -909,6 +909,28 @@
 .station-group{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .station-group::after{content:"";flex:1;height:1px;background:var(--border)}
 .station-group .sg-count{text-transform:none;letter-spacing:0;font-weight:600;opacity:.75}
+
+/* ---- Phone layout: keep multi-column form rows inside the viewport ----
+   Grid items default to min-width:auto, so a track refuses to shrink below
+   its min-content width. The drug pickers (search box + "+ Add" button +
+   long chip labels) have a min-content of ~280px, so a 1fr 1fr row demanded
+   ~570px and the right-hand column was clipped off the screen with no way
+   to scroll to it. */
+.form-row.two-col > *, .form-row.three-col > *, .form-row.four-col > * { min-width: 0; }
+.chip-search { min-width: 0; }
+.chip { max-width: 100%; overflow-wrap: anywhere; }
+.chip-selected-label { overflow-wrap: anywhere; }
+
+/* The app column is capped at 480px, so a two-up drug picker is only ~190px
+   wide even on a desktop — narrower than on a phone. Fold these at every width. */
+.form-row.two-col:has(.chip-selector),
+.form-row.three-col:has(.chip-selector),
+.form-row.four-col:has(.chip-selector),
+.form-row.row-stack { grid-template-columns: 1fr; }
+/* Date inputs cannot compress to a third of the column. */
+.form-row.three-col:has(input[type="date"]),
+.form-row.four-col:has(input[type="date"]),
+.form-row.row-pair { grid-template-columns: 1fr 1fr; }
 </style>
 </head>
 <body>
@@ -2516,15 +2538,12 @@ function buildCaseEntry(type, prefix, status) {
 }
 
 // ── CLINIC SUBMIT ────────────────────────────────────────────────────────
-function submit_cl() {
-  var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('cl-patient'), caseNo = gv('cl-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('cl-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
-  var _dup_cl = checkPatientNotRepeated('clinic','cl');
-  if (!_dup_cl.ok) { alert(_dup_cl.msg); return; }
-  if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('clinic','cl');
+// Every field on the clinic form is read here, and BOTH submit and save-draft
+// go through it. They used to be separate: submit listed a subset of the
+// fields by hand and save-draft listed none at all, so a draft kept only the
+// identity block and a submitted case silently dropped the rest.
+function collect_cl(status) {
+  var entry = buildCaseEntry('clinic','cl', status);
   // Clinic-specific fields
   entry.age=gv('c-age'); entry.sex=gv('c-sex'); entry.weight=gv('c-weight');
   entry.neoGA=gv('c-neo-ga'); entry.neoCA=gv('c-neo-ca'); entry.neoSurgDate=gv('c-neo-surgdate'); entry.neoPMA=(document.getElementById('c-neo-pma-display')?document.getElementById('c-neo-pma-display').textContent:'');
@@ -2536,14 +2555,116 @@ function submit_cl() {
   entry.npo=gv('c-npo'); entry.premed=gv('c-premed'); entry.operation=gv('c-operation');
   entry.airwayDevice=gv('c-airway-device'); entry.indAnalgesic=gv('c-ind-analgesic');
   entry.indHypnotic=gv('c-ind-hypnotic'); entry.indNMB=gv('c-ind-nmb');
-  _submitEntry(entry, 'screen-clinic');
+  entry.cvsEx = gv('c-cvs-ex');
+  entry.respEx = gv('c-resp-ex');
+  entry.thyromental = gv('c-thyromental');
+  entry.tmj = gv('c-tmj');
+  entry.neckExt = gv('c-neck-ext');
+  entry.mouth = gv('c-mouth');
+  entry.teeth = gv('c-teeth');
+  entry.hb = gv('c-hb');
+  entry.wbc = gv('c-wbc');
+  entry.plt = gv('c-plt');
+  entry.na = gv('c-na');
+  entry.k = gv('c-k');
+  entry.ur = gv('c-ur');
+  entry.cr = gv('c-cr');
+  entry.glucose = gv('c-glucose');
+  entry.pt = gv('c-pt');
+  entry.aptt = gv('c-aptt');
+  entry.inr = gv('c-inr');
+  entry.ecg = gv('c-ecg');
+  entry.cxr = gv('c-cxr');
+  entry.awPrevInt = gv('aw-prev-int');
+  entry.awPrevIntC = gv('aw-prev-int-c');
+  entry.awOsa = gv('aw-osa');
+  entry.awOsaC = gv('aw-osa-c');
+  entry.awCspine = gv('aw-cspine');
+  entry.awCspineC = gv('aw-cspine-c');
+  entry.awRad = gv('aw-rad');
+  entry.awRadC = gv('aw-rad-c');
+  entry.awBurns = gv('aw-burns');
+  entry.aw332C = gv('aw-332-c');
+  entry.awSmd = gv('aw-smd');
+  entry.awMouthOpening = gv('aw-mouth-opening');
+  entry.monitoring = gv('c-monitoring');
+  entry.analgesia = gv('c-analgesia');
+  entry.postopDest = gv('c-postop-dest');
+  entry.awLookOther = gv('aw-look-other');
+  entry.aw332Fingers1 = gv('aw-332-1');
+  entry.aw332Fingers2 = gv('aw-332-2');
+  entry.aw332Fingers3 = gv('aw-332-3');
+  entry.awMallampatiClass = gv('aw-mallampati');
+  entry.awObstructionOther = gv('aw-obstruction-other');
+  entry.awNeckMobility = gv('aw-neck-mob');
+  entry.awCollar = gv('aw-collar');
+  entry.awTMD = gv('aw-tmd');
+  entry.awNeckCirc = gv('aw-neck-circ');
+  entry.awULBT = gv('aw-ulbt');
+  return entry;
+}
+
+function submit_cl() {
+  var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
+  var patient = gv('cl-patient'), caseNo = gv('cl-case-no');
+  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('cl-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_cl = checkPatientNotRepeated('clinic','cl');
+  if (!_dup_cl.ok) { alert(_dup_cl.msg); return; }
+  if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
+  _submitEntry(collect_cl('submitted'), 'screen-clinic');
 }
 function saveDraft_cl() {
-  var entry = buildCaseEntry('clinic','cl','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_cl('draft'));
 }
 
 // ── INTRAOP SUBMIT ───────────────────────────────────────────────────────
+// Every field on the intraop form is read here, and BOTH submit and save-draft
+// go through it. They used to be separate: submit listed a subset of the
+// fields by hand and save-draft listed none at all, so a draft kept only the
+// identity block and a submitted case silently dropped the rest.
+function collect_io(status) {
+  var entry = buildCaseEntry('intraop','io', status);
+  entry.asa=gv('c-asa'); entry.operation=gv('c-operation');
+  entry.indAnalgesic=gv('c-ind-analgesic'); entry.indHypnotic=gv('c-ind-hypnotic'); entry.indNMB=gv('c-ind-nmb');
+  entry.airwayDevice=gv('c-airway-device'); entry.ettSize=gv('c-ett-size');
+  entry.events=gv('c-events');
+  entry.surgType = gv('c-surg-type');
+  entry.position = gv('c-position');
+  entry.monitors = gv('c-monitors');
+  entry.invMonitors = gv('c-inv-monitors');
+  entry.induction = gv('c-induction');
+  entry.bmv = gv('c-bmv');
+  entry.laryngoscopy = gv('c-laryngoscopy');
+  entry.ettType = gv('c-ett-type');
+  entry.ettLevel = gv('c-ett-level');
+  entry.vent = gv('c-vent');
+  entry.tv = gv('c-tv');
+  entry.rr = gv('c-rr');
+  entry.peep = gv('c-peep');
+  entry.pip = gv('c-pip');
+  entry.indAdj = gv('c-ind-adj');
+  entry.abxType = gv('c-abx-type');
+  entry.abxDose = gv('c-abx-dose');
+  entry.abxTime = gv('c-abx-time');
+  entry.maintHyp = gv('c-maint-hyp');
+  entry.maintAnal = gv('c-maint-anal');
+  entry.maintNmb = gv('c-maint-nmb');
+  entry.maintOther = gv('c-maint-other');
+  entry.ponv = gv('c-ponv');
+  entry.reversal = gv('c-reversal');
+  entry.fluidType = gv('c-fluid-type');
+  entry.maintFl = gv('c-maint-fl');
+  entry.fasting = gv('c-fasting');
+  entry.insensible = gv('c-insensible');
+  entry.bloodLoss = gv('c-blood-loss');
+  entry.urine = gv('c-urine');
+  entry.totalOut = gv('c-total-out');
+  entry.totalIn = gv('c-total-in');
+  entry.balance = gv('c-balance');
+  return entry;
+}
+
 function submit_io() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('io-patient'), caseNo = gv('io-case-no');
@@ -2552,28 +2673,19 @@ function submit_io() {
   var _dup_io = checkPatientNotRepeated('intraop','io');
   if (!_dup_io.ok) { alert(_dup_io.msg); return; }
   if (!confirm('Submit this Intraoperative case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('intraop','io');
-  entry.asa=gv('c-asa'); entry.operation=gv('c-operation');
-  entry.indAnalgesic=gv('c-ind-analgesic'); entry.indHypnotic=gv('c-ind-hypnotic'); entry.indNMB=gv('c-ind-nmb');
-  entry.airwayDevice=gv('c-airway-device'); entry.ettSize=gv('c-ett-size');
-  entry.events=gv('c-events');
-  _submitEntry(entry, 'screen-intraop');
+  _submitEntry(collect_io('submitted'), 'screen-intraop');
 }
 function saveDraft_io() {
-  var entry = buildCaseEntry('intraop','io','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_io('draft'));
 }
 
 // ── PACU SUBMIT ──────────────────────────────────────────────────────────
-function submit_pacu() {
-  var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('pacu-patient'), caseNo = gv('pacu-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('pacu-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
-  var _dup_pacu = checkPatientNotRepeated('pacu','pacu');
-  if (!_dup_pacu.ok) { alert(_dup_pacu.msg); return; }
-  if (!confirm('Submit this PACU case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('pacu','pacu');
+// Every field on the pacu form is read here, and BOTH submit and save-draft
+// go through it. They used to be separate: submit listed a subset of the
+// fields by hand and save-draft listed none at all, so a draft kept only the
+// identity block and a submitted case silently dropped the rest.
+function collect_pacu(status) {
+  var entry = buildCaseEntry('pacu','pacu', status);
   entry.pacuAirway=gv('c-pacu-airway'); entry.pacuAdjunct=gv('c-pacu-adjunct');
   entry.pacuRR=gv('c-pacu-rr'); entry.pacuSpo2=gv('c-pacu-spo2'); entry.pacuO2Req=gv('c-pacu-o2-req');
   entry.pacuBreathing=gv('c-pacu-breathing'); entry.pacuHR=gv('c-pacu-hr'); entry.pacuBP=gv('c-pacu-bp');
@@ -2583,14 +2695,86 @@ function submit_pacu() {
   entry.pacuIvIn=gv('c-pacu-iv-in'); entry.pacuUrine=gv('c-pacu-urine');
   entry.aldrete=gv('c-aldrete'); entry.pacuDischarge=gv('c-pacu-discharge');
   entry.pacuNotes=gv('c-pacu-notes');
-  _submitEntry(entry, 'screen-pacu');
+  entry.pacuAirwayNotes = gv('c-pacu-airway-notes');
+  entry.pacuBreath = gv('c-pacu-breath');
+  entry.pacuRespNotes = gv('c-pacu-resp-notes');
+  entry.pacuCapRefill = gv('c-pacu-cap-refill');
+  entry.pacuHaemo = gv('c-pacu-haemo');
+  entry.pacuCvTx = gv('c-pacu-cv-tx');
+  entry.pacuOrientation = gv('c-pacu-orientation');
+  entry.pacuEmerge = gv('c-pacu-emerge');
+  entry.pacuDrainYn = gv('c-pacu-drain-yn');
+  entry.pacuDrainOut = gv('c-pacu-drain-out');
+  entry.pacuDrainChar = gv('c-pacu-drain-char');
+  entry.pacuWoundNotes = gv('c-pacu-wound-notes');
+  entry.pacuThermal = gv('c-pacu-thermal');
+  entry.pacuWarm = gv('c-pacu-warm');
+  entry.pacuAnalgesic = gv('c-pacu-analgesic');
+  entry.pacuPonvTx = gv('c-pacu-ponv-tx');
+  entry.pacuDrainMl = gv('c-pacu-drain-ml');
+  entry.pacuBloodLoss = gv('c-pacu-blood-loss');
+  entry.pacuFluidBal = gv('c-pacu-fluid-bal');
+  entry.pacuDuration = gv('c-pacu-duration');
+  entry.dischargeDest = gv('c-discharge-dest');
+  entry.aldreteActivity = gv('c-ald-activity');
+  entry.aldreteResp = gv('c-ald-resp');
+  entry.aldreteCirc = gv('c-ald-circ');
+  entry.aldreteConscious = gv('c-ald-conscious');
+  entry.aldreteSpo2 = gv('c-ald-spo2');
+  return entry;
+}
+
+function submit_pacu() {
+  var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
+  var patient = gv('pacu-patient'), caseNo = gv('pacu-case-no');
+  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
+  if (!gv('pacu-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var _dup_pacu = checkPatientNotRepeated('pacu','pacu');
+  if (!_dup_pacu.ok) { alert(_dup_pacu.msg); return; }
+  if (!confirm('Submit this PACU case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
+  _submitEntry(collect_pacu('submitted'), 'screen-pacu');
 }
 function saveDraft_pacu() {
-  var entry = buildCaseEntry('pacu','pacu','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_pacu('draft'));
 }
 
 // ── WARD SUBMIT ──────────────────────────────────────────────────────────
+// Every field on the ward form is read here, and BOTH submit and save-draft
+// go through it. They used to be separate: submit listed a subset of the
+// fields by hand and save-draft listed none at all, so a draft kept only the
+// identity block and a submitted case silently dropped the rest.
+function collect_wd(status) {
+  var entry = buildCaseEntry('ward','wd', status);
+  entry.painType=gv('c-pain-type'); entry.painSite=gv('c-pain-site');
+  entry.nrs=gv('c-nrs'); entry.vas=gv('c-vas'); entry.vrs=gv('c-vrs'); entry.faces=gv('c-faces');
+  entry.whoStep=gv('c-who-step'); entry.pharmaMod=gv('c-pharma-mod'); entry.nonPharmaMod=gv('c-nonpharma-mod');
+  entry.satisfaction=gv('c-satisfaction'); entry.postopComp=gv('c-postop-comp');
+  entry.painOnset = gv('c-pain-onset');
+  entry.painCharacter = gv('c-pain-character');
+  entry.painRadiation = gv('c-pain-radiation');
+  entry.painExac = gv('c-pain-exac');
+  entry.painRelieve = gv('c-pain-relieve');
+  entry.painImpact = gv('c-pain-impact');
+  entry.preopPainPlan = gv('c-preop-pain-plan');
+  entry.painPlanFollowed = gv('c-pain-plan-followed');
+  entry.painPlanNotes = gv('c-pain-plan-notes');
+  entry.adjuvants = gv('c-adjuvants');
+  entry.painAdequacy = gv('c-pain-adequacy');
+  entry.postopHr = gv('c-postop-hr');
+  entry.postopBp = gv('c-postop-bp');
+  entry.postopSpo2 = gv('c-postop-spo2');
+  entry.postopTemp = gv('c-postop-temp');
+  entry.postopGcs = gv('c-postop-gcs');
+  entry.sedation = gv('c-sedation');
+  entry.postopPonv = gv('c-postop-ponv');
+  entry.ponvTreatment = gv('c-ponv-treatment');
+  entry.patientComments = gv('c-patient-comments');
+  entry.postopNotes = gv('c-postop-notes');
+  entry.supervisorConsultant = gv('c-supervisor');
+  entry.supervisorFeedback = gv('c-feedback');
+  return entry;
+}
+
 function submit_wd() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
   var patient = gv('wd-patient'), caseNo = gv('wd-case-no');
@@ -2599,16 +2783,10 @@ function submit_wd() {
   var _dup_wd = checkPatientNotRepeated('ward','wd');
   if (!_dup_wd.ok) { alert(_dup_wd.msg); return; }
   if (!confirm('Submit this Ward/Pain case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('ward','wd');
-  entry.painType=gv('c-pain-type'); entry.painSite=gv('c-pain-site');
-  entry.nrs=gv('c-nrs'); entry.vas=gv('c-vas'); entry.vrs=gv('c-vrs'); entry.faces=gv('c-faces');
-  entry.whoStep=gv('c-who-step'); entry.pharmaMod=gv('c-pharma-mod'); entry.nonPharmaMod=gv('c-nonpharma-mod');
-  entry.satisfaction=gv('c-satisfaction'); entry.postopComp=gv('c-postop-comp');
-  _submitEntry(entry, 'screen-ward');
+  _submitEntry(collect_wd('submitted'), 'screen-ward');
 }
 function saveDraft_wd() {
-  var entry = buildCaseEntry('ward','wd','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_wd('draft'));
 }
 
 // Generated from the submit_* collectors: every field they read is listed here
@@ -3428,7 +3606,6 @@ function editProfile() {
 function autoFillProfile() {
   if (!studentProfile) return;
   var n = document.getElementById('c-student'); if(n) n.value = studentProfile.name;
-  var i = document.getElementById('c-id');      if(i) i.value = studentProfile.universityId;
   var h = document.getElementById('home-student-name');
   if(h) h.textContent = '👤 ' + studentProfile.name + ' · ' + studentProfile.universityId;
 }
@@ -5344,6 +5521,13 @@ function emailAllResults() {
 }
 
 // ==================== CASE DETAIL VIEW ====================
+var EXTRA_FIELDS = {
+  clinic: [['awLookOther','LEMON · Look — other'], ['aw332Fingers1','LEMON · 3-3-2 — mouth opening'], ['aw332Fingers2','LEMON · 3-3-2 — thyromental'], ['aw332Fingers3','LEMON · 3-3-2 — thyrohyoid'], ['awMallampatiClass','LEMON · Mallampati'], ['awObstructionOther','LEMON · Obstruction — other'], ['awNeckMobility','LEMON · Neck mobility'], ['awCollar','LEMON · Cervical collar'], ['awTMD','Thyromental distance (cm)'], ['awNeckCirc','Neck circumference (cm)'], ['awULBT','Upper lip bite test'], ['cvsEx',"None"], ['respEx',"None"], ['thyromental',"Thyromental Dist."], ['tmj',"TMJ Mobility"], ['neckExt',"Neck Extension"], ['mouth',"Mouth Opening"], ['teeth',"Teeth"], ['hb',"Hb"], ['wbc',"WBC"], ['plt',"Plt"], ['na',"Na"], ['k',"Na"], ['ur',"Urea"], ['cr',"Creatinine"], ['glucose',"Glucose"], ['pt',"PT"], ['aptt',"aPTT"], ['inr',"INR"], ['ecg',"ECG"], ['cxr',"Chest X-Ray"], ['awPrevInt',"\u2717 No"], ['awPrevIntC',"\u2717 No"], ['awOsa',"\u2717 No"], ['awOsaC',"\u2717 No"], ['awCspine',"\u2717 No"], ['awCspineC',"\u2717 No"], ['awRad',"\u2717 No"], ['awRadC',"\u2717 No"], ['awBurns',"\u2717 No"], ['aw332C',"Comment on 3-3-2"], ['awSmd',"Sternomental distance (cm)"], ['awMouthOpening',"Mouth opening (cm)"], ['monitoring',"None"], ['analgesia',"None"], ['postopDest',"Postop Destination"]],
+  intraop: [['surgType',"Type of Surgery"], ['position',"Patient Position"], ['monitors',"Standard Monitors"], ['invMonitors',"Invasive Monitors"], ['induction',"Induction Technique"], ['bmv',"Bag Mask Ventilation"], ['laryngoscopy',"Laryngoscopy Grade"], ['ettType',"ETT Type"], ['ettLevel',"Level (cm)"], ['vent',"Controlled"], ['tv',"TV (mL)"], ['rr',"RR /min"], ['peep',"PEEP"], ['pip',"PIP"], ['indAdj',"None"], ['abxType',"Antibiotic (Drug)"], ['abxDose',"Dose"], ['abxTime',"Time"], ['maintHyp',"None"], ['maintAnal',"None"], ['maintNmb',"None"], ['maintOther',"None"], ['ponv',"None"], ['reversal',"None"], ['fluidType',"None"], ['maintFl',"Maintenance (mL)"], ['fasting',"Fasting Deficit (mL)"], ['insensible',"Insensible (mL)"], ['bloodLoss',"Blood Loss (mL)"], ['urine',"Urine Out (mL)"], ['totalOut',"Total Out (mL)"], ['totalIn',"Total In (mL)"], ['balance',"Balance (mL)"]],
+  pacu: [['aldreteActivity','Aldrete · Activity'], ['aldreteResp','Aldrete · Respiration'], ['aldreteCirc','Aldrete · Circulation'], ['aldreteConscious','Aldrete · Consciousness'], ['aldreteSpo2','Aldrete · Oxygen saturation'], ['pacuAirwayNotes',"Airway Notes"], ['pacuBreath',"Breath Sounds"], ['pacuRespNotes',"Respiratory Notes"], ['pacuCapRefill',"Capillary Refill"], ['pacuHaemo',"Haemodynamic Status vs. Pre-op Baseline"], ['pacuCvTx',"Cardiovascular Interventions Given"], ['pacuOrientation',"Orientation Status"], ['pacuEmerge',"None"], ['pacuDrainYn',"\u2717 No"], ['pacuDrainOut',"Drain Output (mL)"], ['pacuDrainChar',"Drain Character"], ['pacuWoundNotes',"Wound Notes"], ['pacuThermal',"Thermal Status"], ['pacuWarm',"Warming Measures"], ['pacuAnalgesic',"Analgesic Treatment in PACU"], ['pacuPonvTx',"\ud83d\udd34 Vomiting \u2014 treated"], ['pacuDrainMl',"Drain Output (mL)"], ['pacuBloodLoss',"Blood Loss (mL)"], ['pacuFluidBal',"Fluid Balance Assessment"], ['pacuDuration',"PACU Duration (minutes)"], ['dischargeDest',"Discharge Destination"]],
+  ward: [['painOnset',"Onset"], ['painCharacter',"Character"], ['painRadiation',"Radiation"], ['painExac',"Exacerbating Factors"], ['painRelieve',"Relieving Factors"], ['painImpact',"None"], ['preopPainPlan',"\u2717 No"], ['painPlanFollowed',"\u2717 No"], ['painPlanNotes',"\u2717 No"], ['adjuvants',"None"], ['painAdequacy',"\u274c Poor (7\u201310)"], ['postopHr',"HR (bpm)"], ['postopBp',"BP (mmHg)"], ['postopSpo2',"SpO\u2082 (%)"], ['postopTemp',"Temp (\u00b0C)"], ['postopGcs',"Level of Consciousness"], ['sedation',"Sedation Score (Ramsay)"], ['postopPonv',"Severe"], ['ponvTreatment',"Severe"], ['patientComments',"Patient Comments / Concerns"], ['postopNotes',"Postoperative Notes / Overall Summary"], ['supervisorConsultant',"Supervisor / Consultant"], ['supervisorFeedback',"Supervisor Feedback to Student"]],
+};
+
 function openCaseDetail(caseId) {
   const r = records.find(x => String(x.id) === String(caseId));
   if (!r) return;
@@ -5415,6 +5599,20 @@ function openCaseDetail(caseId) {
   }
   
   html += row('Notes', r.notes);
+
+  // Everything the form collects that the sections above do not name explicitly.
+  // Without this the recovered fields would be stored and still invisible to the
+  // supervisor, which is the same outcome as not storing them.
+  var _extra = (typeof EXTRA_FIELDS !== 'undefined' && EXTRA_FIELDS[r.type]) || [];
+  var _rows = '';
+  _extra.forEach(function (f) {
+    var v = r[f[0]];
+    if (v !== undefined && v !== null && String(v).trim() !== '') _rows += row(f[1], v);
+  });
+  if (_rows) {
+    html += '<tr><td colspan="2" style="padding:8px;background:#1a3a5c;color:white;font-weight:700">Full Case Data</td></tr>' + _rows;
+  }
+
   html += '</table>';
   
   document.getElementById('dm-body').innerHTML = html;
@@ -5465,7 +5663,7 @@ function _initApp() {
     const today = _d.getFullYear() + '-' +
       String(_d.getMonth() + 1).padStart(2, '0') + '-' +
       String(_d.getDate()).padStart(2, '0');
-    ['c-date', 'aw-date', 'ev-date'].forEach(id => {
+    ['aw-date', 'ev-date'].forEach(id => {
       const el = document.getElementById(id);
       if (el && !el.value) el.value = today;
     });
@@ -5508,6 +5706,19 @@ setInterval(() => {
 
 
 
+
+/* Fallback for browsers without :has() (Chrome <105, Safari <15.4) — tag the
+   rows that must fold on a phone so the media query above can catch them. */
+(function tagNarrowRows(){
+  function run(){
+    document.querySelectorAll('.form-row.two-col,.form-row.three-col,.form-row.four-col').forEach(function(r){
+      if (r.querySelector('.chip-selector')) r.classList.add('row-stack');
+      else if (r.querySelector('input[type="date"]')) r.classList.add('row-pair');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
 </script>
 <!-- ============================================================ -->
 
@@ -5546,8 +5757,6 @@ setInterval(() => {
 </div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
-<div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
-<div class="form-row two-col"><div><label>Patient Name</label><input id="c-name" oninput="updateProgress()" placeholder="Full name" type="text"/></div><div><label>Hospital ID</label><input id="c-id" oninput="updateProgress()" placeholder="ID" type="text"/></div></div>
 <div class="form-row three-col"><div><label>Age</label><input id="c-age" placeholder="yrs" step="any" type="number"/></div><div><label>Sex</label><select id="c-sex"><option value="">--</option><option>Male</option><option>Female</option></select></div><div><label>Weight (kg)</label><input id="c-weight" placeholder="kg" step="any" type="number"/></div></div>
 <details style="margin-top:6px;background:var(--bg);border-radius:8px;padding:2px 10px">
 <summary style="font-size:11px;color:var(--muted);cursor:pointer;padding:6px 0">🍼 Neonatal / Premature Infant Age Calculator (optional)</summary>

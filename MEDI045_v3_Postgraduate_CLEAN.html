@@ -910,6 +910,28 @@
 .station-group{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .station-group::after{content:"";flex:1;height:1px;background:var(--border)}
 .station-group .sg-count{text-transform:none;letter-spacing:0;font-weight:600;opacity:.75}
+
+/* ---- Phone layout: keep multi-column form rows inside the viewport ----
+   Grid items default to min-width:auto, so a track refuses to shrink below
+   its min-content width. The drug pickers (search box + "+ Add" button +
+   long chip labels) have a min-content of ~280px, so a 1fr 1fr row demanded
+   ~570px and the right-hand column was clipped off the screen with no way
+   to scroll to it. */
+.form-row.two-col > *, .form-row.three-col > *, .form-row.four-col > * { min-width: 0; }
+.chip-search { min-width: 0; }
+.chip { max-width: 100%; overflow-wrap: anywhere; }
+.chip-selected-label { overflow-wrap: anywhere; }
+
+/* The app column is capped at 480px, so a two-up drug picker is only ~190px
+   wide even on a desktop — narrower than on a phone. Fold these at every width. */
+.form-row.two-col:has(.chip-selector),
+.form-row.three-col:has(.chip-selector),
+.form-row.four-col:has(.chip-selector),
+.form-row.row-stack { grid-template-columns: 1fr; }
+/* Date inputs cannot compress to a third of the column. */
+.form-row.three-col:has(input[type="date"]),
+.form-row.four-col:has(input[type="date"]),
+.form-row.row-pair { grid-template-columns: 1fr 1fr; }
 </style>
 </head>
 <body>
@@ -5480,6 +5502,19 @@ setInterval(() => {
       String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   } catch(e) {}
 }, 10000);
+
+/* Fallback for browsers without :has() (Chrome <105, Safari <15.4) — tag the
+   rows that must fold on a phone so the media query above can catch them. */
+(function tagNarrowRows(){
+  function run(){
+    document.querySelectorAll('.form-row.two-col,.form-row.three-col,.form-row.four-col').forEach(function(r){
+      if (r.querySelector('.chip-selector')) r.classList.add('row-stack');
+      else if (r.querySelector('input[type="date"]')) r.classList.add('row-pair');
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
 </script>
 <div class="screen" id="screen-pg-clinic"><div class="app-bar" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">
 <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
