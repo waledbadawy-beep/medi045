@@ -3297,53 +3297,52 @@ function getSupervisorNames() {
 // code, which is held on the Worker and never shipped to the browser.
 
 function forgotPinFlow() {
-  // The reset used to be gated by a code written in plain text a few lines
-  // below, readable by anyone who opened View Source on this page. It now
-  // requires the staff access code, which lives only on the Worker.
   if (!hasStaffToken()) {
     promptStaffToken(function () { forgotPinFlow(); });
     return;
   }
 
-  // Same defect as the admin flow: clear the shared hash and push the reset,
-  // otherwise the cloud record silently restores the old PIN.
-  try { localStorage.removeItem('medi045_cred_meta'); } catch (e) {}
-  Store.set('medi045_eval_pwd', '1234');
-
+  // Nothing local is cleared first. The staff code is only stored, never
+  // checked, so entering any string used to be enough to wipe this device's
+  // credential hash before the server had refused anything - which left the
+  // default password working locally. setSharedCredentials writes local
+  // state only after the server accepts, so a wrong code now changes
+  // nothing at all.
   setSharedPassword('eval', '1234', function (shared) {
-    logAudit('pin_recovery', 'Supervisor PIN reset to default via recovery code');
-    closePasswordModal();
-    if (shared) {
-      showToast('✅ Supervisor PIN reset on all devices');
-    } else {
-      showToast('⚠️ Reset on THIS device only - the server was not updated.');
+    if (!shared) {
+      showToast('\u274C Reset refused \u2014 the staff access code was not accepted. '
+                + 'The current Supervisor PIN is unchanged.');
+      return;
     }
+    logAudit('pin_recovery', 'Supervisor PIN reset to default, authorised by the staff access code');
+    if (typeof closePasswordModal === 'function') { try { closePasswordModal(); } catch (e) {} }
+    showToast('\u2705 Supervisor PIN reset on all devices \u2014 sign in with the default');
+    var input = document.getElementById('admin-password-input');
+    if (input) input.value = '';
   });
 }
 
 function forgotAdminPwdFlow() {
-  // Same change as the PIN flow: the plain-text master code is gone.
   if (!hasStaffToken()) {
     promptStaffToken(function () { forgotAdminPwdFlow(); });
     return;
   }
 
-  // A shared PBKDF2 hash, once present, is the ONLY authority verifyPassword()
-  // consults - the local plain value is deliberately ignored. Resetting only
-  // that local value therefore did nothing, and the cloud record would be
-  // re-pulled by syncCredentialsFromCloud() on the next sync. The reset must
-  // clear the local hash AND overwrite the server record, or it is cosmetic.
-  try { localStorage.removeItem('medi045_cred_meta'); } catch (e) {}
-  Store.set('medi045_admin_pwd', 'ADMIN2025');
-
+  // Nothing local is cleared first. The staff code is only stored, never
+  // checked, so entering any string used to be enough to wipe this device's
+  // credential hash before the server had refused anything - which left the
+  // default password working locally. setSharedCredentials writes local
+  // state only after the server accepts, so a wrong code now changes
+  // nothing at all.
   setSharedPassword('admin', 'ADMIN2025', function (shared) {
-    logAudit('admin_pwd_recovery', 'Admin password reset to default via recovery code');
-    if (shared) {
-      showToast('✅ Admin password reset on all devices - sign in with the default');
-    } else {
-      showToast('⚠️ Reset on THIS device only - the server was not updated. ' +
-                'Other devices keep the old password and a sync may undo this.');
+    if (!shared) {
+      showToast('\u274C Reset refused \u2014 the staff access code was not accepted. '
+                + 'The current Admin password is unchanged.');
+      return;
     }
+    logAudit('admin_pwd_recovery', 'Admin password reset to default, authorised by the staff access code');
+    if (typeof closePasswordModal === 'function') { try { closePasswordModal(); } catch (e) {} }
+    showToast('\u2705 Admin password reset on all devices \u2014 sign in with the default');
     var input = document.getElementById('admin-password-input');
     if (input) input.value = '';
   });

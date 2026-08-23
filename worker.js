@@ -69,7 +69,9 @@ function corsHeaders(env) {
     // Fails CLOSED: an unset variable must not open the API to every website.
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || 'https://waledbadawy-beep.github.io',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Staff-Token',
+    // X-Student-Token must be listed here or the browser refuses the GET at the
+    // preflight and the app loads nothing at all.
+    'Access-Control-Allow-Headers': 'Content-Type, X-Staff-Token, X-Student-Token',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin'
   };
