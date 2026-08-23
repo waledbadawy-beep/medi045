@@ -934,6 +934,40 @@
 </style>
 </head>
 <body>
+<!-- ===================== CLASS ACCESS CODE GATE =====================
+     Asked once, on first open. Without it a student wanders the app and only
+     meets a refusal later, at whatever moment something first tries to read
+     from the server - which reads as a fault in the app. -->
+<div id="class-gate" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#1a3a5c,#4a2a6d);align-items:center;justify-content:center;padding:22px">
+  <div style="background:#fff;border-radius:16px;max-width:380px;width:100%;padding:26px 22px;box-shadow:0 18px 50px rgba(0,0,0,.35)">
+    <div style="text-align:center;font-size:34px;margin-bottom:6px">&#127973;</div>
+    <div style="text-align:center;font-size:18px;font-weight:800;color:#1a3a5c">MEDI 045 Log Book</div>
+    <div style="text-align:center;font-size:14px;font-weight:700;color:#4a2a6d;margin-top:2px" dir="rtl">&#1587;&#1580;&#1604; MEDI 045</div>
+
+    <div style="margin-top:18px;font-size:13px;color:#5a6b7d;line-height:1.7">
+      Enter the class access code to continue. Your course coordinator sends it with this link. You will only be asked once on this device.
+    </div>
+    <div style="margin-top:8px;font-size:13px;color:#5a6b7d;line-height:1.8" dir="rtl">
+      &#1571;&#1583;&#1582;&#1604; &#1585;&#1605;&#1586; &#1575;&#1604;&#1583;&#1601;&#1593;&#1577; &#1604;&#1604;&#1605;&#1578;&#1575;&#1576;&#1593;&#1577;. &#1610;&#1589;&#1604;&#1603; &#1605;&#1593; &#1585;&#1575;&#1576;&#1591; &#1575;&#1604;&#1578;&#1591;&#1576;&#1610;&#1602; &#1605;&#1606; &#1605;&#1606;&#1587;&#1602; &#1575;&#1604;&#1605;&#1602;&#1585;&#1585;&#1548; &#1608;&#1610;&#1615;&#1591;&#1604;&#1576; &#1605;&#1585;&#1577; &#1608;&#1575;&#1581;&#1583;&#1577; &#1601;&#1602;&#1591; &#1593;&#1604;&#1609; &#1607;&#1584;&#1575; &#1575;&#1604;&#1580;&#1607;&#1575;&#1586;.
+    </div>
+
+    <input id="class-gate-input" autocomplete="off" autocapitalize="characters" spellcheck="false"
+      placeholder="MEDI045-..."
+      style="width:100%;margin-top:16px;padding:13px;font-size:16px;border:2px solid #d5dde6;border-radius:10px;text-align:center;font-weight:700;letter-spacing:.5px;box-sizing:border-box"/>
+
+    <div id="class-gate-error" style="display:none;margin-top:9px;font-size:12.5px;color:#b3261e;text-align:center;line-height:1.6"></div>
+
+    <button id="class-gate-btn" type="button" onclick="submitClassGate()"
+      style="-webkit-appearance:none;width:100%;margin-top:14px;background:#1a3a5c;color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent">
+      Continue &#183; &#1605;&#1578;&#1575;&#1576;&#1593;&#1577;
+    </button>
+
+    <div style="margin-top:12px;font-size:11px;color:#9aa8b6;text-align:center;line-height:1.6">
+      Supervisors: enter your staff access code here instead.<br>
+      <span dir="rtl">&#1604;&#1604;&#1605;&#1588;&#1585;&#1601;&#1610;&#1606;: &#1571;&#1583;&#1582;&#1604; &#1585;&#1605;&#1586; &#1575;&#1604;&#1605;&#1588;&#1585;&#1601; &#1607;&#1606;&#1575;.</span>
+    </div>
+  </div>
+</div>
 <div class="status-bar"><span id="clock">09:41</span><span>🔋 94%</span></div>
 <div class="toast" id="toast"></div>
 <!-- iOS ADD TO HOME SCREEN BANNER -->
@@ -5818,6 +5852,84 @@ setInterval(() => {
       if (r.querySelector('.chip-selector')) r.classList.add('row-stack');
       else if (r.querySelector('input[type="date"]')) r.classList.add('row-pair');
     });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
+
+/* ==================== CLASS ACCESS CODE GATE ====================
+   The server refuses any read or write without the class code, but nothing
+   used to ASK for it: a student browsed the app normally and only met the
+   refusal at whatever moment something first hit the network, which reads as
+   a broken app rather than a missing code. This asks once, up front.
+
+   One box accepts either code. A supervisor's staff code is tried too, so a
+   supervisor opening a fresh device is not locked out by a code meant for
+   students. */
+function _gateEl(id) { return document.getElementById(id); }
+
+function _gateShowError(msg) {
+  var e = _gateEl('class-gate-error');
+  if (e) { e.textContent = msg; e.style.display = 'block'; }
+}
+
+function _gateHide() {
+  var g = _gateEl('class-gate');
+  if (g) g.style.display = 'none';
+}
+
+/* Probe the backend with the code as a student token, then as a staff token.
+   A 403 means the code is wrong. A network failure is NOT treated as wrong:
+   the code is kept so the app still opens offline, and the server will refuse
+   later anyway if it was mistyped. Locking someone out of their own drafts
+   because the hospital wifi dropped would be the worse failure. */
+function submitClassGate() {
+  var inp = _gateEl('class-gate-input');
+  var btn = _gateEl('class-gate-btn');
+  var code = inp ? String(inp.value || '').trim() : '';
+  if (!code) { _gateShowError('Please enter the code \u00B7 \u0623\u062F\u062E\u0644 \u0627\u0644\u0631\u0645\u0632'); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking\u2026'; }
+
+  function done(ok) {
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Continue &#183; &#1605;&#1578;&#1575;&#1576;&#1593;&#1577;'; }
+    if (ok) { _gateHide(); if (typeof syncFromCloud === 'function') { try { syncFromCloud(); } catch (e) {} } }
+  }
+
+  fetch(APPS_SCRIPT_URL, { headers: { 'X-Student-Token': code } })
+    .then(function (r) {
+      if (r.ok) { setClassCode(code); done(true); return; }
+      /* Not accepted as a class code - try it as a supervisor's staff code. */
+      return fetch(APPS_SCRIPT_URL, { headers: { 'X-Staff-Token': code } })
+        .then(function (r2) {
+          if (r2.ok) { setStaffToken(code); done(true); return; }
+          _gateShowError('That code was not accepted. Check it with your coordinator. \u00B7 '
+            + '\u0627\u0644\u0631\u0645\u0632 \u063A\u064A\u0631 \u0635\u062D\u064A\u062D');
+          done(false);
+        });
+    })
+    .catch(function () {
+      /* No connection - accept and move on rather than lock the app. */
+      setClassCode(code);
+      done(true);
+    });
+}
+
+(function classGateInit() {
+  function run() {
+    var g = _gateEl('class-gate');
+    if (!g) return;
+    var hasCode = (typeof getClassCode === 'function') && getClassCode();
+    var hasStaff = (typeof hasStaffToken === 'function') && hasStaffToken();
+    if (hasCode || hasStaff) return;      /* already set up on this device */
+    g.style.display = 'flex';
+    var inp = _gateEl('class-gate-input');
+    if (inp) {
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submitClassGate();
+      });
+      setTimeout(function () { try { inp.focus(); } catch (e) {} }, 250);
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
