@@ -41,7 +41,7 @@ const PUBLIC_CONFIG = new Set([
 
 // Types a student must never receive, even for their own records. Marks are
 // released by the programme, not read out of the app before moderation.
-const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials'];
+const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials', 'backup_log'];
 
 // Nothing is forbidden outright any more, but credentials are special: see
 // STAFF_ONLY_TYPES below and the plain-text guard in handlePost. The record may
@@ -66,7 +66,8 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;  // 10 MB per attachment once decoded
 
 function corsHeaders(env) {
   return {
-    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
+    // Fails CLOSED: an unset variable must not open the API to every website.
+    'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || 'https://waledbadawy-beep.github.io',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-Staff-Token',
     'Access-Control-Max-Age': '86400',
@@ -105,10 +106,26 @@ function isStaff(request, env, bodyToken) {
   const header = request.headers.get('X-Staff-Token');
   if (safeEqual(header, env.STAFF_TOKEN)) return true;
   if (bodyToken && safeEqual(bodyToken, env.STAFF_TOKEN)) return true;
-  try {
-    const q = new URL(request.url).searchParams.get('staff');
-    if (q && safeEqual(q, env.STAFF_TOKEN)) return true;
-  } catch (e) {}
+  // The ?staff= query form was removed. A query string is written to browser
+  // history, proxy logs and Referer headers, so the token outlived the session
+  // on any shared hospital computer. Header for GET, body for POST.
+  return false;
+}
+
+/**
+ * A shared code issued to the batch with the app link. It does not identify an
+ * individual - that needs per-student accounts - but it stops anyone who merely
+ * knows this URL from reading or writing the database.
+ *
+ * If STUDENT_TOKEN is not set on the Worker this check is skipped, so deploying
+ * this file changes nothing until the secret exists. Set it, then send the code
+ * to the batch.
+ */
+function isStudentAuthorised(request, env, bodyToken) {
+  if (!env.STUDENT_TOKEN) return true; // not configured yet - old behaviour
+  const header = request.headers.get('X-Student-Token');
+  if (safeEqual(header, env.STUDENT_TOKEN)) return true;
+  if (bodyToken && safeEqual(bodyToken, env.STUDENT_TOKEN)) return true;
   return false;
 }
 
@@ -135,6 +152,10 @@ async function handleGet(request, env) {
   const url = new URL(request.url);
   const staff = isStaff(request, env);
   const sid = (url.searchParams.get('sid') || '').trim();
+
+  if (!staff && !isStudentAuthorised(request, env)) {
+    return json(env, { success: false, error: 'Class access code required' }, 403);
+  }
 
   await ensureTable(env);
 
@@ -206,15 +227,40 @@ async function handlePost(request, env) {
   }
 
   const staff = isStaff(request, env, data._staffToken);
-  // Never let the token itself be written into a record.
+  const studentOk = staff || isStudentAuthorised(request, env, data._studentToken);
+  // Never let either token be written into a record.
   if ('_staffToken' in data) delete data._staffToken;
+  if ('_studentToken' in data) delete data._studentToken;
+
+  if (!studentOk) {
+    return json(env, { success: false, error: 'Class access code required' }, 403);
+  }
 
   await ensureTable(env);
 
   // ---- administrative actions: staff only
   if (data._action === 'delete') {
     if (!staff) return json(env, { success: false, error: 'Not authorised' }, 403);
+
+    // One record, by id - the ordinary case, and the safe one.
+    if (data.id) {
+      const res = await env.MEDI045_DB
+        .prepare(`DELETE FROM records WHERE id = ?`).bind(String(data.id)).run();
+      return json(env, { success: true, deleted: (res.meta && res.meta.changes) || 0 });
+    }
+
     const type = data.type || 'all';
+
+    // There is no import anywhere in the app: the CSV is an export, not a
+    // restore. A wipe is therefore final, so it must be typed out in full and
+    // cannot happen by tapping one button.
+    if (type === 'all' && data.confirm !== 'DELETE ALL RECORDS') {
+      return json(env, {
+        success: false,
+        error: 'To erase every record, resend with confirm set to the exact phrase DELETE ALL RECORDS. This cannot be undone and there is no import.'
+      }, 400);
+    }
+
     const res = type === 'all'
       ? await env.MEDI045_DB.prepare(`DELETE FROM records`).run()
       : await env.MEDI045_DB.prepare(`DELETE FROM records WHERE type = ?`).bind(type).run();
@@ -239,7 +285,12 @@ async function handlePost(request, env) {
     }
     const safeName = String(data.fileName || 'attachment')
       .replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 120);
-    const key = `${Date.now()}_${safeName}`;
+    // Was `${Date.now()}_${name}` - guessable, and /file/ has no authentication,
+    // so anyone could walk the keyspace. A random segment makes the URL itself
+    // the capability. This is obscurity, not authentication: treat any link as
+    // readable by whoever receives it.
+    const rand = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+    const key = `${Date.now()}_${rand}_${safeName}`;
     await env.MEDI045_FILES.put(key, bytes, {
       httpMetadata: { contentType: data.mimeType || 'application/octet-stream' }
     });
@@ -342,6 +393,31 @@ async function buildBackupCsv(env) {
   return { csv, count: (rows.results || []).length };
 }
 
+/**
+ * The nightly run happens with nobody watching, and a failed send produced no
+ * trace anywhere - an inbox with no new mail looks the same whether the cron
+ * never fired or the email service refused it. Every attempt now leaves a row.
+ * Read it from the supervisor dashboard: type 'backup_log', staff only.
+ */
+async function recordBackupResult(env, ok, count, detail) {
+  try {
+    await ensureTable(env);
+    const now = new Date().toISOString();
+    const row = {
+      type: 'backup_log', id: 'backup_' + now,
+      ok: ok, records: count, detail: detail || '',
+      label: (env.APP_LABEL || '').trim(), timestamp: now
+    };
+    await env.MEDI045_DB.prepare(
+      `INSERT INTO records (id, type, student, status, updated, json)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET json = excluded.json`
+    ).bind(row.id, 'backup_log', '', ok ? 'ok' : 'failed', now, JSON.stringify(row)).run();
+  } catch (e) {
+    console.error('Could not record backup result:', e);
+  }
+}
+
 async function runBackup(env) {
   if (!env.RESEND_API_KEY) {
     return json(env, { success: false, error: 'Email key is not configured on the Worker' }, 500);
@@ -382,11 +458,13 @@ async function runBackup(env) {
 
   if (!res.ok) {
     const detail = await res.text();
+    await recordBackupResult(env, false, count, `HTTP ${res.status} ${detail.slice(0, 200)}`);
     return json(env, {
       success: false,
       error: `Email service rejected the backup (HTTP ${res.status}). ${detail.slice(0, 300)}`
     }, 502);
   }
+  await recordBackupResult(env, true, count, '');
   return json(env, { success: true, records: count, sentTo: env.BACKUP_EMAIL });
 }
 
@@ -421,6 +499,11 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runBackup(env));
+    ctx.waitUntil(
+      runBackup(env).catch(async (err) => {
+        console.error('Nightly backup threw:', err && err.stack ? err.stack : err);
+        await recordBackupResult(env, false, 0, String(err && err.message || err).slice(0, 200));
+      })
+    );
   }
 };

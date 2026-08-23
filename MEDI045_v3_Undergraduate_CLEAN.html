@@ -2269,6 +2269,16 @@ function setSharedPassword(which, newPwd, done) {
   setSharedCredentials(next, done);
 }
 
+// A code issued to the batch with the app link. Without it the backend is
+// writable by anyone who reads the page source and finds the Worker URL. It
+// does not identify an individual student - that needs real accounts.
+function getClassCode() {
+  try { return Store.get('medi045_class_code') || ''; } catch (e) { return ''; }
+}
+function setClassCode(c) {
+  try { Store.set('medi045_class_code', String(c || '').trim()); } catch (e) {}
+}
+
 function getStaffToken() { try { return Store.get('medi045_staff_token') || ''; } catch (e) { return ''; } }
 function setStaffToken(t) { try { Store.set('medi045_staff_token', String(t || '').trim()); } catch (e) {} }
 function hasStaffToken() { return !!getStaffToken(); }
@@ -2284,6 +2294,8 @@ function apiHeaders() {
 function withStaffToken(body) {
   var t = getStaffToken();
   if (t) { try { body._staffToken = t; } catch (e) {} }
+  var c = getClassCode();
+  if (c) { try { body._studentToken = c; } catch (e) {} }
   return body;
 }
 
@@ -2297,9 +2309,20 @@ function currentStudentSid() {
 }
 
 function apiGetUrl() {
-  if (hasStaffToken()) return APPS_SCRIPT_URL + '?staff=' + encodeURIComponent(getStaffToken());
+  // The staff code used to be appended as ?staff=... A query string is kept in
+  // browser history, proxy logs and Referer headers, so on a shared computer the
+  // code outlived the person who typed it. It now travels as a header.
   var sid = currentStudentSid();
   return sid ? APPS_SCRIPT_URL + '?sid=' + encodeURIComponent(sid) : APPS_SCRIPT_URL;
+}
+
+// Headers for a GET. A custom header makes this a non-simple request, so the
+// browser sends an OPTIONS preflight first; the Worker answers it.
+function apiGetHeaders() {
+  var h = {};
+  var t = getStaffToken();       if (t) h['X-Staff-Token'] = t;
+  var c = getClassCode();        if (c) h['X-Student-Token'] = c;
+  return h;
 }
 
 function apiPost(body) {
@@ -2310,7 +2333,17 @@ function apiPost(body) {
   }).then(function (r) {
     if (r.status === 403) {
       return r.json().catch(function () { return {}; }).then(function (j) {
-        throw new Error(j.error || 'Not authorised — staff access code missing or wrong');
+        var msg = j.error || 'Not authorised — staff access code missing or wrong';
+        // A student is missing the class code; a supervisor is missing the staff
+        // code. Ask for the right one rather than showing a generic refusal.
+        if (/class access code/i.test(msg)) {
+          var c = prompt('Enter the class access code for MEDI 045.\nYour course coordinator sends this with the app link.');
+          if (c !== null && c.trim()) {
+            setClassCode(c);
+            msg = 'Class access code saved — please try that again.';
+          }
+        }
+        throw new Error(msg);
       });
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -2427,7 +2460,7 @@ function syncFromCloud(callback) {
   }
 
   if (el) el.innerHTML = '<div style="text-align:center;padding:30px;color:#2a5298;font-size:14px">\u23F3 Syncing student submissions...</div>';
-  fetch(apiGetUrl())
+  fetch(apiGetUrl(), { headers: apiGetHeaders() })
     .then(function(r) { return r.json(); })
     .then(function(cloudRecords) {
       if (!Array.isArray(cloudRecords)) { if (callback) callback(); return; }
@@ -3259,14 +3292,18 @@ function getSupervisorNames() {
 }
 
 // ==================== FORGOT PASSWORD / PIN RECOVERY ====================
-// Recovery master code — known only to the Program Director. Documented separately,
-// never shown anywhere in the app UI. Resets the relevant password back to its default.
-var MASTER_RECOVERY_CODE = 'MEDI045RESET';
+// The master recovery code that used to sit here in plain text has been removed.
+// Resetting the Admin password or Supervisor PIN now requires the staff access
+// code, which is held on the Worker and never shipped to the browser.
 
 function forgotPinFlow() {
-  var code = prompt('Enter the master recovery code to reset the Supervisor PIN:');
-  if (code === null) return;
-  if (code.trim() !== MASTER_RECOVERY_CODE) { showToast('❌ Incorrect recovery code'); return; }
+  // The reset used to be gated by a code written in plain text a few lines
+  // below, readable by anyone who opened View Source on this page. It now
+  // requires the staff access code, which lives only on the Worker.
+  if (!hasStaffToken()) {
+    promptStaffToken(function () { forgotPinFlow(); });
+    return;
+  }
 
   // Same defect as the admin flow: clear the shared hash and push the reset,
   // otherwise the cloud record silently restores the old PIN.
@@ -3285,9 +3322,11 @@ function forgotPinFlow() {
 }
 
 function forgotAdminPwdFlow() {
-  var code = prompt('Enter the master recovery code to reset the Admin password:');
-  if (code === null) return;
-  if (code.trim() !== MASTER_RECOVERY_CODE) { showToast('❌ Incorrect recovery code'); return; }
+  // Same change as the PIN flow: the plain-text master code is gone.
+  if (!hasStaffToken()) {
+    promptStaffToken(function () { forgotAdminPwdFlow(); });
+    return;
+  }
 
   // A shared PBKDF2 hash, once present, is the ONLY authority verifyPassword()
   // consults - the local plain value is deliberately ignored. Resetting only
@@ -4178,7 +4217,18 @@ function deleteFromCloud(type) {
   if (!hasStaffToken() && !promptStaffToken()) {
     return Promise.resolve({ success:false, error:'Staff access code required for server-side deletion' });
   }
-  return apiPost({ _action: 'delete', type: type })
+  // A wipe is final: there is no import anywhere in this app, so the CSV export
+  // cannot put anything back. Erasing everything must be typed out in full.
+  var body = { _action: 'delete', type: type };
+  if (type === 'all') {
+    var typed = prompt('This erases EVERY record for every student and cannot be undone.\nThere is no import - the CSV export will not restore it.\n\nType exactly:  DELETE ALL RECORDS');
+    if (typed === null) return Promise.resolve({ success:false, error:'Cancelled' });
+    if (typed.trim() !== 'DELETE ALL RECORDS') {
+      return Promise.resolve({ success:false, error:'Phrase did not match \u2014 nothing was deleted' });
+    }
+    body.confirm = 'DELETE ALL RECORDS';
+  }
+  return apiPost(body)
     .catch(function(err){
       var m = (err && err.message) ? err.message : 'network error';
       if (/failed to fetch|networkerror|load failed/i.test(m)) {
