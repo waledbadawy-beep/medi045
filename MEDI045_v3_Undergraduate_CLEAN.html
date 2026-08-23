@@ -1068,7 +1068,7 @@
 <div class="menu-card" onclick="goto('screen-practical')"><div class="menu-icon ic-orange">🔬</div><div class="menu-card-info"><h3>Practical Sessions – Skill Lab</h3><p>13 Stations · Steps · Self-Assessment · KPIs</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-course-ref')"><div class="menu-icon ic-gold">📖</div><div class="menu-card-info"><h3>Course Reference</h3><p>Topics, CLOs &amp; resources</p></div><div class="menu-arrow">›</div></div>
 <div class="menu-card" onclick="goto('screen-elearning')"><div class="menu-icon ic-pink">🎥</div><div class="menu-card-info"><h3>eLearning Videos</h3><p>YouTube tutorials for practical skills</p></div><div class="menu-arrow">›</div></div>
-<div class="menu-card" onclick="goto('screen-survey')"><div class="menu-icon" style="background:#e8f0fe;color:#1a73e8">📝</div><div class="menu-card-info"><h3>Program Evaluation</h3><p>Rate workshops, teaching &amp; resources</p></div><div class="menu-arrow">›</div></div>
+<div class="menu-card" onclick="goto('screen-feedback')"><div class="menu-icon" style="background:#e8f0fe;color:#1a73e8">📝</div><div class="menu-card-info"><h3>Feedback &amp; Surveys</h3><p>Course feedback and the university survey</p></div><div class="menu-arrow">›</div></div>
 </div>
 <div style="text-align:center;font-size:10px;color:#9ca3af;padding:8px 0 2px">© 2026 Dr. Walid Badwi · KSUMC Anaesthesia Training Programme</div>
 <div class="bottom-nav">
@@ -1695,9 +1695,48 @@
 </div></div>
 </div>
 </div>
+<!-- ===================== FEEDBACK & SURVEYS HUB ===================== -->
+<div class="screen" id="screen-feedback">
+<div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>Feedback &amp; Surveys</h1><p>Two separate forms · نموذجان منفصلان</p></div></div>
+<div style="padding:16px 16px calc(100px + env(safe-area-inset-bottom))">
+
+<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px">
+<div style="background:var(--primary);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+<div><div style="color:#fff;font-size:14px;font-weight:700">MEDI 045 Course Feedback</div><div style="color:#c8d8ea;font-size:11px" dir="rtl">تقييم مقرر MEDI 045</div></div>
+<span style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap">In this app</span>
+</div>
+<div style="padding:12px 14px">
+<div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Your feedback on teaching, workshop stations, supervision and resources in this course.</div>
+<div style="font-size:11.5px;color:var(--primary);background:#eef3f9;border-radius:8px;padding:9px 11px;line-height:1.7">
+👁️ Seen by the course director and teaching committee<br>
+🔓 No sign-in needed — answers are anonymous
+</div>
+<button onclick="goto('screen-survey')" style="-webkit-appearance:none;width:100%;margin-top:12px;background:var(--primary);color:#fff;border:none;padding:12px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent" type="button">Open the feedback form</button>
+</div>
+</div>
+
+<div style="background:#fff;border-radius:12px;border:1px solid #c3ccd6;overflow:hidden">
+<div style="background:#f4f6f8;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #dde3ea">
+<div><div style="color:#2c3e50;font-size:14px;font-weight:700">Student Satisfaction Survey</div><div style="color:#5a6b7d;font-size:11px" dir="rtl">استبانة رضا الطلاب — عمادة الجودة</div></div>
+<span style="background:#e4e9ee;color:#46586b;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap">KSU site ↗</span>
+</div>
+<div style="padding:12px 14px">
+<div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">The university's official survey, run by the Deanship of Academic Quality. It is not part of this app.</div>
+<div style="font-size:11.5px;color:#46586b;background:#f4f6f8;border-radius:8px;padding:9px 11px;line-height:1.7">
+👁️ Seen by Academic Quality, not by this course<br>
+🔒 Sign in with your KSU username and password<br>
+🕐 Open all year — not tied to the logbook deadline
+</div>
+<a href="https://blue.ksu.edu.sa/" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;margin-top:12px;background:#fff;color:#2c3e50;border:2px solid #9aa8b6;padding:11px;border-radius:9px;font-size:13.5px;font-weight:700;text-decoration:none;-webkit-tap-highlight-color:transparent">Go to blue.ksu.edu.sa ↗</a>
+<div style="margin-top:8px;font-size:10.5px;color:#8494a4;text-align:center;line-height:1.5">Opens in a new tab. This app cannot see whether you completed it.</div>
+</div>
+</div>
+
+</div>
+</div>
 <!-- ===================== PROGRAM EVALUATION SURVEY ===================== -->
 <div class="screen" id="screen-survey">
-<div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>Program Evaluation</h1><p>MEDI 045 · Anonymous Feedback</p></div><button class="save-btn" onclick="submitSurvey()">Submit</button></div>
+<div class="app-bar"><button class="back-btn" onclick="goto('screen-feedback')">‹</button><div class="app-bar-title"><h1>MEDI 045 Course Feedback</h1><p>Anonymous · seen by the course team</p></div><button class="save-btn" onclick="submitSurvey()">Submit</button></div>
 <div style="padding:16px 16px calc(100px + env(safe-area-inset-bottom))">
 <!-- SECTION A: Overall Program -->
 <div class="score-card">
