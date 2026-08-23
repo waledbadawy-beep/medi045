@@ -2551,7 +2551,6 @@ function gv(id) { var el=document.getElementById(id); return el ? el.value : '';
 // It is scoped to this student: two students may of course see the same patient.
 function checkPatientNotRepeated(type, prefix) {
   var mrn   = String(gv(prefix + '-mrn') || '').trim();
-  var pname = String(gv(prefix + '-patient') || '').trim();
   var myId  = studentProfile ? String(studentProfile.universityId || '') : '';
   if (!myId) return { ok: true };
 
@@ -2563,9 +2562,7 @@ function checkPatientNotRepeated(type, prefix) {
     if (r.status === 'deleted') continue;
 
     var rm = String(r.patientMRN || '').trim();
-    var rn = String(r.patientName || '').trim();
     if (mrn && rm && rm.toLowerCase() === mrn.toLowerCase()) { clash = { r: r, on: 'Hospital ID' }; break; }
-    if (!mrn && pname && rn && rn.toLowerCase() === pname.toLowerCase()) { clash = { r: r, on: 'patient name' }; break; }
   }
   if (!clash) return { ok: true };
 
@@ -2584,7 +2581,7 @@ function buildCaseEntry(type, prefix, status) {
     submittedAt: new Date().toLocaleString('en-SA'),
     studentName: gv(prefix+'-student'), studentId: gv(prefix+'-id'),
     studentGroup: gv(prefix+'-group'),
-    patientName: gv(prefix+'-patient'), patientMRN: gv(prefix+'-mrn'),
+    patientMRN: gv(prefix+'-mrn'),
     caseNo: gv(prefix+'-case-no'),
     caseDate: gv(prefix+'-date'), supervisor: gv(prefix+'-supervisor'),
     feedback: gv(prefix+'-feedback')
@@ -2594,9 +2591,8 @@ function buildCaseEntry(type, prefix, status) {
 // ── CLINIC SUBMIT ────────────────────────────────────────────────────────
 function submit_cl() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('cl-patient'), caseNo = gv('cl-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('cl-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var caseNo = gv('cl-case-no');
+  if (!gv('cl-mrn') || !caseNo) { showToast('\\u26A0\\uFE0F Please enter Hospital ID (MRN) and Case No.'); return; }
   var _dup_cl = checkPatientNotRepeated('clinic','cl');
   if (!_dup_cl.ok) { alert(_dup_cl.msg); return; }
   if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2622,9 +2618,8 @@ function saveDraft_cl() {
 // ── INTRAOP SUBMIT ───────────────────────────────────────────────────────
 function submit_io() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('io-patient'), caseNo = gv('io-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('io-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var caseNo = gv('io-case-no');
+  if (!gv('io-mrn') || !caseNo) { showToast('\\u26A0\\uFE0F Please enter Hospital ID (MRN) and Case No.'); return; }
   var _dup_io = checkPatientNotRepeated('intraop','io');
   if (!_dup_io.ok) { alert(_dup_io.msg); return; }
   if (!confirm('Submit this Intraoperative case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2643,9 +2638,8 @@ function saveDraft_io() {
 // ── PACU SUBMIT ──────────────────────────────────────────────────────────
 function submit_pacu() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('pacu-patient'), caseNo = gv('pacu-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('pacu-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var caseNo = gv('pacu-case-no');
+  if (!gv('pacu-mrn') || !caseNo) { showToast('\\u26A0\\uFE0F Please enter Hospital ID (MRN) and Case No.'); return; }
   var _dup_pacu = checkPatientNotRepeated('pacu','pacu');
   if (!_dup_pacu.ok) { alert(_dup_pacu.msg); return; }
   if (!confirm('Submit this PACU case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2669,9 +2663,8 @@ function saveDraft_pacu() {
 // ── WARD SUBMIT ──────────────────────────────────────────────────────────
 function submit_wd() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
-  var patient = gv('wd-patient'), caseNo = gv('wd-case-no');
-  if (!patient || !caseNo) { showToast('⚠️ Please enter Patient Name and Case No.'); return; }
-  if (!gv('wd-mrn')) { showToast('\u26A0\uFE0F Please enter the Hospital ID (MRN)'); return; }
+  var caseNo = gv('wd-case-no');
+  if (!gv('wd-mrn') || !caseNo) { showToast('\\u26A0\\uFE0F Please enter Hospital ID (MRN) and Case No.'); return; }
   var _dup_wd = checkPatientNotRepeated('ward','wd');
   if (!_dup_wd.ok) { alert(_dup_wd.msg); return; }
   if (!confirm('Submit this Ward/Pain case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
@@ -2692,10 +2685,10 @@ function saveDraft_wd() {
 // Computed/display-only fields (e.g. the neonatal PMA readout) are omitted -
 // they recalculate from the inputs that are restored.
 var CASE_FORMS = {
-  clinic: { screen: 'screen-clinic', fields: { age:'c-age', airwayDevice:'c-airway-device', allergy:'c-allergy', asa:'c-asa', bp:'c-bp', caseDate:'cl-date', caseNo:'cl-case-no', cvs:'c-cvs', dx:'c-dx', endo:'c-endo', feedback:'cl-feedback', hr:'c-hr', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', mallampati:'c-mallampati', meds:'c-meds', neoCA:'c-neo-ca', neoGA:'c-neo-ga', neoSurgDate:'c-neo-surgdate', neuro:'c-neuro', npo:'c-npo', operation:'c-operation', otherHx:'c-other-hx', patientMRN:'cl-mrn', patientName:'cl-patient', premed:'c-premed', prevAnaes:'c-prev-anaes', procedure:'c-procedure', renal:'c-renal', resp:'c-resp', sex:'c-sex', spo2:'c-spo2', studentGroup:'cl-group', studentId:'cl-id', studentName:'cl-student', supervisor:'cl-supervisor', temp:'c-temp', weight:'c-weight' } },
-  intraop: { screen: 'screen-intraop', fields: { airwayDevice:'c-airway-device', asa:'c-asa', caseDate:'io-date', caseNo:'io-case-no', ettSize:'c-ett-size', events:'c-events', feedback:'io-feedback', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', operation:'c-operation', patientMRN:'io-mrn', patientName:'io-patient', studentGroup:'io-group', studentId:'io-id', studentName:'io-student', supervisor:'io-supervisor' } },
-  pacu: { screen: 'screen-pacu', fields: { aldrete:'c-aldrete', caseDate:'pacu-date', caseNo:'pacu-case-no', feedback:'pacu-feedback', pacuAVPU:'c-pacu-avpu', pacuAdjunct:'c-pacu-adjunct', pacuAirway:'c-pacu-airway', pacuBP:'c-pacu-bp', pacuBreathing:'c-pacu-breathing', pacuDischarge:'c-pacu-discharge', pacuHR:'c-pacu-hr', pacuIvIn:'c-pacu-iv-in', pacuNRS:'c-pacu-nrs', pacuNotes:'c-pacu-notes', pacuO2Req:'c-pacu-o2-req', pacuPONV:'c-pacu-ponv', pacuRR:'c-pacu-rr', pacuRamsay:'c-pacu-ramsay', pacuRhythm:'c-pacu-rhythm', pacuShiver:'c-pacu-shiver', pacuSpo2:'c-pacu-spo2', pacuTemp:'c-pacu-temp', pacuUrine:'c-pacu-urine', pacuWound:'c-pacu-wound', patientMRN:'pacu-mrn', patientName:'pacu-patient', studentGroup:'pacu-group', studentId:'pacu-id', studentName:'pacu-student', supervisor:'pacu-supervisor' } },
-  ward: { screen: 'screen-ward', fields: { caseDate:'wd-date', caseNo:'wd-case-no', faces:'c-faces', feedback:'wd-feedback', nonPharmaMod:'c-nonpharma-mod', nrs:'c-nrs', painSite:'c-pain-site', painType:'c-pain-type', patientMRN:'wd-mrn', patientName:'wd-patient', pharmaMod:'c-pharma-mod', postopComp:'c-postop-comp', satisfaction:'c-satisfaction', studentGroup:'wd-group', studentId:'wd-id', studentName:'wd-student', supervisor:'wd-supervisor', vas:'c-vas', vrs:'c-vrs', whoStep:'c-who-step' } },
+  clinic: { screen: 'screen-clinic', fields: { age:'c-age', airwayDevice:'c-airway-device', allergy:'c-allergy', asa:'c-asa', bp:'c-bp', caseDate:'cl-date', caseNo:'cl-case-no', cvs:'c-cvs', dx:'c-dx', endo:'c-endo', feedback:'cl-feedback', hr:'c-hr', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', mallampati:'c-mallampati', meds:'c-meds', neoCA:'c-neo-ca', neoGA:'c-neo-ga', neoSurgDate:'c-neo-surgdate', neuro:'c-neuro', npo:'c-npo', operation:'c-operation', otherHx:'c-other-hx', patientMRN:'cl-mrn', premed:'c-premed', prevAnaes:'c-prev-anaes', procedure:'c-procedure', renal:'c-renal', resp:'c-resp', sex:'c-sex', spo2:'c-spo2', studentGroup:'cl-group', studentId:'cl-id', studentName:'cl-student', supervisor:'cl-supervisor', temp:'c-temp', weight:'c-weight' } },
+  intraop: { screen: 'screen-intraop', fields: { airwayDevice:'c-airway-device', asa:'c-asa', caseDate:'io-date', caseNo:'io-case-no', ettSize:'c-ett-size', events:'c-events', feedback:'io-feedback', indAnalgesic:'c-ind-analgesic', indHypnotic:'c-ind-hypnotic', indNMB:'c-ind-nmb', operation:'c-operation', patientMRN:'io-mrn', studentGroup:'io-group', studentId:'io-id', studentName:'io-student', supervisor:'io-supervisor' } },
+  pacu: { screen: 'screen-pacu', fields: { aldrete:'c-aldrete', caseDate:'pacu-date', caseNo:'pacu-case-no', feedback:'pacu-feedback', pacuAVPU:'c-pacu-avpu', pacuAdjunct:'c-pacu-adjunct', pacuAirway:'c-pacu-airway', pacuBP:'c-pacu-bp', pacuBreathing:'c-pacu-breathing', pacuDischarge:'c-pacu-discharge', pacuHR:'c-pacu-hr', pacuIvIn:'c-pacu-iv-in', pacuNRS:'c-pacu-nrs', pacuNotes:'c-pacu-notes', pacuO2Req:'c-pacu-o2-req', pacuPONV:'c-pacu-ponv', pacuRR:'c-pacu-rr', pacuRamsay:'c-pacu-ramsay', pacuRhythm:'c-pacu-rhythm', pacuShiver:'c-pacu-shiver', pacuSpo2:'c-pacu-spo2', pacuTemp:'c-pacu-temp', pacuUrine:'c-pacu-urine', pacuWound:'c-pacu-wound', patientMRN:'pacu-mrn', studentGroup:'pacu-group', studentId:'pacu-id', studentName:'pacu-student', supervisor:'pacu-supervisor' } },
+  ward: { screen: 'screen-ward', fields: { caseDate:'wd-date', caseNo:'wd-case-no', faces:'c-faces', feedback:'wd-feedback', nonPharmaMod:'c-nonpharma-mod', nrs:'c-nrs', painSite:'c-pain-site', painType:'c-pain-type', patientMRN:'wd-mrn', pharmaMod:'c-pharma-mod', postopComp:'c-postop-comp', satisfaction:'c-satisfaction', studentGroup:'wd-group', studentId:'wd-id', studentName:'wd-student', supervisor:'wd-supervisor', vas:'c-vas', vrs:'c-vrs', whoStep:'c-who-step' } },
 };
 
 // ── DRAFT RESUME ─────────────────────────────────────────────────────────
@@ -3504,7 +3497,6 @@ function editProfile() {
 function autoFillProfile() {
   if (!studentProfile) return;
   var n = document.getElementById('c-student'); if(n) n.value = studentProfile.name;
-  var i = document.getElementById('c-id');      if(i) i.value = studentProfile.universityId;
   var h = document.getElementById('home-student-name');
   if(h) h.textContent = '👤 ' + studentProfile.name + ' · ' + studentProfile.universityId;
 }
@@ -3754,7 +3746,7 @@ function renderRecords() {
   document.getElementById('records-count').textContent = myRecords.length + ' record'+(myRecords.length!==1?'s':'')+' saved';
   let container=document.getElementById('records-container');
   if(myRecords.length===0){ container.innerHTML='<div class="empty-state"><div class="es-icon">📂</div><h3>No records yet</h3><p>Save a case to see it here</p></div>'; return; }
-  container.innerHTML=myRecords.map(r=>`<div class="record-card" style="cursor:pointer" onclick="openCaseDetail('${r.id}')"><div class="rc-top"><div class="rc-name">${r.type==='airway'?'🫁':'📋'} Case #${r.caseNo||'?'} · ${_esc(r.patientName||'Unknown')}</div><div class="rc-date">${r.caseDate||r.date}</div></div><div class="rc-tags">${r.type==='airway'?'<span class="tag tag-red">Airway</span>':'<span class="tag tag-blue">Full Case</span>'}${r.status==='submitted'?'<span class="tag" style="background:#e8f8f0;color:#1a7a4a">✓ Submitted</span>':'<span class="tag" style="background:#fff8e8;color:#c67a00">Draft</span>'}${r.dx?`<span class="tag tag-orange">${r.dx}</span>`:''}${r.asa?`<span class="tag tag-green">ASA ${r.asa}</span>`:''}</div></div>`).join('');
+  container.innerHTML=myRecords.map(r=>`<div class="record-card" style="cursor:pointer" onclick="openCaseDetail('${r.id}')"><div class="rc-top"><div class="rc-name">${r.type==='airway'?'🫁':'📋'} Case #${r.caseNo||'?'} · MRN ${_esc(r.patientMRN||'—')}</div><div class="rc-date">${r.caseDate||r.date}</div></div><div class="rc-tags">${r.type==='airway'?'<span class="tag tag-red">Airway</span>':'<span class="tag tag-blue">Full Case</span>'}${r.status==='submitted'?'<span class="tag" style="background:#e8f8f0;color:#1a7a4a">✓ Submitted</span>':'<span class="tag" style="background:#fff8e8;color:#c67a00">Draft</span>'}${r.dx?`<span class="tag tag-orange">${r.dx}</span>`:''}${r.asa?`<span class="tag tag-green">ASA ${r.asa}</span>`:''}</div></div>`).join('');
 }
 
 function updateLEMON() {
@@ -3873,7 +3865,7 @@ function renderDashboard() {
         var evBg    = ev ? (ev.status==='approved'?'#1a7a4a':ev.status==='pending_review'?'#c67a00':'#6c757d') : TYPE_COLOR[type];
         var evLabel = ev ? (ev.status==='approved'?'✅ '+ev.finalMark+'/5':ev.status==='pending_review'?'⏳ Pending':'📝 Draft') : '🎓 Evaluate';
         html += '<div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;display:flex;justify-content:space-between;align-items:center;gap:8px">';
-        html += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">Case #'+_esc(c.caseNo)+' · '+_esc(c.patientName)+'</div><div style="font-size:11px;color:#6c757d">'+_esc(c.caseDate||'')+(c.dx?' · '+_esc(c.dx):'')+'</div></div>';
+        html += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">Case #'+_esc(c.caseNo)+' · '+'MRN '+_esc(c.patientMRN||'—')+'</div><div style="font-size:11px;color:#6c757d">'+_esc(c.caseDate||'')+(c.dx?' · '+_esc(c.dx):'')+'</div></div>';
         html += '<div style="display:flex;gap:6px;flex-shrink:0">';
         html += '<button onclick="openCaseDetail('+c.id+')" style="background:#eaf1fa;color:#1a3a5c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">👁</button>';
         html += '<button onclick="loadCaseForEval('+c.id+')" style="background:'+evBg+';color:white;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">'+evLabel+'</button>';
@@ -3892,7 +3884,7 @@ function renderDashboard() {
 }
 
 
-function loadCaseForEval(caseId) { if(!evalUnlocked){ showPasswordModal(); pendingEvalCaseId=caseId; return; } let r=records.find(x=>String(x.id)===String(caseId)); if(r){ const el=document.getElementById('ev-student'); if(el) el.value=r.studentName||r.patientName||''; const el2=document.getElementById('ev-sid'); if(el2) el2.value=r.studentId||''; goto('screen-eval'); switchEvalTab(0); showToast('📋 Case loaded'); } }
+function loadCaseForEval(caseId) { if(!evalUnlocked){ showPasswordModal(); pendingEvalCaseId=caseId; return; } let r=records.find(x=>String(x.id)===String(caseId)); if(r){ const el=document.getElementById('ev-student'); if(el) el.value=r.studentName||''; const el2=document.getElementById('ev-sid'); if(el2) el2.value=r.studentId||''; goto('screen-eval'); switchEvalTab(0); showToast('📋 Case loaded'); } }
 let pendingEvalCaseId=null;
 function getPdName(fallback) {
   try { var v = Store.get('medi045_pd_name'); if (v && String(v).trim()) return String(v).trim(); } catch (e) {}
@@ -4006,7 +3998,7 @@ function deleteSingleCase(caseId) {
   });
 
   var msg = 'Delete this case permanently?\n\n' +
-            'Case #' + (c.caseNo || '') + ' \u00B7 ' + (c.patientName || '') +
+            'Case #' + (c.caseNo || '') + ' \u00B7 ' + ('MRN ' + (c.patientMRN || '—')) +
             '\nStudent: ' + (c.studentName || c.studentId || 'unknown') +
             '\nDate: ' + (c.caseDate || 'unknown');
   if (ev) {
@@ -4029,7 +4021,7 @@ function deleteSingleCase(caseId) {
       '\u26A0\uFE0F The submission window is still OPEN (' + (b.batchName || 'current batch') +
       ' closes ' + (b.deadlineDate || 'unknown') + ').\n\n' +
       'This is live student work. To confirm deletion of Case #' + expect +
-      ' (' + (c.patientName || '') + '), type the case number below.'
+      ' (' + ('MRN ' + (c.patientMRN || '—')) + '), type the case number below.'
     );
     if (typed === null) return;
     if (String(typed).trim() !== expect) {
@@ -4044,7 +4036,7 @@ function deleteSingleCase(caseId) {
   postToCloud(c);
   records.splice(idx, 1);
   Store.set('medi045_records', JSON.stringify(records));
-  logAudit('delete_case', 'Deleted case #' + (c.caseNo || '') + ' (' + (c.patientName || '') +
+  logAudit('delete_case', 'Deleted case #' + (c.caseNo || '') + ' (' + ('MRN ' + (c.patientMRN || '—')) +
                           ') of student ' + (c.studentId || 'unknown'));
   updateStats(); renderRecords(); renderDashboard(); renderResults();
   showToast('\uD83D\uDDD1 Case deleted');
@@ -5187,7 +5179,7 @@ function openDetailModal(evalId) {
     html += '<div style="background:#2ec4b6;color:white;padding:10px 14px;font-weight:700;font-size:13px">📋 Student\'s Submitted Case Records (' + studentCases.length + ')</div>';
     studentCases.forEach((c, i) => {
       html += '<div style="padding:10px 14px;border-bottom:1px solid #e0f5f0;font-size:13px">';
-      html += '<div style="font-weight:700;margin-bottom:4px">Case #' + _esc(c.caseNo||'?') + ': ' + _esc(c.patientName||'') + ' — ' + _esc(c.procedure||c.operation||c.dx||'') + '</div>';
+      html += '<div style="font-weight:700;margin-bottom:4px">Case #' + _esc(c.caseNo||'?') + ': ' + 'MRN ' + _esc(c.patientMRN||'—') + ' — ' + _esc(c.procedure||c.operation||c.dx||'') + '</div>';
       html += '<div style="color:var(--muted);font-size:12px;margin-bottom:6px">' + _esc(c.caseDate||c.date||'') + ' · ASA ' + _esc(c.asa||'?') + ' · ' + _esc(c.age||'') + '/' + _esc(c.sex||'') + '</div>';
       html += '<button onclick="closeDetailModal();setTimeout(function(){openCaseDetail('+c.id+')},200)" style="background:#2ec4b6;color:white;border:none;border-radius:6px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%">📖 View Full Case Record</button>';
       html += '</div>';
@@ -5351,14 +5343,14 @@ function openCaseDetail(caseId) {
     var myId = studentProfile ? String(studentProfile.universityId||'') : '';
     if (!myId || String(r.studentId||'') !== myId) { showToast('⚠️ You can only view your own cases'); return; }
   }
-  document.getElementById('dm-name').textContent = 'Case #' + (r.caseNo||'?') + ' · MRN ' + (r.patientMRN||'—') + ' · ' + (r.patientName||'');
+  document.getElementById('dm-name').textContent = 'Case #' + (r.caseNo||'?') + ' · MRN ' + (r.patientMRN||'—');
   document.getElementById('dm-meta').textContent = (r.studentName||'') + ' · ' + (r.caseDate||r.date||'') + ' · ' + (r.status==='submitted'?'SUBMITTED':'DRAFT');
   
   function row(label, val) { return val ? '<tr><td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;font-weight:600;color:var(--muted);width:35%">' + label + '</td><td style="padding:6px 8px;border-bottom:1px solid #eee;font-size:13px">' + _esc(String(val)) + '</td></tr>' : ''; }
   
   let html = '<table style="width:100%;border-collapse:collapse">';
   html += '<tr><td colspan="2" style="padding:8px;background:var(--primary);color:white;font-weight:700;border-radius:8px 8px 0 0">Patient Information</td></tr>';
-  html += row('Patient Name', r.patientName);
+  html += row('Hospital ID (MRN)', r.patientMRN);
   html += row('Student', r.studentName);
   html += row('Age / Sex', (r.age||'') + ' / ' + (r.sex||''));
   html += row('Weight', r.weight ? r.weight + ' kg' : '');
@@ -5527,7 +5519,6 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="cl-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="cl-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="cl-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="cl-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -5536,8 +5527,6 @@ setInterval(() => {
 <div><label>Supervisor</label><input id="cl-supervisor" type="text" placeholder="Type a name, or choose below" autocomplete="off" style="margin-bottom:6px" oninput="checkNewSupervisor('cl')"/><div id="cl-supervisor-add" style="display:none;font-size:12px;margin-bottom:6px"></div><select id="cl-supervisor-select" onchange="if(this.value){document.getElementById('cl-supervisor').value=this.value; document.getElementById('cl-supervisor-add').style.display='none';}" style="font-size:15px"><option value="">— or choose from list —</option></select></div>
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">🏥 Preoperative Assessment &amp; History</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">🏥 I. Preoperative Assessment</div>
-<div class="form-row two-col"><div><label>Case No.</label><input id="c-case" oninput="updateProgress()" placeholder="e.g. 1" type="text"/></div><div><label>Date</label><input id="c-date" oninput="updateProgress()" type="date"/></div></div>
-<div class="form-row two-col"><div><label>Patient Name</label><input id="c-name" oninput="updateProgress()" placeholder="Full name" type="text"/></div><div><label>Hospital ID</label><input id="c-id" oninput="updateProgress()" placeholder="ID" type="text"/></div></div>
 <div class="form-row three-col"><div><label>Age</label><input id="c-age" placeholder="yrs" step="any" type="number"/></div><div><label>Sex</label><select id="c-sex"><option value="">--</option><option>Male</option><option>Female</option></select></div><div><label>Weight (kg)</label><input id="c-weight" placeholder="kg" step="any" type="number"/></div></div>
 <details style="margin-top:6px;background:var(--bg);border-radius:8px;padding:2px 10px">
 <summary style="font-size:11px;color:var(--muted);cursor:pointer;padding:6px 0">🍼 Neonatal / Premature Infant Age Calculator (optional)</summary>
@@ -5658,7 +5647,6 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="io-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="io-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="io-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="io-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -5721,7 +5709,6 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="pacu-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="pacu-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="pacu-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="pacu-case-no" placeholder="e.g. 1"/></div>
 </div>
@@ -6150,7 +6137,6 @@ setInterval(() => {
 </div>
 <div class="form-row"><div><label>Group</label><input id="wd-group" placeholder="Auto-filled from profile" readonly="" style="background:#f0f4f8"/></div></div>
 <div class="form-row two-col">
-<div><label>Patient Name / Initials</label><input id="wd-patient" placeholder="e.g. A.M."/></div>
 <div><label>Hospital ID (MRN)</label><input id="wd-mrn" placeholder="e.g. 1234567" inputmode="numeric" autocomplete="off"/></div>
 <div><label>Case No.</label><input id="wd-case-no" placeholder="e.g. 1"/></div>
 </div>
