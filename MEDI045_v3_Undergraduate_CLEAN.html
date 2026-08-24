@@ -2079,6 +2079,13 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
 <button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme</button>
 </div>
+<!-- Section: Release Marks -->
+<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📤 Release Marks to Students</div>
+<div style="font-size:11px;color:#5a6b7d;margin-bottom:4px" dir="rtl">إطلاق الدرجات للطلاب</div>
+<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Supervisors mark cases; only you release them. A student sees nothing until you do.<br><span dir="rtl">المشرفون يقيّمون، وأنت وحدك تطلق الدرجة.</span></div>
+<div id="release-queue"></div>
+</div>
 <!-- Section: Audit Log -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📜 Audit Log</div>
@@ -5914,6 +5921,7 @@ function _initApp() {
   syncBatchConfigFromCloud();
   _safe('elearning', function(){ renderElearningLinks(); renderAdminElearning(); });
   _safe('grading', renderGradingAdmin);
+  _safe('release', renderReleaseQueue);
   _safe('stats', updateStats);
   _safe('records', renderRecords);
   _safe('dashboard', renderDashboard);
@@ -6509,7 +6517,7 @@ function _autoTotalNow() {
 
 function renderScoreReview(prev) {
   var R = getRubric(), t = _autoTotalNow();
-  var isFinal = prev && prev.status === 'final';
+  var isFinal = prev && ['awaiting_release','released','final'].indexOf(prev.status) !== -1;
 
   var h = '<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Case #'
         + _esc2(_reviewCase.caseNo) + ' \u00B7 MRN ' + _esc2(_reviewCase.patientMRN || '\u2014')
@@ -6518,8 +6526,11 @@ function renderScoreReview(prev) {
 
   h += '<div style="background:' + (isFinal ? '#e8f8f0' : '#fff8e8') + ';border-radius:10px;padding:10px 12px;margin:12px 0;'
      + 'font-size:12px;font-weight:700;color:' + (isFinal ? '#1a7a4a' : '#c67a00') + '">'
-     + (isFinal ? '\u2705 FINAL \u2014 released to the student'
-                : '\u23F3 PRELIMINARY \u2014 not visible to the student until you finalise') + '</div>';
+     + (isFinal
+          ? (prev && prev.status === 'released'
+              ? '\u2705 RELEASED \u2014 the student has this mark'
+              : '\u23F3 MARKED \u2014 with the admin, not yet released to the student')
+          : '\u23F3 PRELIMINARY \u2014 nothing recorded yet') + '</div>';
 
   h += _reviewTabs();
   if (_reviewPage === 1) {
@@ -6605,7 +6616,7 @@ function renderScoreReview(prev) {
   btn.onclick = finaliseReview;
   btn.innerHTML = isFinal
     ? '\uD83D\uDCBE Save changes<div style="font-size:10px;font-weight:400;opacity:.9" dir="rtl">\u062D\u0641\u0638 \u0627\u0644\u062A\u0639\u062F\u064A\u0644</div>'
-    : '\u2705 Finalise and release<div style="font-size:10px;font-weight:400;opacity:.9" dir="rtl">\u0627\u0639\u062A\u0645\u0627\u062F \u0648\u0625\u0631\u0633\u0627\u0644</div>';
+    : '\u2713 Submit mark to admin<div style="font-size:10px;font-weight:400;opacity:.9" dir="rtl">\u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u062F\u0631\u062C\u0629 \u0644\u0644\u0645\u0633\u0624\u0648\u0644</div>';
   btn.style.background = isFinal ? '#7b2d8b' : '#1a7a4a';
 }
 
@@ -6716,7 +6727,7 @@ function saveAutoScoreOnly() {
 function finaliseReview() {
   if (!_reviewCase) return;
   var R = getRubric(), prev = getCaseReview(_reviewCase.id);
-  if (prev && prev.status === 'final') {
+  if (prev && ['awaiting_release','released','final'].indexOf(prev.status) !== -1) {
     var was = prev.total, now = _autoTotalNow().scaled;
     getRubric().supervisorDomains.forEach(function (d) {
       var el = document.getElementById('sup-' + d.id);
@@ -6724,7 +6735,9 @@ function finaliseReview() {
       if (!isNaN(v)) now += Math.max(0, Math.min(d.points, v));
     });
     if (!confirm('Save the amended mark?\n\nWas ' + was + '/100, now ' + now + '/100.\n'
-      + 'The student already has the earlier mark; the change is recorded and the old figure kept in the history.')) return;
+      + (prev.status === 'released'
+          ? 'The student already has the earlier mark; the change is recorded and the old figure kept in the history.'
+          : 'Not yet released, so the student has not seen it. The old figure is kept in the history.'))) return;
   }
   var domains = {}, sup = 0, incomplete = [];
   R.supervisorDomains.forEach(function (d) {
@@ -6765,13 +6778,16 @@ function finaliseReview() {
     domains: domains, supervisorScore: sup, supervisorMax: _reviewScore.supervisorMax,
     total: t.scaled + sup,
     feedback: (document.getElementById('review-feedback') || {}).value || '',
-    status: 'final',
-    finalisedBy: (studentProfile && studentProfile.name) || 'staff',
-    finalisedAt: new Date().toISOString(),
+    /* A supervisor marks; only the admin releases. The mark waits here until
+       the programme issues it, so no single supervisor can put a figure in
+       front of a student on their own. */
+    status: 'awaiting_release',
+    markedBy: (studentProfile && studentProfile.name) || 'staff',
+    markedAt: new Date().toISOString(),
     /* Amendments are appended, never overwritten: a mark that changed after
        release must stay explainable afterwards. */
     history: ((prev && prev.history) || []).concat(prev ? [{
-      at: prev.finalisedAt, by: prev.finalisedBy, total: prev.total
+      at: prev.markedAt || prev.finalisedAt, by: prev.markedBy || prev.finalisedBy, total: prev.total
     }] : [])
   };
   /* Same path every other record takes: replace any earlier review for this
@@ -6780,8 +6796,7 @@ function finaliseReview() {
   records.push(review);
   try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
   postToCloud(review);
-  showToast((prev && prev.status === 'final' ? '\uD83D\uDCBE Mark updated: ' : '\u2705 Mark finalised: ')
-            + review.total + '/100');
+  showToast('\u2713 Marked ' + review.total + '/100 \u2014 sent to the admin for release');
   closeScoreReview();
   if (typeof renderDashboard === 'function') { try { renderDashboard(); } catch (e) {} }
 }
@@ -7096,6 +7111,91 @@ function describeRule(c) {
 
 function closeRubricReview() {
   document.getElementById('rubric-review-modal').style.display = 'none';
+}
+
+/* ---- Admin release queue ------------------------------------------
+   The only route by which a mark reaches a student. A supervisor's
+   submission sits here until the programme issues it. */
+function _marksAwaiting() {
+  return records.filter(function (r) {
+    return r.type === 'case_review' && r.status === 'awaiting_release';
+  });
+}
+
+function renderReleaseQueue() {
+  var el = document.getElementById('release-queue');
+  if (!el) return;
+  var q = _marksAwaiting();
+  if (!q.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:6px 0">'
+      + 'No marks waiting. <span dir="rtl">\u0644\u0627 \u062A\u0648\u062C\u062F \u062F\u0631\u062C\u0627\u062A \u0645\u0639\u0644\u0642\u0629.</span></div>';
+    return;
+  }
+  var h = '';
+  q.forEach(function (r) {
+    h += '<div style="background:var(--bg);border-radius:9px;padding:10px 11px;margin-bottom:7px">'
+      + '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:12.5px;font-weight:700;color:#1a3a5c">' + _esc(r.student || '\u2014') + '</div>'
+      + '<div style="font-size:10.5px;color:var(--muted)">' + _esc(r.caseType || '') + ' \u00B7 case '
+      + _esc(r.caseId || '') + ' \u00B7 marked by ' + _esc(r.markedBy || 'staff') + '</div></div>'
+      + '<div style="font-size:15px;font-weight:800;color:var(--primary);white-space:nowrap">' + r.total + '/100</div>'
+      + '</div>'
+      + '<button onclick="releaseMark(\'' + _esc(r.caseId) + '\')" style="width:100%;margin-top:8px;background:#1a7a4a;'
+      + 'color:#fff;border:none;border-radius:8px;padding:10px;font-size:12.5px;font-weight:800;cursor:pointer;'
+      + 'font-family:inherit">\u2705 Release to this student \u00B7 <span dir="rtl">\u0625\u0637\u0644\u0627\u0642</span></button>'
+      + '</div>';
+  });
+  if (q.length > 1) {
+    h += '<button onclick="releaseAllMarks()" style="width:100%;margin-top:4px;background:#1a3a5c;color:#fff;border:none;'
+      + 'border-radius:9px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">'
+      + '\u2705 Release all ' + q.length + ' \u00B7 <span dir="rtl">\u0625\u0637\u0644\u0627\u0642 \u0627\u0644\u0643\u0644</span></button>';
+  }
+  el.innerHTML = h;
+}
+
+function releaseMark(caseId, quiet) {
+  if (!hasStaffToken()) { promptStaffToken(function () { releaseMark(caseId); }); return; }
+  var r = _marksAwaiting().filter(function (x) { return String(x.caseId) === String(caseId); })[0];
+  if (!r) return;
+  if (!quiet && !confirm('Release ' + r.total + '/100 to ' + (r.student || 'this student') + '?\n\n'
+      + 'They will be able to see the mark and the feedback. This is the point at which it becomes theirs.')) return;
+
+  r.status = 'released';
+  r.releasedBy = (studentProfile && studentProfile.name) || 'admin';
+  r.releasedAt = new Date().toISOString();
+
+  /* The student's copy is a separate record. case_review stays staff-only, so
+     a mark a supervisor is still working on cannot reach anyone. */
+  var mark = {
+    type: 'case_mark', id: 'mark_' + r.caseId,
+    caseId: r.caseId, caseType: r.caseType,
+    student: r.student, studentId: r.studentId,
+    total: r.total, autoScore: r.autoScore, autoMax: r.autoMax,
+    supervisorScore: r.supervisorScore, supervisorMax: r.supervisorMax,
+    feedback: r.feedback || '', status: 'released',
+    releasedAt: r.releasedAt
+  };
+  records = records.filter(function (x) { return String(x.id) !== String(mark.id); });
+  records.push(mark);
+  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
+  postToCloud(r);
+  postToCloud(mark);
+  if (typeof logAudit === 'function') {
+    try { logAudit('grading', 'Released ' + r.total + '/100 to ' + (r.student || r.studentId)
+      + ' for case ' + r.caseId); } catch (e) {}
+  }
+  renderReleaseQueue();
+  if (!quiet) showToast('\u2705 Released ' + r.total + '/100 to ' + (r.student || 'the student'));
+}
+
+function releaseAllMarks() {
+  var q = _marksAwaiting();
+  if (!q.length) return;
+  if (!confirm('Release all ' + q.length + ' marks to their students?\n\n'
+    + 'Each student will see their mark and feedback. This cannot be undone from here.')) return;
+  q.slice().forEach(function (r) { releaseMark(r.caseId, true); });
+  showToast('\u2705 Released ' + q.length + ' marks');
 }
 </script>
 <!-- ============================================================ -->

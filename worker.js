@@ -48,7 +48,11 @@ const PUBLIC_CONFIG = new Set([
 const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials', 'backup_log',
   // A preliminary automatic score is working material for the supervisor.
   // Only a finalised case_review is released to the student.
-  'case_autoscore'];
+  'case_autoscore',
+  // A supervisor's mark stays staff-only. The student's copy is written as a
+  // separate 'case_mark' record when the admin releases it, so nothing a
+  // supervisor is still working on can reach the student.
+  'case_review'];
 
 // A finalised case mark belongs to the student it was written for: handleGet
 // already scopes reads by student id, so it reaches that student and nobody
