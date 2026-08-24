@@ -931,6 +931,20 @@
 .form-row.three-col:has(input[type="date"]),
 .form-row.four-col:has(input[type="date"]),
 .form-row.row-pair { grid-template-columns: 1fr 1fr; }
+
+/* ---- Drug lists: stop slicing a row in half ----
+   .chip-list caps at a fixed height and scrolls, but the cap fell mid-row, so
+   the sixth drug was cut through the middle and read as a rendering fault
+   rather than as a list continuing below. The cap is now a little taller, and
+   a list that actually overflows gets a fade at its foot plus a one-line hint,
+   so the cut looks deliberate and the student knows to scroll. */
+.chip-list { max-height: 208px; scrollbar-width: thin; }
+.chip-selector { position: relative; }
+.chip-selector.is-scrollable .chip-list { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent 100%); }
+.chip-selector.is-scrollable.at-end .chip-list { -webkit-mask-image: none; mask-image: none; }
+.chip-scroll-hint { display: none; font-size: 10px; font-weight: 700; color: var(--muted); text-align: center; padding: 0 0 6px; letter-spacing: .3px; }
+.chip-selector.is-scrollable .chip-scroll-hint { display: block; }
+.chip-selector.is-scrollable.at-end .chip-scroll-hint { visibility: hidden; }
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAgMTYwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJNRURJIDA0NSI+PHJlY3Qgd2lkdGg9IjE2MCIgaGVpZ2h0PSIxNjAiIHJ4PSIzNCIgZmlsbD0iIzBkMmY4ZiIvPjxwYXRoIGQ9Ik01MCAxMDggcTAgLTMyIDIzIC0zMiBxMjMgMCAyMyAzMiB6IiBmaWxsPSIjNWNiNTMxIi8+PHBhdGggZD0iTTU5IDEwNCBxMiAtMjIgMTMgLTI0IHEtOCA4IC04IDI0IHoiIGZpbGw9IiNkOGYwZDQiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSIxMDkiIHJ4PSIyOSIgcnk9IjciIGZpbGw9IiNmZmZmZmYiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSIxMDciIHJ4PSIyMyIgcnk9IjQiIGZpbGw9IiM1Y2I1MzEiLz48cmVjdCB4PSI2NSIgeT0iNjIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjQiIGZpbGw9IiNmZmZmZmYiLz48cmVjdCB4PSI4MSIgeT0iNjUiIHdpZHRoPSIxNSIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmZmZmZiIvPjxlbGxpcHNlIGN4PSIxMjEiIGN5PSI2OSIgcng9IjIzIiByeT0iMTIiIGZpbGw9IiM1Y2I1MzEiLz48ZWxsaXBzZSBjeD0iMTEwIiBjeT0iNjYiIHJ4PSI4IiByeT0iNSIgZmlsbD0iI2Q4ZjBkNCIvPjwvc3ZnPg=="/>
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAgMTYwIiB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJNRURJIDA0NSI+PHJlY3Qgd2lkdGg9IjE2MCIgaGVpZ2h0PSIxNjAiIHJ4PSIzNCIgZmlsbD0iIzBkMmY4ZiIvPjxwYXRoIGQ9Ik01MCAxMDggcTAgLTMyIDIzIC0zMiBxMjMgMCAyMyAzMiB6IiBmaWxsPSIjNWNiNTMxIi8+PHBhdGggZD0iTTU5IDEwNCBxMiAtMjIgMTMgLTI0IHEtOCA4IC04IDI0IHoiIGZpbGw9IiNkOGYwZDQiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSIxMDkiIHJ4PSIyOSIgcnk9IjciIGZpbGw9IiNmZmZmZmYiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSIxMDciIHJ4PSIyMyIgcnk9IjQiIGZpbGw9IiM1Y2I1MzEiLz48cmVjdCB4PSI2NSIgeT0iNjIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgcng9IjQiIGZpbGw9IiNmZmZmZmYiLz48cmVjdCB4PSI4MSIgeT0iNjUiIHdpZHRoPSIxNSIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmZmZmZiIvPjxlbGxpcHNlIGN4PSIxMjEiIGN5PSI2OSIgcng9IjIzIiByeT0iMTIiIGZpbGw9IiM1Y2I1MzEiLz48ZWxsaXBzZSBjeD0iMTEwIiBjeT0iNjYiIHJ4PSI4IiByeT0iNSIgZmlsbD0iI2Q4ZjBkNCIvPjwvc3ZnPg=="/>
@@ -5939,6 +5953,45 @@ function submitClassGate() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
 })();
+
+/* Mark the drug lists that really do overflow, so only those get the fade and
+   the hint. A permanent fade on a short list would be a lie about there being
+   more to see. Re-checked when a search filters the list, since filtering
+   changes what fits. */
+(function chipScrollHints() {
+  function markOne(sel) {
+    var list = sel.querySelector('.chip-list');
+    if (!list) return;
+    var over = list.scrollHeight - list.clientHeight > 4;
+    sel.classList.toggle('is-scrollable', over);
+    if (!over) { sel.classList.remove('at-end'); return; }
+    if (!sel.querySelector('.chip-scroll-hint')) {
+      var h = document.createElement('div');
+      h.className = 'chip-scroll-hint';
+      h.textContent = '\u2193 scroll for more \u00B7 \u0645\u0632\u064A\u062F';
+      list.parentNode.insertBefore(h, list.nextSibling);
+    }
+    sel.classList.toggle('at-end', list.scrollTop + list.clientHeight >= list.scrollHeight - 4);
+  }
+  function markAll() {
+    document.querySelectorAll('.chip-selector').forEach(markOne);
+  }
+  function run() {
+    markAll();
+    document.querySelectorAll('.chip-list').forEach(function (l) {
+      l.addEventListener('scroll', function () { markOne(l.closest('.chip-selector')); }, { passive: true });
+    });
+    document.querySelectorAll('.chip-search').forEach(function (inp) {
+      inp.addEventListener('input', function () {
+        setTimeout(function () { markOne(inp.closest('.chip-selector')); }, 0);
+      });
+    });
+    /* Sections open on demand, so a list can be measured while hidden. */
+    document.addEventListener('click', function () { setTimeout(markAll, 260); }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
+})();
 </script>
 <!-- ============================================================ -->
 
@@ -6941,6 +6994,4 @@ function submitClassGate() {
 </div></div><div style="padding:12px 16px 28px;display:flex;gap:10px;background:white;border-top:1px solid var(--border)"><button onclick="saveDraft_wd()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:10px;padding:16px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Draft</button><button onclick="submit_wd()" style="flex:2;background:#5c3a1a;color:white;border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:800;cursor:pointer">✓ Submit Case</button></div></div>
 <!-- SIGN-OFF -->
 
-</body></html>`;
-
-
+</body></html>
