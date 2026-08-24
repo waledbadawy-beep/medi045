@@ -2621,6 +2621,238 @@ function buildCaseEntry(type, prefix, status) {
   };
 }
 
+
+/* ==================================================================
+   ONE COLLECTOR PER FORM, USED BY BOTH SUBMIT AND SAVE DRAFT
+   The submit handlers named the fields to keep by hand and had fallen
+   far behind the forms: 129 of 229 controls were filled in and then
+   discarded - the whole LEMON airway assessment, the five Aldrete
+   components, ventilation settings, fluid balance, bloods, the pain
+   history. Save Draft was worse: it read nothing beyond the identity
+   block, so a draft lost everything and Continue editing returned an
+   almost empty form.
+
+   Each form now has one collector reading every control on its screen,
+   used by BOTH submit and save-draft. Key names already used by the old
+   handlers are preserved, so records written before this change still
+   read correctly. Same repair as the undergraduate app on 18 August.
+   ================================================================== */
+
+function collect_cl(status) {
+  var entry = buildCaseEntry('clinic','cl', status);
+  entry.age = gv('c-age');
+  entry.sex = gv('c-sex');
+  entry.weight = gv('c-weight');
+  entry.neoGA = gv('c-neo-ga');
+  entry.neoCA = gv('c-neo-ca');
+  entry.neoSurgDate = gv('c-neo-surgdate');
+  entry.dx = gv('c-dx');
+  entry.procedure = gv('c-procedure');
+  entry.prevAnaes = gv('c-prev-anaes');
+  entry.allergy = gv('c-allergy');
+  entry.cvs = gv('c-cvs');
+  entry.resp = gv('c-resp');
+  entry.endo = gv('c-endo');
+  entry.renal = gv('c-renal');
+  entry.neuro = gv('c-neuro');
+  entry.otherHx = gv('c-other-hx');
+  entry.meds = gv('c-meds');
+  entry.hr = gv('c-hr');
+  entry.spo2 = gv('c-spo2');
+  entry.temp = gv('c-temp');
+  entry.bp = gv('c-bp');
+  entry.cvsEx = gv('c-cvs-ex');
+  entry.respEx = gv('c-resp-ex');
+  entry.mallampati = gv('c-mallampati');
+  entry.thyromental = gv('c-thyromental');
+  entry.tmj = gv('c-tmj');
+  entry.neckExt = gv('c-neck-ext');
+  entry.mouth = gv('c-mouth');
+  entry.teeth = gv('c-teeth');
+  entry.hb = gv('c-hb');
+  entry.wbc = gv('c-wbc');
+  entry.plt = gv('c-plt');
+  entry.na = gv('c-na');
+  entry.k = gv('c-k');
+  entry.ur = gv('c-ur');
+  entry.cr = gv('c-cr');
+  entry.glucose = gv('c-glucose');
+  entry.pt = gv('c-pt');
+  entry.aptt = gv('c-aptt');
+  entry.inr = gv('c-inr');
+  entry.asa = gv('c-asa');
+  entry.ecg = gv('c-ecg');
+  entry.cxr = gv('c-cxr');
+  entry.awPrevInt = gv('aw-prev-int');
+  entry.awPrevIntC = gv('aw-prev-int-c');
+  entry.awOsa = gv('aw-osa');
+  entry.awOsaC = gv('aw-osa-c');
+  entry.awCspine = gv('aw-cspine');
+  entry.awCspineC = gv('aw-cspine-c');
+  entry.awRad = gv('aw-rad');
+  entry.awRadC = gv('aw-rad-c');
+  entry.awBurns = gv('aw-burns');
+  entry.awLookOther = gv('aw-look-other');
+  entry.aw3321 = gv('aw-332-1');
+  entry.aw3322 = gv('aw-332-2');
+  entry.aw3323 = gv('aw-332-3');
+  entry.aw332C = gv('aw-332-c');
+  entry.awMallampati = gv('aw-mallampati');
+  entry.awObstructionOther = gv('aw-obstruction-other');
+  entry.awNeckMob = gv('aw-neck-mob');
+  entry.awCollar = gv('aw-collar');
+  entry.awTmd = gv('aw-tmd');
+  entry.awSmd = gv('aw-smd');
+  entry.awNeckCirc = gv('aw-neck-circ');
+  entry.awMouthOpening = gv('aw-mouth-opening');
+  entry.awUlbt = gv('aw-ulbt');
+  entry.npo = gv('c-npo');
+  entry.premed = gv('c-premed');
+  entry.monitoring = gv('c-monitoring');
+  entry.analgesia = gv('c-analgesia');
+  entry.postopDest = gv('c-postop-dest');
+  var _pma = document.getElementById('c-neo-pma-display');
+  entry.neoPMA = _pma ? _pma.textContent : '';
+  return entry;
+}
+
+function collect_io(status) {
+  var entry = buildCaseEntry('intraop','io', status);
+  entry.surgType = gv('c-surg-type');
+  entry.operation = gv('c-operation');
+  entry.position = gv('c-position');
+  entry.monitors = gv('c-monitors');
+  entry.invMonitors = gv('c-inv-monitors');
+  entry.induction = gv('c-induction');
+  entry.bmv = gv('c-bmv');
+  entry.airwayDevice = gv('c-airway-device');
+  entry.laryngoscopy = gv('c-laryngoscopy');
+  entry.ettType = gv('c-ett-type');
+  entry.ettSize = gv('c-ett-size');
+  entry.ettLevel = gv('c-ett-level');
+  entry.vent = gv('c-vent');
+  entry.tv = gv('c-tv');
+  entry.rr = gv('c-rr');
+  entry.peep = gv('c-peep');
+  entry.pip = gv('c-pip');
+  entry.events = gv('c-events');
+  entry.indAnalgesic = gv('c-ind-analgesic');
+  entry.indHypnotic = gv('c-ind-hypnotic');
+  entry.indNMB = gv('c-ind-nmb');
+  entry.indAdj = gv('c-ind-adj');
+  entry.abxType = gv('c-abx-type');
+  entry.abxDose = gv('c-abx-dose');
+  entry.abxTime = gv('c-abx-time');
+  entry.maintHyp = gv('c-maint-hyp');
+  entry.maintAnal = gv('c-maint-anal');
+  entry.maintNmb = gv('c-maint-nmb');
+  entry.maintOther = gv('c-maint-other');
+  entry.ponv = gv('c-ponv');
+  entry.reversal = gv('c-reversal');
+  entry.fluidType = gv('c-fluid-type');
+  entry.maintFl = gv('c-maint-fl');
+  entry.fasting = gv('c-fasting');
+  entry.insensible = gv('c-insensible');
+  entry.bloodLoss = gv('c-blood-loss');
+  entry.urine = gv('c-urine');
+  entry.totalOut = gv('c-total-out');
+  entry.totalIn = gv('c-total-in');
+  entry.balance = gv('c-balance');
+  return entry;
+}
+
+function collect_pacu(status) {
+  var entry = buildCaseEntry('pacu','pacu', status);
+  entry.pacuAirway = gv('c-pacu-airway');
+  entry.pacuAdjunct = gv('c-pacu-adjunct');
+  entry.pacuAirwayNotes = gv('c-pacu-airway-notes');
+  entry.pacuRR = gv('c-pacu-rr');
+  entry.pacuSpo2 = gv('c-pacu-spo2');
+  entry.pacuO2Req = gv('c-pacu-o2-req');
+  entry.pacuBreath = gv('c-pacu-breath');
+  entry.pacuBreathing = gv('c-pacu-breathing');
+  entry.pacuRespNotes = gv('c-pacu-resp-notes');
+  entry.pacuHR = gv('c-pacu-hr');
+  entry.pacuBP = gv('c-pacu-bp');
+  entry.pacuRhythm = gv('c-pacu-rhythm');
+  entry.pacuCapRefill = gv('c-pacu-cap-refill');
+  entry.pacuHaemo = gv('c-pacu-haemo');
+  entry.pacuCvTx = gv('c-pacu-cv-tx');
+  entry.pacuAVPU = gv('c-pacu-avpu');
+  entry.pacuRamsay = gv('c-pacu-ramsay');
+  entry.pacuOrientation = gv('c-pacu-orientation');
+  entry.pacuEmerge = gv('c-pacu-emerge');
+  entry.pacuWound = gv('c-pacu-wound');
+  entry.pacuDrainYn = gv('c-pacu-drain-yn');
+  entry.pacuDrainOut = gv('c-pacu-drain-out');
+  entry.pacuDrainChar = gv('c-pacu-drain-char');
+  entry.pacuWoundNotes = gv('c-pacu-wound-notes');
+  entry.pacuTemp = gv('c-pacu-temp');
+  entry.pacuThermal = gv('c-pacu-thermal');
+  entry.pacuShiver = gv('c-pacu-shiver');
+  entry.pacuWarm = gv('c-pacu-warm');
+  entry.pacuNRS = gv('c-pacu-nrs');
+  entry.pacuAnalgesic = gv('c-pacu-analgesic');
+  entry.pacuPONV = gv('c-pacu-ponv');
+  entry.pacuPonvTx = gv('c-pacu-ponv-tx');
+  entry.pacuIvIn = gv('c-pacu-iv-in');
+  entry.pacuUrine = gv('c-pacu-urine');
+  entry.pacuDrainMl = gv('c-pacu-drain-ml');
+  entry.pacuBloodLoss = gv('c-pacu-blood-loss');
+  entry.pacuFluidBal = gv('c-pacu-fluid-bal');
+  entry.aldActivity = gv('c-ald-activity');
+  entry.aldResp = gv('c-ald-resp');
+  entry.aldCirc = gv('c-ald-circ');
+  entry.aldConscious = gv('c-ald-conscious');
+  entry.aldSpo2 = gv('c-ald-spo2');
+  entry.aldrete = gv('c-aldrete');
+  entry.pacuDischarge = gv('c-pacu-discharge');
+  entry.pacuDuration = gv('c-pacu-duration');
+  entry.dischargeDest = gv('c-discharge-dest');
+  entry.pacuNotes = gv('c-pacu-notes');
+  return entry;
+}
+
+function collect_wd(status) {
+  var entry = buildCaseEntry('ward','wd', status);
+  entry.painType = gv('c-pain-type');
+  entry.painSite = gv('c-pain-site');
+  entry.painOnset = gv('c-pain-onset');
+  entry.painCharacter = gv('c-pain-character');
+  entry.painRadiation = gv('c-pain-radiation');
+  entry.painExac = gv('c-pain-exac');
+  entry.painRelieve = gv('c-pain-relieve');
+  entry.painImpact = gv('c-pain-impact');
+  entry.nrs = gv('c-nrs');
+  entry.vas = gv('c-vas');
+  entry.vrs = gv('c-vrs');
+  entry.faces = gv('c-faces');
+  entry.preopPainPlan = gv('c-preop-pain-plan');
+  entry.painPlanFollowed = gv('c-pain-plan-followed');
+  entry.painPlanNotes = gv('c-pain-plan-notes');
+  entry.whoStep = gv('c-who-step');
+  entry.adjuvants = gv('c-adjuvants');
+  entry.pharmaMod = gv('c-pharma-mod');
+  entry.nonPharmaMod = gv('c-nonpharma-mod');
+  entry.painAdequacy = gv('c-pain-adequacy');
+  entry.postopHr = gv('c-postop-hr');
+  entry.postopBp = gv('c-postop-bp');
+  entry.postopSpo2 = gv('c-postop-spo2');
+  entry.postopTemp = gv('c-postop-temp');
+  entry.postopGcs = gv('c-postop-gcs');
+  entry.sedation = gv('c-sedation');
+  entry.postopPonv = gv('c-postop-ponv');
+  entry.ponvTreatment = gv('c-ponv-treatment');
+  entry.postopComp = gv('c-postop-comp');
+  entry.satisfaction = gv('c-satisfaction');
+  entry.patientComments = gv('c-patient-comments');
+  entry.postopNotes = gv('c-postop-notes');
+  entry.supervisor = gv('c-supervisor');
+  entry.student = gv('c-student');
+  entry.feedback = gv('c-feedback');
+  return entry;
+}
+
 // ── CLINIC SUBMIT ────────────────────────────────────────────────────────
 function submit_cl() {
   var win = checkSubmissionWindow(); if (!win.ok) { alert(win.msg); return; }
@@ -2629,23 +2861,10 @@ function submit_cl() {
   var _dup_cl = checkPatientNotRepeated('clinic','cl');
   if (!_dup_cl.ok) { alert(_dup_cl.msg); return; }
   if (!confirm('Submit this Anesthesia Clinic case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('clinic','cl');
-  // Clinic-specific fields
-  entry.age=gv('c-age'); entry.sex=gv('c-sex'); entry.weight=gv('c-weight');
-  entry.neoGA=gv('c-neo-ga'); entry.neoCA=gv('c-neo-ca'); entry.neoSurgDate=gv('c-neo-surgdate'); entry.neoPMA=(document.getElementById('c-neo-pma-display')?document.getElementById('c-neo-pma-display').textContent:'');
-  entry.dx=gv('c-dx'); entry.procedure=gv('c-procedure'); entry.asa=gv('c-asa');
-  entry.mallampati=gv('c-mallampati'); entry.prevAnaes=gv('c-prev-anaes'); entry.allergy=gv('c-allergy');
-  entry.cvs=gv('c-cvs'); entry.resp=gv('c-resp'); entry.endo=gv('c-endo');
-  entry.renal=gv('c-renal'); entry.neuro=gv('c-neuro'); entry.otherHx=gv('c-other-hx'); entry.meds=gv('c-meds');
-  entry.hr=gv('c-hr'); entry.spo2=gv('c-spo2'); entry.bp=gv('c-bp'); entry.temp=gv('c-temp');
-  entry.npo=gv('c-npo'); entry.premed=gv('c-premed'); entry.operation=gv('c-operation');
-  entry.airwayDevice=gv('c-airway-device'); entry.indAnalgesic=gv('c-ind-analgesic');
-  entry.indHypnotic=gv('c-ind-hypnotic'); entry.indNMB=gv('c-ind-nmb');
-  _submitEntry(entry, 'screen-clinic');
+  _submitEntry(collect_cl('submitted'), 'screen-clinic');
 }
 function saveDraft_cl() {
-  var entry = buildCaseEntry('clinic','cl','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_cl('draft'));
 }
 
 // ── INTRAOP SUBMIT ───────────────────────────────────────────────────────
@@ -2656,16 +2875,10 @@ function submit_io() {
   var _dup_io = checkPatientNotRepeated('intraop','io');
   if (!_dup_io.ok) { alert(_dup_io.msg); return; }
   if (!confirm('Submit this Intraoperative case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('intraop','io');
-  entry.asa=gv('c-asa'); entry.operation=gv('c-operation');
-  entry.indAnalgesic=gv('c-ind-analgesic'); entry.indHypnotic=gv('c-ind-hypnotic'); entry.indNMB=gv('c-ind-nmb');
-  entry.airwayDevice=gv('c-airway-device'); entry.ettSize=gv('c-ett-size');
-  entry.events=gv('c-events');
-  _submitEntry(entry, 'screen-intraop');
+  _submitEntry(collect_io('submitted'), 'screen-intraop');
 }
 function saveDraft_io() {
-  var entry = buildCaseEntry('intraop','io','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_io('draft'));
 }
 
 // ── PACU SUBMIT ──────────────────────────────────────────────────────────
@@ -2676,21 +2889,10 @@ function submit_pacu() {
   var _dup_pacu = checkPatientNotRepeated('pacu','pacu');
   if (!_dup_pacu.ok) { alert(_dup_pacu.msg); return; }
   if (!confirm('Submit this PACU case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('pacu','pacu');
-  entry.pacuAirway=gv('c-pacu-airway'); entry.pacuAdjunct=gv('c-pacu-adjunct');
-  entry.pacuRR=gv('c-pacu-rr'); entry.pacuSpo2=gv('c-pacu-spo2'); entry.pacuO2Req=gv('c-pacu-o2-req');
-  entry.pacuBreathing=gv('c-pacu-breathing'); entry.pacuHR=gv('c-pacu-hr'); entry.pacuBP=gv('c-pacu-bp');
-  entry.pacuRhythm=gv('c-pacu-rhythm'); entry.pacuAVPU=gv('c-pacu-avpu'); entry.pacuRamsay=gv('c-pacu-ramsay');
-  entry.pacuWound=gv('c-pacu-wound'); entry.pacuTemp=gv('c-pacu-temp'); entry.pacuShiver=gv('c-pacu-shiver');
-  entry.pacuNRS=gv('c-pacu-nrs'); entry.pacuPONV=gv('c-pacu-ponv');
-  entry.pacuIvIn=gv('c-pacu-iv-in'); entry.pacuUrine=gv('c-pacu-urine');
-  entry.aldrete=gv('c-aldrete'); entry.pacuDischarge=gv('c-pacu-discharge');
-  entry.pacuNotes=gv('c-pacu-notes');
-  _submitEntry(entry, 'screen-pacu');
+  _submitEntry(collect_pacu('submitted'), 'screen-pacu');
 }
 function saveDraft_pacu() {
-  var entry = buildCaseEntry('pacu','pacu','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_pacu('draft'));
 }
 
 // ── WARD SUBMIT ──────────────────────────────────────────────────────────
@@ -2701,16 +2903,10 @@ function submit_wd() {
   var _dup_wd = checkPatientNotRepeated('ward','wd');
   if (!_dup_wd.ok) { alert(_dup_wd.msg); return; }
   if (!confirm('Submit this Ward/Pain case for evaluation?\n\nOnce submitted it cannot be edited.')) return;
-  var entry = buildCaseEntry('ward','wd');
-  entry.painType=gv('c-pain-type'); entry.painSite=gv('c-pain-site');
-  entry.nrs=gv('c-nrs'); entry.vas=gv('c-vas'); entry.vrs=gv('c-vrs'); entry.faces=gv('c-faces');
-  entry.whoStep=gv('c-who-step'); entry.pharmaMod=gv('c-pharma-mod'); entry.nonPharmaMod=gv('c-nonpharma-mod');
-  entry.satisfaction=gv('c-satisfaction'); entry.postopComp=gv('c-postop-comp');
-  _submitEntry(entry, 'screen-ward');
+  _submitEntry(collect_wd('submitted'), 'screen-ward');
 }
 function saveDraft_wd() {
-  var entry = buildCaseEntry('ward','wd','draft');
-  _saveDraftEntry(entry);
+  _saveDraftEntry(collect_wd('draft'));
 }
 
 // Generated from the submit_* collectors: every field they read is listed here
