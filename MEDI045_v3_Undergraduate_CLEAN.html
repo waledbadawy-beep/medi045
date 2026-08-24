@@ -4234,6 +4234,7 @@ function exportEvalPDF(evalId){
 <tr style="background:#eaf1fa"><td><b>Case Score</b></td><td><b>50</b></td><td><b>${r.c1Score||0}</b></td></tr></table>
 ${(r.changeLog&&r.changeLog.length)?'<h3 style="color:#7b2d8b;margin-top:16px">Change Log</h3><table><tr><th>Date</th><th>By</th><th>Change</th></tr>'+r.changeLog.map(c=>'<tr><td>'+c.date+'</td><td>'+c.by+'</td><td>'+c.field+': '+c.oldVal+' → '+c.newVal+'</td></tr>').join('')+'</table>':''}<div class="mark">Case Score: ${r.c1Score||0} / 50 &nbsp;→&nbsp; Final Mark: ${r.finalMark||0} / 5${r.overridden?' (Override)':''}</div><p><b>Feedback:</b> ${_esc(r.feedback||'—')}</p>
 <datalist id="supervisor-suggestions"><option value="Dr. Walid Badwi"></datalist>
+</div>
 </body></html>`;
   let win=null; try { win=window.open('','_blank'); } catch(e){ win=null; }
   if (win && win.document) {
@@ -5783,6 +5784,19 @@ function openCaseDetail(caseId) {
   } else {
     acts.innerHTML = '';
   }
+  /* Staff get the marking entry point on any submitted case. Students never
+     see it: the preliminary score is not theirs to read, and the final mark
+     reaches them through the released review, not this button. */
+  if (evalUnlocked && r.status === 'submitted' && ['clinic','intraop','pacu','ward'].indexOf(r.type) !== -1) {
+    var rv = getCaseReview(r.id);
+    var label = rv && rv.status === 'final'
+      ? '\uD83D\uDCCB Mark: ' + rv.total + '/100 \u00B7 review or amend'
+      : '\uD83D\uDCCB Mark this case';
+    acts.innerHTML += '<button onclick="openScoreReview(\'' + r.id + '\')" ' +
+      'style="width:100%;margin-top:8px;background:' + (rv && rv.status === 'final' ? '#1a7a4a' : '#7b2d8b') + ';' +
+      'color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;' +
+      'font-family:inherit">' + label + '</button>';
+  }
   document.getElementById('eval-detail-modal').style.display = 'block';
 }
 
@@ -5992,6 +6006,470 @@ function submitClassGate() {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
 })();
+
+/* ==================================================================
+   AUTOMATED CASE SCORING
+   ------------------------------------------------------------------
+   Scores ONLY what can be checked objectively from the saved record:
+   is a field filled, is it an allowed value, is a number plausible,
+   were at least N of a set chosen. It therefore measures DOCUMENTATION
+   COMPLETENESS, not clinical competence - the report says so in those
+   words, so the two are never confused. Judgment stays with the
+   supervisor and carries its own 40 marks.
+
+   Nothing is stored until a supervisor finalises. The preliminary score
+   is recomputed from the record each time it is viewed, which means
+   existing cases get a score with no migration, and editing the rubric
+   never rewrites a mark that was already issued.
+   ================================================================== */
+
+var RUBRIC_VERSION = 1;
+
+var DEFAULT_RUBRIC = {
+  version: RUBRIC_VERSION,
+  autoTotal: 60,
+  supervisorTotal: 40,
+  supervisorDomains: [
+    { id: 'reasoning', label: 'Clinical reasoning & appropriateness of plan', points: 15 },
+    { id: 'viva',      label: 'Case discussion / viva',                        points: 10 },
+    { id: 'prof',      label: 'Professionalism & communication',               points: 8  },
+    { id: 'reflect',   label: 'Quality of written reflection',                 points: 7  }
+  ],
+  universal: [
+    { id:'U1', label:'Patient identity verified (MRN + Case No.)', points:5, rule:'allPresent', fields:['patientMRN','caseNo'] },
+    { id:'U2', label:'Date recorded and not in the future',        points:2, rule:'validDate',  field:'caseDate' },
+    { id:'U3', label:'Supervisor named',                           points:3, rule:'present',    field:'supervisor' },
+    { id:'U4', label:'ASA grade recorded',                         points:3, rule:'present',    field:'asa' },
+    { id:'U5', label:'No placeholder text in the record',          points:2, rule:'noPlaceholder' }
+  ],
+  byType: {
+    clinic: [
+      { id:'C1', label:'Demographics (age, sex, weight)', points:4, rule:'allPresent', fields:['age','sex','weight'] },
+      { id:'C2', label:'Diagnosis and planned procedure', points:5, rule:'allPresent', fields:['dx','procedure'] },
+      { id:'C3', label:'Airway assessment', points:10, rule:'compound',
+        all:['mallampati'], atLeast:{ n:2, fields:['thyromental','mouth','neckExt','tmj','teeth'] } },
+      { id:'C4', label:'Systemic review', points:8, rule:'atLeastN', n:4, fields:['cvs','resp','endo','renal','neuro','otherHx'] },
+      { id:'C5', label:'Medication and allergy history', points:4, rule:'allPresent', fields:['meds','allergy'] },
+      { id:'C6', label:'Baseline observations', points:4, rule:'allPresent', fields:['hr','spo2','bp'] },
+      { id:'C7', label:'Investigations', points:6, rule:'atLeastN', n:3, fields:['hb','wbc','plt','na','k','ur','cr','glucose','pt','aptt','inr'] },
+      { id:'C8', label:'Fasting status recorded', points:2, rule:'present', field:'npo' },
+      { id:'C9', label:'Post-operative destination planned', points:2, rule:'present', field:'postopDest' }
+    ],
+    intraop: [
+      { id:'I1', label:'Surgery type and operation', points:4, rule:'allPresent', fields:['surgType','operation'] },
+      { id:'I2', label:'Patient position', points:3, rule:'present', field:'position' },
+      { id:'I3', label:'Standard monitoring (\u22653 modalities)', points:8, rule:'countAtLeast', field:'monitors', n:3 },
+      { id:'I4', label:'Invasive monitoring answered', points:3, rule:'present', field:'invMonitors' },
+      { id:'I5', label:'Induction drugs (analgesic + hypnotic)', points:6, rule:'allPresent', fields:['indAnalgesic','indHypnotic'] },
+      { id:'I6', label:'Airway management', points:6, rule:'airway' },
+      { id:'I7', label:'Ventilation settings', points:6, rule:'compound',
+        all:['vent'], atLeast:{ n:2, fields:['tv','rr','peep','pip'] } },
+      { id:'I8', label:'Maintenance agent recorded', points:4, rule:'atLeastN', n:1, fields:['maintHyp','maintAnal','maintNmb','maintOther'] },
+      { id:'I9', label:'Fluid balance', points:5, rule:'atLeastN', n:3, fields:['fluidType','maintFl','bloodLoss','urine','totalIn','totalOut'] }
+    ],
+    pacu: [
+      { id:'P1', label:'Airway and breathing on arrival', points:6, rule:'allPresent', fields:['pacuAirway','pacuRR','pacuSpo2'] },
+      { id:'P2', label:'Circulation', points:6, rule:'allPresent', fields:['pacuHR','pacuBP','pacuRhythm'] },
+      { id:'P3', label:'Conscious level', points:4, rule:'atLeastN', n:1, fields:['pacuAVPU','pacuRamsay'] },
+      { id:'P4', label:'Aldrete score, all five components', points:10, rule:'allPresent',
+        fields:['aldreteActivity','aldreteResp','aldreteCirc','aldreteConscious','aldreteSpo2'] },
+      { id:'P5', label:'Aldrete total matches its components', points:3, rule:'aldreteSum' },
+      { id:'P6', label:'Pain assessed', points:4, rule:'present', field:'pacuNRS' },
+      { id:'P7', label:'PONV assessed', points:3, rule:'present', field:'pacuPONV' },
+      { id:'P8', label:'Temperature and shivering', points:3, rule:'allPresent', fields:['pacuTemp','pacuShiver'] },
+      { id:'P9', label:'Discharge decision', points:6, rule:'allPresent', fields:['dischargeDest','pacuDischarge'] }
+    ],
+    ward: [
+      { id:'W1', label:'Pain type and site', points:5, rule:'allPresent', fields:['painType','painSite'] },
+      { id:'W2', label:'Pain scored on a validated scale', points:8, rule:'atLeastN', n:1, fields:['nrs','vas','vrs','faces'] },
+      { id:'W3', label:'Pain characterised', points:6, rule:'atLeastN', n:3, fields:['painOnset','painCharacter','painRadiation','painExac','painRelieve'] },
+      { id:'W4', label:'WHO analgesic step', points:5, rule:'present', field:'whoStep' },
+      { id:'W5', label:'Pharmacological plan', points:6, rule:'present', field:'pharmaMod' },
+      { id:'W6', label:'Non-pharmacological measures answered', points:3, rule:'present', field:'nonPharmaMod' },
+      { id:'W7', label:'Post-operative observations', points:6, rule:'atLeastN', n:3, fields:['postopHr','postopBp','postopSpo2','postopTemp','postopGcs'] },
+      { id:'W8', label:'Adequacy and satisfaction', points:3, rule:'allPresent', fields:['painAdequacy','satisfaction'] },
+      { id:'W9', label:'Complications reviewed', points:3, rule:'present', field:'postopComp' }
+    ]
+  }
+};
+
+/* The rubric is config, not code: the admin panel edits this record and the
+   change takes effect with no redeploy. A stored rubric is merged over the
+   default, so a rubric written before a criterion existed still scores. */
+function getRubric() {
+  try {
+    var raw = Store.get('medi045_grading_rubric');
+    if (!raw) return DEFAULT_RUBRIC;
+    var c = JSON.parse(raw);
+    var out = JSON.parse(JSON.stringify(DEFAULT_RUBRIC));
+    if (c.autoTotal) out.autoTotal = c.autoTotal;
+    if (c.supervisorTotal) out.supervisorTotal = c.supervisorTotal;
+    if (c.version) out.version = c.version;
+    ['universal'].forEach(function (k) { applyPoints(out[k], c[k]); });
+    Object.keys(out.byType).forEach(function (t) {
+      applyPoints(out.byType[t], c.byType && c.byType[t]);
+    });
+    if (c.supervisorDomains) applyPoints(out.supervisorDomains, c.supervisorDomains);
+    return out;
+  } catch (e) { return DEFAULT_RUBRIC; }
+}
+function applyPoints(target, source) {
+  if (!target || !source) return;
+  source.forEach(function (sc) {
+    var t = target.filter(function (x) { return x.id === sc.id; })[0];
+    if (!t) return;
+    if (sc.points !== undefined && !isNaN(parseInt(sc.points, 10))) t.points = parseInt(sc.points, 10);
+    if (sc.n !== undefined && !isNaN(parseInt(sc.n, 10))) t.n = parseInt(sc.n, 10);
+    if (sc.disabled) t.disabled = true;
+  });
+}
+
+/* ---- the individual checks ---- */
+function _v(rec, k) {
+  var x = rec ? rec[k] : '';
+  return (x === undefined || x === null) ? '' : String(x).trim();
+}
+function _has(rec, k) { return _v(rec, k) !== ''; }
+var PLACEHOLDERS = ['test','test1','testing','xxx','xx','x','-','--','n/a','na','none yet','1111','0000','asdf','abc'];
+function _isPlaceholder(val) {
+  return PLACEHOLDERS.indexOf(String(val).trim().toLowerCase()) !== -1;
+}
+/* A chip field stores its selections comma separated; a free-text field from
+   before the lists existed stores whatever was typed. Counting tokens handles
+   both, so old cases still score. */
+function _count(rec, k) {
+  var raw = _v(rec, k);
+  if (!raw) return 0;
+  return raw.split(/[,;/]+/).map(function (x) { return x.trim(); })
+            .filter(function (x) { return x !== '' && x.toLowerCase() !== 'none'; }).length;
+}
+
+function evaluateCriterion(c, rec) {
+  var missing = [], detail = '';
+  switch (c.rule) {
+    case 'present':
+      if (!_has(rec, c.field)) missing.push(c.field);
+      break;
+    case 'allPresent':
+      c.fields.forEach(function (f) { if (!_has(rec, f)) missing.push(f); });
+      break;
+    case 'atLeastN': {
+      var got = c.fields.filter(function (f) { return _has(rec, f); });
+      detail = got.length + ' of ' + c.n + ' required';
+      if (got.length < c.n) missing = c.fields.filter(function (f) { return !_has(rec, f); });
+      break;
+    }
+    case 'countAtLeast': {
+      var n = _count(rec, c.field);
+      detail = n + ' selected, ' + c.n + ' required';
+      if (n < c.n) missing.push(c.field);
+      break;
+    }
+    case 'compound': {
+      (c.all || []).forEach(function (f) { if (!_has(rec, f)) missing.push(f); });
+      if (c.atLeast) {
+        var g = c.atLeast.fields.filter(function (f) { return _has(rec, f); });
+        detail = g.length + ' of ' + c.atLeast.n + ' supporting items';
+        if (g.length < c.atLeast.n) missing.push('(' + c.atLeast.n + ' of: ' + c.atLeast.fields.join(', ') + ')');
+      }
+      break;
+    }
+    case 'validDate': {
+      var d = _v(rec, c.field);
+      if (!d) { missing.push(c.field); break; }
+      var t = new Date(d).getTime();
+      if (isNaN(t)) { missing.push(c.field + ' (unreadable)'); break; }
+      if (t > Date.now() + 864e5) { missing.push(c.field + ' (in the future)'); }
+      break;
+    }
+    case 'airway': {
+      var dev = _v(rec, 'airwayDevice');
+      if (!dev) { missing.push('airwayDevice'); break; }
+      if (/ett|tube|intub/i.test(dev)) {
+        if (!_has(rec, 'ettSize')) missing.push('ettSize');
+        if (!_has(rec, 'laryngoscopy')) missing.push('laryngoscopy (grade)');
+        detail = 'ETT recorded - size and grade required';
+      } else { detail = dev + ' - no tube details required'; }
+      break;
+    }
+    case 'aldreteSum': {
+      var parts = ['aldreteActivity','aldreteResp','aldreteCirc','aldreteConscious','aldreteSpo2'];
+      var vals = parts.map(function (p) { return parseInt(_v(rec, p), 10); });
+      if (vals.some(isNaN)) { missing.push('all five components'); break; }
+      var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+      var stated = parseInt(_v(rec, 'aldrete'), 10);
+      if (isNaN(stated)) { missing.push('aldrete total'); break; }
+      detail = 'components sum to ' + sum + ', total recorded as ' + stated;
+      if (sum !== stated) missing.push('total does not match');
+      break;
+    }
+    case 'noPlaceholder': {
+      var bad = [], filled = 0;
+      Object.keys(rec || {}).forEach(function (k) {
+        if (k.charAt(0) === '_') return;
+        var val = rec[k];
+        if (typeof val === 'string' && val.trim()) {
+          filled++;
+          if (_isPlaceholder(val)) bad.push(k);
+        }
+      });
+      /* An empty record has no placeholder text, but awarding it the mark for
+         that would be rewarding a blank form. The criterion needs something to
+         judge before it can be passed. */
+      if (filled < 5) { missing.push('too few fields completed to assess'); detail = filled + ' fields filled'; break; }
+      if (bad.length) { missing = bad; detail = 'placeholder text in: ' + bad.join(', '); }
+      break;
+    }
+    default:
+      detail = 'unknown rule';
+  }
+  return { id: c.id, label: c.label, points: c.points,
+           earned: missing.length === 0 ? c.points : 0,
+           passed: missing.length === 0, missing: missing, detail: detail };
+}
+
+/* Returns the preliminary automatic score for one case record. */
+function scoreCase(rec) {
+  var R = getRubric();
+  var list = (R.universal || []).concat(R.byType[rec && rec.type] || []);
+  list = list.filter(function (c) { return !c.disabled; });
+  var results = list.map(function (c) { return evaluateCriterion(c, rec); });
+  var max = results.reduce(function (a, r) { return a + r.points; }, 0);
+  var got = results.reduce(function (a, r) { return a + r.earned; }, 0);
+  /* Criteria are written to sum to the auto total, but a rubric edited in the
+     panel may not - so the result is scaled rather than silently wrong. */
+  var scaled = max > 0 ? Math.round(got / max * R.autoTotal) : 0;
+  return { rubricVersion: R.version, criteria: results,
+           rawEarned: got, rawMax: max,
+           autoScore: scaled, autoMax: R.autoTotal,
+           supervisorMax: R.supervisorTotal, scoredAt: new Date().toISOString() };
+}
+
+/* ==================================================================
+   SUPERVISOR REVIEW OF THE PRELIMINARY SCORE
+   Shows every criterion, what it was worth, whether it passed, and the
+   exact reason - so a mark can always be explained line by line. The
+   supervisor may override any single criterion, adds the judgment
+   marks, and only then finalises. Nothing is released before that.
+   ================================================================== */
+
+var _reviewCase = null, _reviewScore = null, _reviewOverrides = {};
+/* Judgment marks the supervisor has typed but not yet saved. Overriding a
+   criterion re-renders the panel, and without this the half-entered marks
+   would silently vanish - the supervisor would finalise a mark believing
+   figures were still there. */
+var _reviewDraftDomains = {};
+function _captureDraftDomains() {
+  try {
+    getRubric().supervisorDomains.forEach(function (d) {
+      var el = document.getElementById('sup-' + d.id);
+      if (el && el.value !== '') _reviewDraftDomains[d.id] = el.value;
+    });
+  } catch (e) {}
+}
+
+function _esc2(x) { return String(x === undefined || x === null ? '' : x)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* Supervisor marks already given for this case, if it has been reviewed. */
+function getCaseReview(caseId) {
+  var r = records.filter(function (x) {
+    return x.type === 'case_review' && String(x.caseId) === String(caseId);
+  });
+  return r.length ? r[r.length - 1] : null;
+}
+
+function openScoreReview(caseId) {
+  if (!hasStaffToken()) { promptStaffToken(function () { openScoreReview(caseId); }); return; }
+  var rec = records.filter(function (x) { return String(x.id) === String(caseId); })[0];
+  if (!rec) { showToast('\u26A0\uFE0F Case not found'); return; }
+  _reviewCase = rec;
+  _reviewScore = scoreCase(rec);
+  var prev = getCaseReview(caseId);
+  _reviewOverrides = (prev && prev.overrides) ? JSON.parse(JSON.stringify(prev.overrides)) : {};
+  _reviewDraftDomains = {};
+  renderScoreReview(prev);
+  document.getElementById('score-review-modal').style.display = 'flex';
+}
+
+function closeScoreReview() {
+  document.getElementById('score-review-modal').style.display = 'none';
+  _reviewCase = null; _reviewScore = null; _reviewOverrides = {}; _reviewDraftDomains = {};
+}
+
+function _overrideOf(id, dflt) {
+  return _reviewOverrides[id] !== undefined ? _reviewOverrides[id] : dflt;
+}
+
+function toggleCriterion(id) {
+  var c = _reviewScore.criteria.filter(function (x) { return x.id === id; })[0];
+  if (!c) return;
+  _captureDraftDomains();
+  var cur = _overrideOf(id, c.earned);
+  _reviewOverrides[id] = (cur > 0) ? 0 : c.points;
+  if (_reviewOverrides[id] === c.earned) delete _reviewOverrides[id];  /* back to automatic */
+  renderScoreReview(getCaseReview(_reviewCase.id));
+}
+
+function _autoTotalNow() {
+  var raw = 0, max = 0;
+  _reviewScore.criteria.forEach(function (c) {
+    max += c.points; raw += _overrideOf(c.id, c.earned);
+  });
+  return { raw: raw, max: max,
+           scaled: max > 0 ? Math.round(raw / max * _reviewScore.autoMax) : 0 };
+}
+
+function renderScoreReview(prev) {
+  var R = getRubric(), t = _autoTotalNow();
+  var isFinal = prev && prev.status === 'final';
+
+  var h = '<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Case #'
+        + _esc2(_reviewCase.caseNo) + ' \u00B7 MRN ' + _esc2(_reviewCase.patientMRN || '\u2014')
+        + ' \u00B7 ' + _esc2(_reviewCase.type) + '</div>'
+        + '<div style="font-size:15px;font-weight:800;color:var(--primary)">' + _esc2(_reviewCase.student || '') + '</div>';
+
+  h += '<div style="background:' + (isFinal ? '#e8f8f0' : '#fff8e8') + ';border-radius:10px;padding:10px 12px;margin:12px 0;'
+     + 'font-size:12px;font-weight:700;color:' + (isFinal ? '#1a7a4a' : '#c67a00') + '">'
+     + (isFinal ? '\u2705 FINAL \u2014 released to the student'
+                : '\u23F3 PRELIMINARY \u2014 not visible to the student until you finalise') + '</div>';
+
+  h += '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px">'
+     + 'Documentation \u2014 scored automatically</div>'
+     + '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">'
+     + 'This measures whether the case is completely and consistently documented. '
+     + 'It is not a judgment of the anaesthetic. Tap any line to override it.</div>';
+
+  _reviewScore.criteria.forEach(function (c) {
+    var val = _overrideOf(c.id, c.earned);
+    var over = _reviewOverrides[c.id] !== undefined;
+    var ok = val > 0;
+    h += '<div onclick="toggleCriterion(\'' + c.id + '\')" style="display:flex;gap:9px;align-items:flex-start;'
+       + 'padding:8px 10px;border-radius:8px;margin-bottom:5px;cursor:pointer;'
+       + 'background:' + (ok ? '#f2fbf5' : '#fdf3f3') + ';border:1px solid ' + (ok ? '#cfe9d8' : '#f0d5d5') + '">'
+       + '<div style="font-size:14px;line-height:1.3">' + (ok ? '\u2705' : '\u274C') + '</div>'
+       + '<div style="flex:1;min-width:0">'
+       + '<div style="font-size:12.5px;font-weight:600;color:#1a1a2e">' + _esc2(c.label) + '</div>';
+    if (!ok && c.missing && c.missing.length) {
+      h += '<div style="font-size:11px;color:#b3261e;margin-top:2px">Missing: ' + _esc2(c.missing.join(', ')) + '</div>';
+    }
+    if (c.detail) h += '<div style="font-size:10.5px;color:var(--muted);margin-top:2px">' + _esc2(c.detail) + '</div>';
+    if (over) h += '<div style="font-size:10px;color:#7b2d8b;font-weight:800;margin-top:3px">OVERRIDDEN BY SUPERVISOR</div>';
+    h += '</div><div style="font-size:12px;font-weight:800;color:' + (ok ? '#1a7a4a' : '#b3261e') + ';white-space:nowrap">'
+       + val + '/' + c.points + '</div></div>';
+  });
+
+  h += '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:#eef3f9;border-radius:9px;'
+     + 'font-size:13px;font-weight:800;color:var(--primary);margin-top:6px">'
+     + '<span>Documentation subtotal</span><span>' + t.scaled + ' / ' + _reviewScore.autoMax + '</span></div>'
+     + '<div style="font-size:10.5px;color:var(--muted);text-align:right;margin-top:3px">'
+     + t.raw + ' of ' + t.max + ' criterion points, scaled to ' + _reviewScore.autoMax + '</div>';
+
+  h += '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:18px 0 6px">'
+     + 'Clinical judgment \u2014 yours to award</div>';
+  R.supervisorDomains.forEach(function (d) {
+    var v = (_reviewDraftDomains[d.id] !== undefined) ? _reviewDraftDomains[d.id]
+          : ((prev && prev.domains && prev.domains[d.id] !== undefined) ? prev.domains[d.id] : '');
+    h += '<div style="display:flex;gap:10px;align-items:center;margin-bottom:7px">'
+       + '<div style="flex:1;font-size:12.5px;color:#1a1a2e">' + _esc2(d.label) + '</div>'
+       + '<input id="sup-' + d.id + '" type="number" min="0" max="' + d.points + '" value="' + _esc2(v) + '" '
+       + 'oninput="updateReviewTotal()" style="width:62px;padding:7px;border:1.5px solid var(--border);'
+       + 'border-radius:8px;font-size:14px;text-align:center;font-weight:700"/>'
+       + '<div style="font-size:11px;color:var(--muted);width:34px">/ ' + d.points + '</div></div>';
+  });
+
+  h += '<div style="margin-top:12px"><label style="font-size:11px;font-weight:800;color:var(--muted);'
+     + 'text-transform:uppercase;letter-spacing:.4px">Feedback to the student</label>'
+     + '<textarea id="review-feedback" rows="3" style="width:100%;margin-top:5px;padding:10px;border:1.5px solid var(--border);'
+     + 'border-radius:9px;font-size:13px;font-family:inherit;box-sizing:border-box" '
+     + 'placeholder="What was done well, what to improve\u2026">' + _esc2(prev ? prev.feedback : '') + '</textarea></div>';
+
+  h += '<div id="review-total" style="margin-top:14px"></div>';
+  document.getElementById('score-review-body').innerHTML = h;
+  updateReviewTotal();
+
+  var btn = document.getElementById('review-finalise-btn');
+  btn.textContent = isFinal ? '\u21BA Re-open and amend' : '\u2705 Finalise and release';
+  btn.style.background = isFinal ? '#7b2d8b' : '#1a7a4a';
+}
+
+function updateReviewTotal() {
+  if (!_reviewScore) return;
+  var R = getRubric(), t = _autoTotalNow(), sup = 0, missing = false;
+  R.supervisorDomains.forEach(function (d) {
+    var el = document.getElementById('sup-' + d.id);
+    var v = el ? parseInt(el.value, 10) : NaN;
+    if (isNaN(v)) { missing = true; return; }
+    sup += Math.max(0, Math.min(d.points, v));
+  });
+  var box = document.getElementById('review-total');
+  if (!box) return;
+  var total = t.scaled + sup;
+  box.innerHTML = '<div style="background:var(--primary);color:#fff;border-radius:11px;padding:13px 15px">'
+    + '<div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85"><span>Documentation</span><span>'
+    + t.scaled + ' / ' + _reviewScore.autoMax + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:12px;opacity:.85;margin-top:3px"><span>Clinical judgment</span><span>'
+    + sup + ' / ' + _reviewScore.supervisorMax + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:19px;font-weight:800;margin-top:8px;'
+    + 'padding-top:8px;border-top:1px solid rgba(255,255,255,.25)"><span>Total</span><span>' + total + ' / 100</span></div>'
+    + (missing ? '<div style="font-size:11px;margin-top:7px;opacity:.9">\u26A0\uFE0F Judgment marks incomplete \u2014 total is provisional</div>' : '')
+    + '</div>';
+}
+
+function finaliseReview() {
+  if (!_reviewCase) return;
+  var R = getRubric(), prev = getCaseReview(_reviewCase.id);
+  if (prev && prev.status === 'final') {
+    if (!confirm('Re-open this mark for amendment?\nThe student already has it, and the change will be recorded.')) return;
+  }
+  var domains = {}, sup = 0, incomplete = [];
+  R.supervisorDomains.forEach(function (d) {
+    var el = document.getElementById('sup-' + d.id);
+    var v = el ? parseInt(el.value, 10) : NaN;
+    if (isNaN(v)) { incomplete.push(d.label); return; }
+    v = Math.max(0, Math.min(d.points, v));
+    domains[d.id] = v; sup += v;
+  });
+  if (incomplete.length) {
+    showToast('\u26A0\uFE0F Award every judgment domain first: ' + incomplete.join(', '));
+    return;
+  }
+  var t = _autoTotalNow();
+  var review = {
+    type: 'case_review', id: 'review_' + _reviewCase.id,
+    caseId: String(_reviewCase.id), caseType: _reviewCase.type,
+    student: _reviewCase.student || '', studentId: _reviewCase.studentId || '',
+    rubricVersion: _reviewScore.rubricVersion,
+    autoScore: t.scaled, autoMax: _reviewScore.autoMax,
+    autoRaw: t.raw, autoRawMax: t.max,
+    overrides: _reviewOverrides,
+    criteria: _reviewScore.criteria.map(function (c) {
+      return { id: c.id, label: c.label, points: c.points,
+               auto: c.earned, awarded: _overrideOf(c.id, c.earned),
+               reason: c.missing && c.missing.length ? c.missing.join(', ') : (c.detail || '') };
+    }),
+    domains: domains, supervisorScore: sup, supervisorMax: _reviewScore.supervisorMax,
+    total: t.scaled + sup,
+    feedback: (document.getElementById('review-feedback') || {}).value || '',
+    status: 'final',
+    finalisedBy: (studentProfile && studentProfile.name) || 'staff',
+    finalisedAt: new Date().toISOString(),
+    /* Amendments are appended, never overwritten: a mark that changed after
+       release must stay explainable afterwards. */
+    history: ((prev && prev.history) || []).concat(prev ? [{
+      at: prev.finalisedAt, by: prev.finalisedBy, total: prev.total
+    }] : [])
+  };
+  /* Same path every other record takes: replace any earlier review for this
+     case in the local list, persist, then push to the server. */
+  records = records.filter(function (x) { return String(x.id) !== String(review.id); });
+  records.push(review);
+  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
+  postToCloud(review);
+  showToast('\u2705 Mark finalised: ' + review.total + '/100');
+  closeScoreReview();
+  if (typeof renderDashboard === 'function') { try { renderDashboard(); } catch (e) {} }
+}
 </script>
 <!-- ============================================================ -->
 
@@ -6169,8 +6647,8 @@ function submitClassGate() {
 </div>
 </div><details class="case-accordion" open=""><summary class="case-accordion-summary">⚕️ Intraoperative Management</summary><div class="case-accordion-body"><div class="form-section"><div class="form-section-header">⚕️ Intraoperative</div>
 <div class="form-row two-col"><div><label>Type of Surgery</label><input id="c-surg-type" placeholder="Elective / Emergency" type="text"/></div><div><label>Operation</label><input id="c-operation" placeholder="Surgical procedure" type="text"/></div></div>
-<div class="form-row two-col"><div><label>Patient Position</label><select id="c-position"><option>Supine</option><option>Prone</option><option>Lateral</option><option>Lithotomy</option><option>Trendelenburg</option><option>Sitting</option></select></div><div><label>Standard Monitors</label><input id="c-monitors" placeholder="ECG, SpO₂, NIBP..." type="text"/></div></div>
-<div class="form-row"><label>Invasive Monitors</label><input id="c-inv-monitors" placeholder="Art line, CVP, PA catheter..." type="text"/></div>
+<div class="form-row two-col"><div><label>Patient Position</label><select id="c-position"><option>Supine</option><option>Prone</option><option>Lateral</option><option>Lithotomy</option><option>Trendelenburg</option><option>Sitting</option></select></div><div><label>Standard Monitors</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'std-mon-list','c-monitors')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'std-mon-list','c-monitors')">+ Add</button></div><div class="chip-list" id="std-mon-list"><span class="chip" onclick="toggleChip(this,'c-monitors')">ECG</span><span class="chip" onclick="toggleChip(this,'c-monitors')">SpO₂</span><span class="chip" onclick="toggleChip(this,'c-monitors')">NIBP</span><span class="chip" onclick="toggleChip(this,'c-monitors')">EtCO₂</span><span class="chip" onclick="toggleChip(this,'c-monitors')">Temperature</span><span class="chip" onclick="toggleChip(this,'c-monitors')">Agent analyser</span><span class="chip" onclick="toggleChip(this,'c-monitors')">Nerve stimulator</span><span class="chip" onclick="toggleChip(this,'c-monitors')">Urine output</span><span class="chip" onclick="toggleChip(this,'c-monitors')">Precordial stethoscope</span></div><div class="chip-selected-label">Selected: <span id="c-monitors-display">None</span></div><input id="c-monitors" type="hidden" value=""/></div></div></div>
+<div class="form-row"><label>Invasive Monitors</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'inv-mon-list','c-inv-monitors')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'inv-mon-list','c-inv-monitors')">+ Add</button></div><div class="chip-list" id="inv-mon-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-inv-monitors')">None</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Arterial line</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Central venous pressure</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">PA catheter</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Cardiac output</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Depth of anaesthesia (BIS)</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Intracranial pressure</span><span class="chip" onclick="toggleChip(this,'c-inv-monitors')">Transoesophageal echo</span></div><div class="chip-selected-label">Selected: <span id="c-inv-monitors-display">None</span></div><input id="c-inv-monitors" type="hidden" value=""/></div></div>
 </div><div class="form-section"><div class="form-section-header">💉 Anaesthetic Technique</div>
 <div class="form-row two-col"><div><label>Induction Technique</label><select id="c-induction"><option value="">-- Select --</option><option>RSI (Rapid Sequence Induction)</option><option>Modified RSI</option><option>Awake intubation</option><option>Standard induction</option></select></div><div><label>Bag Mask Ventilation</label><select id="c-bmv"><option>Easy</option><option>Difficult</option><option>Not attempted</option></select></div></div>
 <div class="form-row two-col"><div><label>Airway Device</label><select id="c-airway-device"><option>ETT Oral</option><option>ETT Nasal</option><option>LMA Classic</option><option>LMA ProSeal</option><option>LMA Supreme</option><option>iGel</option><option>Face Mask</option></select></div><div><label>Laryngoscopy Grade</label><select id="c-laryngoscopy"><option>Grade I</option><option>Grade IIa</option><option>Grade IIb</option><option>Grade III</option><option>Grade IV</option></select></div></div>
@@ -6994,4 +7472,16 @@ function submitClassGate() {
 </div></div><div style="padding:12px 16px 28px;display:flex;gap:10px;background:white;border-top:1px solid var(--border)"><button onclick="saveDraft_wd()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:10px;padding:16px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Draft</button><button onclick="submit_wd()" style="flex:2;background:#5c3a1a;color:white;border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:800;cursor:pointer">✓ Submit Case</button></div></div>
 <!-- SIGN-OFF -->
 
+<div id="score-review-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(10,20,40,.55);align-items:flex-end;justify-content:center">
+<div style="background:#fff;width:100%;max-width:480px;max-height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column">
+<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:15px;font-weight:800;color:var(--primary)">Case mark</div>
+<button onclick="closeScoreReview()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+</div>
+<div id="score-review-body" style="padding:14px 16px;overflow-y:auto;flex:1"></div>
+<div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:9px">
+<button onclick="closeScoreReview()" style="flex:1;background:#eef1f5;color:#46586b;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">Close</button>
+<button id="review-finalise-btn" onclick="finaliseReview()" style="flex:2;background:#1a7a4a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit">✅ Finalise and release</button>
+</div>
+</div>
 </body></html>
