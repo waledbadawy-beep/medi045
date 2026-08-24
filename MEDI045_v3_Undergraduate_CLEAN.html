@@ -2130,7 +2130,11 @@ const Store = (() => {
 // ==================== CLOUD SYNC ====================
 const APPS_SCRIPT_URL = 'https://cold-term-86d6.waledbadawy7.workers.dev';
 
-function markUnsynced(recordId) {
+/* Set once a code has been asked for, so a batch of failing records cannot
+   throw the same prompt at the user ten times over. */
+var _classCodeAsked = false;
+
+function markUnsynced(recordId, err) {
   try {
     var idx = records.findIndex(function(r) { return String(r.id) === String(recordId); });
     if (idx >= 0) { records[idx]._cloudSynced = false; Store.set('medi045_records', JSON.stringify(records)); }
@@ -2139,10 +2143,28 @@ function markUnsynced(recordId) {
     var pend = JSON.parse(Store.get('medi045_unsynced') || '[]');
     if (pend.indexOf(String(recordId)) === -1) { pend.push(String(recordId)); Store.set('medi045_unsynced', JSON.stringify(pend)); }
   } catch (e) {}
+  var refused = err && err.refused;
   if (typeof showToast === 'function') {
-    showToast('\u26A0\uFE0F Saved on this device only \u2014 not yet sent to the server. Stay on this device and try again when you have a connection.');
+    showToast(refused
+      ? '\u26A0\uFE0F Saved here, but the server refused it: ' + (err.message || 'not authorised')
+      : '\u26A0\uFE0F Saved on this device only \u2014 not yet sent to the server. Stay on this device and try again when you have a connection.');
   }
   updateSyncBanner();
+
+  /* The one refusal a student can actually fix themselves: this browser has
+     never been given the class code. Ask for it, then resend what is waiting. */
+  if (err && err.needsClassCode && !_classCodeAsked) {
+    _classCodeAsked = true;
+    setTimeout(function () {
+      var c = prompt('This device has not been given the class access code, so the server '
+        + 'will not accept your cases.\n\nEnter it to send them now:');
+      if (c !== null && c.trim()) {
+        setClassCode(c.trim());
+        _classCodeAsked = false;
+        retryUnsynced();
+      }
+    }, 400);
+  }
 }
 
 function updateSyncBanner() {
@@ -2159,13 +2181,23 @@ function updateSyncBanner() {
   }
   if (!pend.length) { el.style.display = 'none'; return; }
   el.style.display = 'block';
-  el.textContent = '\u26A0\uFE0F ' + pend.length + ' item' + (pend.length !== 1 ? 's' : '') + ' saved on this device only \u2014 tap to retry sending';
+  var why = (!getClassCode() && !hasStaffToken())
+    ? ' \u2014 this device has no access code, tap to enter it'
+    : ' \u2014 tap to retry sending';
+  el.textContent = '\u26A0\uFE0F ' + pend.length + ' item' + (pend.length !== 1 ? 's' : '')
+    + ' saved on this device only' + why;
 }
 
 function retryUnsynced() {
   var pend = [];
   try { pend = JSON.parse(Store.get('medi045_unsynced') || '[]'); } catch (e) {}
   if (!pend.length) return;
+  /* No point resending anything if this browser still has no credential. */
+  if (!getClassCode() && !hasStaffToken()) {
+    var c = prompt('Enter the class access code for MEDI 045 to send these cases:');
+    if (c === null || !c.trim()) return;
+    setClassCode(c.trim());
+  }
   if (typeof showToast === 'function') showToast('\u23F3 Retrying ' + pend.length + ' item(s)...');
   pend.slice().forEach(function(id) {
     var rec = records.find(function(r) { return String(r.id) === String(id); });
@@ -2497,7 +2529,21 @@ function postToCloud(record) {
     headers: apiHeaders(),
     body: JSON.stringify(withStaffToken(record))
   }).then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    /* A refusal and a dropped connection are different problems with different
+       remedies, and both used to end up as "saved on this device only - try
+       again when you have a connection". On a browser that never received the
+       class code the write is refused, not lost, and telling the user to wait
+       for a signal sends them looking in the wrong place forever. */
+    if (r.status === 403) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        var msg = j.error || 'The server refused this record';
+        var err = new Error(msg);
+        err.needsClassCode = /class access code/i.test(msg);
+        err.refused = true;
+        throw err;
+      });
+    }
+    if (!r.ok) { var e = new Error('The server replied ' + r.status); e.refused = true; throw e; }
     return r.json().catch(function() { return { success: true }; });
   }).then(function(res) {
     if (res && res.success === false) throw new Error(res.error || 'server rejected');
@@ -2509,8 +2555,8 @@ function postToCloud(record) {
       if (idx >= 0) { records[idx]._cloudSynced = true; Store.set('medi045_records', JSON.stringify(records)); }
     } catch (e) {}
     updateSyncBanner();
-  }).catch(function() {
-    markUnsynced(record.id);
+  }).catch(function (err) {
+    markUnsynced(record.id, err);
   });
 }
 
