@@ -1718,33 +1718,43 @@
 <div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>eLearning Videos</h1><p>YouTube tutorials for practical skills</p></div></div>
 <div style="padding:16px 16px 100px;">
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🫁 Airway Management</div><div class="course-topic-content">
+<div id="el-links-airway">
 <a class="video-link" href="https://www.youtube.com/watch?v=psQ8ge4em2M" target="_blank" rel="noopener noreferrer">🎥 Endotracheal Intubation – Animated Teaching</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=rCAS2eD-mcw" target="_blank" rel="noopener noreferrer">🎥 LMA Insertion – Essential Techniques</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=KqgT_mtdF04" target="_blank" rel="noopener noreferrer">🎥 Bag-Mask Ventilation – Beginner's Guide</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=1U_voTdZpdM" target="_blank" rel="noopener noreferrer">🎥 Bag-Mask Ventilation – Super Detailed Guide</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=oeBki9wLxMk" target="_blank" rel="noopener noreferrer">🎥 LMA (Laryngeal Mask Airway) – Demonstration</a>
+</div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">💉 Regional &amp; Spinal Anaesthesia</div><div class="course-topic-content">
+<div id="el-links-regional">
 <a class="video-link" href="https://www.youtube.com/watch?v=Jn0-4_IHKB0" target="_blank" rel="noopener noreferrer">🎥 Spinal Anaesthesia – Step by Step Practical</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=iINhdaILIUY" target="_blank" rel="noopener noreferrer">🎥 Landmark-Guided Spinal Anesthesia Technique</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=-dDrNNdFhNg" target="_blank" rel="noopener noreferrer">🎥 Spinal Anesthesia Explained – Dr. Hadzic</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=E39RMSsszY4" target="_blank" rel="noopener noreferrer">🎥 Spinal Anesthesia – Step by Step Procedure</a>
+</div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🩸 Vascular Access</div><div class="course-topic-content">
+<div id="el-links-vascular">
 <a class="video-link" href="https://www.youtube.com/watch?v=vE99rZ7JT3Q" target="_blank" rel="noopener noreferrer">🎥 IV Cannulation – OSCE Guide (Geeky Medics)</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=aXJZSYOh6dU" target="_blank" rel="noopener noreferrer">🎥 Peripheral IV Cannulation – NEJM Demo</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=SZ2TClYz4zI" target="_blank" rel="noopener noreferrer">🎥 Central Venous Line Insertion – Step by Step</a>
+</div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🏥 Guidelines &amp; Algorithms</div><div class="course-topic-content">
+<div id="el-links-guidelines">
 <a class="video-link" href="https://das.uk.com/guidelines/das_intubation_guidelines" target="_blank" rel="noopener noreferrer">📖 Difficult Airway Algorithm – DAS Guidelines</a>
 <a class="video-link" href="https://www.who.int/teams/integrated-health-services/patient-safety/research/safe-surgery/tool-and-resources" target="_blank" rel="noopener noreferrer">📖 WHO Surgical Safety Checklist</a>
 <a class="video-link" href="https://www.resus.org.uk/library/additional-guidance/guidance-anaphylaxis/emergency-treatment" target="_blank" rel="noopener noreferrer">📖 Anaphylaxis Management – Resuscitation Council UK</a>
+</div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🎥 Quick Skills – YouTube Shorts</div><div class="course-topic-content">
+<div id="el-links-shorts">
 <a class="video-link" href="https://www.youtube.com/shorts/u_gB7Rxvguw" target="_blank" rel="noopener noreferrer">🎥 C-E Grip in Bag-Mask Ventilation</a>
 <a class="video-link" href="https://www.youtube.com/shorts/ITjsusbzsA8" target="_blank" rel="noopener noreferrer">🎥 Central Venous Catheter (Right IJV)</a>
 <a class="video-link" href="https://www.youtube.com/shorts/7VPfLUx4KBU" target="_blank" rel="noopener noreferrer">🎥 Spinal Anesthesia / Lumbar Puncture</a>
 <a class="video-link" href="https://www.youtube.com/watch?v=YoMvREzeFoM" target="_blank" rel="noopener noreferrer">🎥 LMA Insertion Technique Demo</a>
+</div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🏥 Anaesthesia Clinic — Preoperative Assessment</div><div class="course-topic-content">
 <div id="el-links-clinic"><div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div></div>
@@ -2749,6 +2759,10 @@ function collect_cl(status) {
   entry.aw332Fingers3 = gv('aw-332-3');
   entry.awMallampatiClass = gv('aw-mallampati');
   entry.awObstructionOther = gv('aw-obstruction-other');
+  entry.awLookFindings = gv('aw-look-findings');
+  entry.awObstructionFindings = gv('aw-obstruction-findings');
+  entry.awCongenitalFindings = gv('aw-congenital-findings');
+  entry.anaesType = gv('c-anaes-type-value');
   entry.awNeckMobility = gv('aw-neck-mob');
   entry.awCollar = gv('aw-collar');
   entry.awTMD = gv('aw-tmd');
@@ -6493,10 +6507,15 @@ function finaliseReview() {
    ================================================================== */
 
 var ELEARNING_SECTIONS = [
-  { key: 'clinic',  label: '\uD83C\uDFE5 Anaesthesia Clinic \u2014 Preoperative Assessment' },
-  { key: 'intraop', label: '\u2695\uFE0F Intraoperative \u2014 Practical Skills' },
-  { key: 'pacu',    label: '\uD83C\uDFE5 PACU / Recovery \u2014 Assessing the Unwell Patient' },
-  { key: 'ward',    label: '\uD83D\uDECF\uFE0F Ward / Pain Round \u2014 Pain History' }
+  { key: 'airway',     label: '\uD83E\uDEC1 Airway Management' },
+  { key: 'regional',   label: '\uD83D\uDC89 Regional & Spinal Anaesthesia' },
+  { key: 'vascular',   label: '\uD83E\uDE78 Vascular Access' },
+  { key: 'guidelines', label: '\uD83C\uDFE5 Guidelines & Algorithms' },
+  { key: 'shorts',     label: '\uD83C\uDFA5 Quick Skills \u2013 YouTube Shorts' },
+  { key: 'clinic',     label: '\uD83C\uDFE5 Anaesthesia Clinic \u2014 Preoperative Assessment' },
+  { key: 'intraop',    label: '\u2695\uFE0F Intraoperative \u2014 Practical Skills' },
+  { key: 'pacu',       label: '\uD83C\uDFE5 PACU / Recovery \u2014 Assessing the Unwell Patient' },
+  { key: 'ward',       label: '\uD83D\uDECF\uFE0F Ward / Pain Round \u2014 Pain History' }
 ];
 
 function getElearningLinks() {
@@ -6623,6 +6642,64 @@ function renderElearningLinks() {
     }).join('\n');
   });
 }
+
+/* ------------------------------------------------------------------
+   CHECKBOX GROUPS
+   Each option was a <label> wrapping a checkbox, with the toggle on the
+   label. Clicking the label also clicked the checkbox inside it, which
+   bubbled back to the label and ran the toggle a second time - so the
+   class went on and straight back off and the tick appeared dead. The
+   inner box no longer takes pointer events, so exactly one toggle runs.
+
+   Worse: none of the four groups was ever read on submit. Every tick in
+   the LEMON look, obstruction and congenital lists, and the anaesthesia
+   type, was discarded. Each group now writes its selections into a
+   hidden field, and the collectors save it.
+   ------------------------------------------------------------------ */
+var CHECK_GROUP_FIELDS = {
+  'lemon-look': 'aw-look-findings',
+  'lemon-obstruction': 'aw-obstruction-findings',
+  'lemon-congenital': 'aw-congenital-findings',
+  'c-anaes-type': 'c-anaes-type-value'
+};
+
+function toggleCheckOption(el, ev) {
+  /* Clicking the label activates the checkbox inside it; that click bubbles
+     back to this same label and would run the toggle a second time, leaving
+     the tick exactly as it started. pointer-events:none on the box stops the
+     user hitting it directly, but not the label's own forwarding - so the
+     forwarded event, whose target is the input, is ignored here. */
+  if (ev && ev.target && ev.target.tagName === 'INPUT') return;
+  /* The inner box is display:none - selection is shown by the border and
+     background - so its checked state is never seen and is not synced. */
+  el.classList.toggle('selected');
+  syncCheckGroup(el.closest('.check-group'));
+}
+
+function syncCheckGroup(group) {
+  if (!group || !group.id) return;
+  var fieldId = CHECK_GROUP_FIELDS[group.id];
+  if (!fieldId) return;
+  var picked = [];
+  group.querySelectorAll('.check-option.selected').forEach(function (o) {
+    picked.push(o.textContent.trim());
+  });
+  var f = document.getElementById(fieldId);
+  if (f) f.value = picked.join(', ');
+}
+
+/* Restoring a draft has to put the ticks back, not just the hidden value. */
+function restoreCheckGroup(groupId, value) {
+  var group = document.getElementById(groupId);
+  if (!group) return;
+  var want = String(value || '').split(',').map(function (x) { return x.trim(); })
+             .filter(function (x) { return x; });
+  group.querySelectorAll('.check-option').forEach(function (o) {
+    var on = want.indexOf(o.textContent.trim()) !== -1;
+    o.classList.toggle('selected', on);
+  });
+  syncCheckGroup(group);
+}
 </script>
 <!-- ============================================================ -->
 
@@ -6697,16 +6774,17 @@ function renderElearningLinks() {
 </div><div class="form-section"><div class="form-section-header">🍋 L – Look Externally</div>
 <div class="form-row"><label>Look for external features that may predict difficult intubation (check all that apply):</label>
 <div class="check-group" id="lemon-look">
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Obesity (BMI &gt;30)</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Thick neck / short neck</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Beard / facial hair</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Prominent incisors / buck teeth</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Receding chin / micrognathia</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Edentulous / missing teeth</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Facial trauma / deformity</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> High arched palate</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Large tongue / macroglossia</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Obesity (BMI &gt;30)</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Thick neck / short neck</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Beard / facial hair</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Prominent incisors / buck teeth</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Receding chin / micrognathia</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Edentulous / missing teeth</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Facial trauma / deformity</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> High arched palate</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Large tongue / macroglossia</label>
 </div>
+<input id="aw-look-findings" type="hidden" value=""/>
 <input id="aw-look-other" oninput="updateLEMON()" placeholder="Other findings" style="margin-top:8px" type="text"/>
 </div>
 </div><div class="form-section"><div class="form-section-header">📏 E – Evaluate 3-3-2 Rule</div>
@@ -6719,12 +6797,13 @@ function renderElearningLinks() {
 </div><div class="form-section"><div class="form-section-header">🔴 O – Obstruction / Pathology</div>
 <div class="form-row"><label>Any evidence of airway obstruction (check all that apply):</label>
 <div class="check-group" id="lemon-obstruction">
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Stridor</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Hoarseness</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Dysphagia</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Mass / tumor visible</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Previous tracheostomy</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Stridor</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Hoarseness</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Dysphagia</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Mass / tumor visible</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Previous tracheostomy</label>
 </div>
+<input id="aw-obstruction-findings" type="hidden" value=""/>
 <input id="aw-obstruction-other" oninput="updateLEMON()" placeholder="Other findings" style="margin-top:8px" type="text"/>
 </div>
 </div><div class="form-section"><div class="form-section-header">🔄 N – Neck Mobility</div>
@@ -6732,11 +6811,12 @@ function renderElearningLinks() {
 <div class="form-row"><label>Is the patient wearing a cervical collar?</label><div class="yn-group"><div class="yn-btn yes" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✓ Yes</div><div class="yn-btn no active" onclick="toggleYN(this,'aw-collar'); updateLEMON()">✗ No</div></div><input id="aw-collar" type="hidden" value="No"/></div>
 <div class="form-row"><label>Congenital or acquired neck deformity?</label>
 <div class="check-group" id="lemon-congenital">
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Down's syndrome</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Klippel‑Feil syndrome</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Ankylosing spondylitis</label>
-<label class="check-option" onclick="this.classList.toggle('selected'); updateLEMON()"><input type="checkbox"/> Goiter / neck mass</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Down's syndrome</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Klippel‑Feil syndrome</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Ankylosing spondylitis</label>
+<label class="check-option" onclick="toggleCheckOption(this,event); updateLEMON()"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Goiter / neck mass</label>
 </div>
+<input id="aw-congenital-findings" type="hidden" value=""/>
 </div>
 </div><div class="form-section"><div class="form-section-header">📏 Additional Measurements</div>
 <div class="form-row two-col"><div><label>Thyromental distance (cm)</label><input id="aw-tmd" oninput="updateLEMON()" placeholder="cm" step="0.1" type="number"/></div><div><label>Sternomental distance (cm)</label><input id="aw-smd" oninput="updateLEMON()" placeholder="cm" step="0.1" type="number"/></div></div>
@@ -6749,7 +6829,8 @@ function renderElearningLinks() {
 <div><label>NPO (hours)</label><select id="c-npo"><option value="">-- Select --</option><option>2</option><option>4</option><option>6</option><option>8</option><option>&gt;8</option></select></div>
 <div><label>Pre-medications</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'premed-list','c-premed')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'premed-list','c-premed')">+ Add</button></div><div class="chip-list" id="premed-list"><span class="chip chip-nkda" onclick="toggleChip(this,'c-premed')">None</span><span class="chip" onclick="toggleChip(this,'c-premed')">Midazolam 1-2mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Midazolam 7.5mg PO</span><span class="chip" onclick="toggleChip(this,'c-premed')">Fentanyl 50-100mcg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Glycopyrrolate 0.2mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Metoclopramide 10mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Ondansetron 4mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Paracetamol 1g PO/IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Ranitidine 50mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Dexamethasone 4-8mg IV</span><span class="chip" onclick="toggleChip(this,'c-premed')">Lorazepam 1-2mg PO</span><span class="chip" onclick="toggleChip(this,'c-premed')">Clonidine 0.1-0.2mg PO</span></div><div class="chip-selected-label">Selected: <span id="c-premed-display">None</span></div><input id="c-premed" type="hidden" value=""/></div></div>
 </div>
-<div class="form-row"><label>Type of Anaesthesia</label><div class="check-group" id="c-anaes-type"><label class="check-option" onclick="this.classList.toggle('selected')"><input type="checkbox"/> GA</label><label class="check-option" onclick="this.classList.toggle('selected')"><input type="checkbox"/> MAC</label><label class="check-option" onclick="this.classList.toggle('selected')"><input type="checkbox"/> Spinal/Epidural</label><label class="check-option" onclick="this.classList.toggle('selected')"><input type="checkbox"/> Regional Block</label></div></div>
+<div class="form-row"><label>Type of Anaesthesia</label><div class="check-group" id="c-anaes-type"><label class="check-option" onclick="toggleCheckOption(this,event)"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> GA</label><label class="check-option" onclick="toggleCheckOption(this,event)"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> MAC</label><label class="check-option" onclick="toggleCheckOption(this,event)"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Spinal/Epidural</label><label class="check-option" onclick="toggleCheckOption(this,event)"><input type="checkbox" tabindex="-1" style="pointer-events:none"/> Regional Block</label></div>
+<input id="c-anaes-type-value" type="hidden" value=""/></div>
 <div class="form-row"><label>Monitoring Plan</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'monitoring-list','c-monitoring')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'monitoring-list','c-monitoring')">+ Add</button></div><div class="chip-list" id="monitoring-list"><span class="chip" onclick="toggleChip(this,'c-monitoring')">Standard (ECG, NIBP, SpO₂)</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">Capnography (EtCO₂)</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">Temperature probe</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">Neuromuscular (TOF)</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">Arterial line (IBP)</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">Central venous pressure (CVP)</span><span class="chip" onclick="toggleChip(this,'c-monitoring')">BIS monitor</span></div><div class="chip-selected-label">Selected: <span id="c-monitoring-display">None</span></div><input id="c-monitoring" type="hidden" value=""/></div></div>
 <div class="form-row two-col">
 <div><label>Postop Analgesia</label><div class="chip-selector"><div class="chip-search-wrap"><input class="chip-search" oninput="filterChips(this,'analgesia-list','c-analgesia')" placeholder="🔍 Search..." type="text"/><button class="chip-add-btn" onclick="addCustomChip(this,'analgesia-list','c-analgesia')">+ Add</button></div><div class="chip-list" id="analgesia-list"><span class="chip" onclick="toggleChip(this,'c-analgesia')">Paracetamol 1g IV</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Ibuprofen 400mg PO</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Morphine PCA</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Fentanyl PCA</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Epidural analgesia</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Nerve block</span><span class="chip" onclick="toggleChip(this,'c-analgesia')">Ketorolac 30mg IV</span></div><div class="chip-selected-label">Selected: <span id="c-analgesia-display">None</span></div><input id="c-analgesia" type="hidden" value=""/></div></div>
