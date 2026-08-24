@@ -6512,7 +6512,10 @@ function renderScoreReview(prev) {
   updateReviewTotal();
 
   var btn = document.getElementById('review-finalise-btn');
-  btn.textContent = isFinal ? '\u21BA Re-open and amend' : '\u2705 Finalise and release';
+  /* The old label, 'Re-open and amend', read as though it merely unlocked the
+     mark - so a supervisor who had changed the figures could not tell that
+     pressing it was what saved them. It now says what it does. */
+  btn.textContent = isFinal ? '\uD83D\uDCBE Save changes' : '\u2705 Finalise and release';
   btn.style.background = isFinal ? '#7b2d8b' : '#1a7a4a';
 }
 
@@ -6543,7 +6546,14 @@ function finaliseReview() {
   if (!_reviewCase) return;
   var R = getRubric(), prev = getCaseReview(_reviewCase.id);
   if (prev && prev.status === 'final') {
-    if (!confirm('Re-open this mark for amendment?\nThe student already has it, and the change will be recorded.')) return;
+    var was = prev.total, now = _autoTotalNow().scaled;
+    getRubric().supervisorDomains.forEach(function (d) {
+      var el = document.getElementById('sup-' + d.id);
+      var v = el ? parseInt(el.value, 10) : NaN;
+      if (!isNaN(v)) now += Math.max(0, Math.min(d.points, v));
+    });
+    if (!confirm('Save the amended mark?\n\nWas ' + was + '/100, now ' + now + '/100.\n'
+      + 'The student already has the earlier mark; the change is recorded and the old figure kept in the history.')) return;
   }
   var domains = {}, sup = 0, incomplete = [];
   R.supervisorDomains.forEach(function (d) {
@@ -6589,7 +6599,8 @@ function finaliseReview() {
   records.push(review);
   try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
   postToCloud(review);
-  showToast('\u2705 Mark finalised: ' + review.total + '/100');
+  showToast((prev && prev.status === 'final' ? '\uD83D\uDCBE Mark updated: ' : '\u2705 Mark finalised: ')
+            + review.total + '/100');
   closeScoreReview();
   if (typeof renderDashboard === 'function') { try { renderDashboard(); } catch (e) {} }
 }
