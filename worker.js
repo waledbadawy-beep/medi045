@@ -36,12 +36,22 @@ const STUDENT_WRITABLE = new Set([
 
 // Record types every student needs to read.
 const PUBLIC_CONFIG = new Set([
-  'announcement', 'batch_config', 'grading_config', 'supervisor_list'
+  'announcement', 'batch_config', 'grading_config', 'supervisor_list',
+  // The eLearning links a student needs to see, and the marking scheme, which
+  // is published rather than hidden - a student who asks how a mark was
+  // reached should be able to read the criteria that produced it.
+  'elearning_links', 'grading_rubric'
 ]);
 
 // Types a student must never receive, even for their own records. Marks are
 // released by the programme, not read out of the app before moderation.
 const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials', 'backup_log'];
+
+// A finalised case mark belongs to the student it was written for: handleGet
+// already scopes reads by student id, so it reaches that student and nobody
+// else. It is not in STAFF_ONLY_TYPES because the whole point of finalising is
+// to release it.
+
 
 // Nothing is forbidden outright any more, but credentials are special: see
 // STAFF_ONLY_TYPES below and the plain-text guard in handlePost. The record may

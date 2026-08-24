@@ -2407,10 +2407,36 @@ function closeStaffTokenModal() {
 function submitStaffToken() {
   var inp = document.getElementById('staff-token-input');
   var v = inp ? String(inp.value || '').trim() : '';
-  if (!v) { var e = document.getElementById('staff-token-error'); if (e) e.style.display = 'block'; return; }
+  var err = document.getElementById('staff-token-error');
+  if (!v) { if (err) { err.textContent = 'Enter the access code'; err.style.display = 'block'; } return; }
+
+  /* The code used to be stored without ever being checked. The app then
+     believed this device was staff while the server did not, so admin changes
+     saved locally, looked successful, and were refused on every send with
+     'Not authorised to write this record type' - and the reason was invisible.
+     The code is now tried against the backend before it is kept. */
+  if (err) { err.textContent = 'Checking\u2026'; err.style.display = 'block'; }
+  fetch(APPS_SCRIPT_URL + '?staffcheck=1', { headers: { 'X-Staff-Token': v } })
+    .then(function (r) {
+      if (r.status === 403 || r.status === 401) {
+        if (err) { err.textContent = '\u274C That code was not accepted by the server.'; err.style.display = 'block'; }
+        return;
+      }
+      _acceptStaffToken(v);
+    })
+    .catch(function () {
+      /* No connection: keep it rather than lock a supervisor out of a device
+         that is simply offline. The server still refuses a wrong code later. */
+      _acceptStaffToken(v, true);
+    });
+}
+
+function _acceptStaffToken(v, offline) {
   setStaffToken(v);
   closeStaffTokenModal();
-  showToast('\u2705 Access code saved on this device');
+  showToast(offline
+    ? '\u2705 Access code saved \u2014 not verified, no connection'
+    : '\u2705 Access code accepted');
   var cb = _staffTokenThen; _staffTokenThen = null;
   if (cb) { cb(); return; }
   if (typeof syncFromCloud === 'function') {
