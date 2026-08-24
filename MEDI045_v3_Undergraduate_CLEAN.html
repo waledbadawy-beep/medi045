@@ -2071,6 +2071,14 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="addElearningLink()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px;font-family:inherit">➕ Add link</button>
 <div id="el-admin-list" style="margin-top:14px"></div>
 </div>
+<!-- Section: Automatic Marking -->
+<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:4px">📋 Automatic Marking</div>
+<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Scores how completely a case is documented. It does not judge the anaesthetic — that stays with the supervisor and carries its own marks. No score reaches a student until a supervisor finalises it.</div>
+<div id="grading-status" style="border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700"></div>
+<button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
+<button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme</button>
+</div>
 <!-- Section: Audit Log -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📜 Audit Log</div>
@@ -5857,7 +5865,8 @@ function openCaseDetail(caseId) {
   /* Staff get the marking entry point on any submitted case. Students never
      see it: the preliminary score is not theirs to read, and the final mark
      reaches them through the released review, not this button. */
-  if (evalUnlocked && r.status === 'submitted' && ['clinic','intraop','pacu','ward'].indexOf(r.type) !== -1) {
+  if (evalUnlocked && isAutoGradingOn() && r.status === 'submitted'
+      && ['clinic','intraop','pacu','ward'].indexOf(r.type) !== -1) {
     var rv = getCaseReview(r.id);
     var label = rv && rv.status === 'final'
       ? '\uD83D\uDCCB Mark: ' + rv.total + '/100 \u00B7 review or amend'
@@ -5878,6 +5887,7 @@ function _initApp() {
   updateHomeBatchBanner();
   syncBatchConfigFromCloud();
   _safe('elearning', function(){ renderElearningLinks(); renderAdminElearning(); });
+  _safe('grading', renderGradingAdmin);
   _safe('stats', updateStats);
   _safe('records', renderRecords);
   _safe('dashboard', renderDashboard);
@@ -6167,11 +6177,27 @@ var DEFAULT_RUBRIC = {
 /* The rubric is config, not code: the admin panel edits this record and the
    change takes effect with no redeploy. A stored rubric is merged over the
    default, so a rubric written before a criterion existed still scores. */
+/* The rubric lives in one record on the server, so a change made by the admin
+   reaches every supervisor's device on the next sync rather than only the
+   browser it was typed into. */
+function getRubricRecord() {
+  return records.filter(function (r) {
+    return r.type === 'grading_rubric' && r.status !== 'deleted';
+  }).slice(-1)[0] || null;
+}
+
+/* Automatic marking is OFF until switched on. Nobody should discover a
+   scoring scheme running on their students' work because a file was
+   deployed. */
+function isAutoGradingOn() {
+  var rec = getRubricRecord();
+  return !!(rec && rec.enabled);
+}
+
 function getRubric() {
   try {
-    var raw = Store.get('medi045_grading_rubric');
-    if (!raw) return DEFAULT_RUBRIC;
-    var c = JSON.parse(raw);
+    var c = getRubricRecord();
+    if (!c) return DEFAULT_RUBRIC;
     var out = JSON.parse(JSON.stringify(DEFAULT_RUBRIC));
     if (c.autoTotal) out.autoTotal = c.autoTotal;
     if (c.supervisorTotal) out.supervisorTotal = c.supervisorTotal;
@@ -6745,6 +6771,107 @@ function restoreCheckGroup(groupId, value) {
     o.classList.toggle('selected', on);
   });
   syncCheckGroup(group);
+}
+
+/* ---- Switching automatic marking on and off ---------------------- */
+function renderGradingAdmin() {
+  var box = document.getElementById('grading-status');
+  var btn = document.getElementById('grading-toggle-btn');
+  if (!box || !btn) return;
+  var on = isAutoGradingOn(), rec = getRubricRecord();
+  box.style.background = on ? '#e8f8f0' : '#fdf3f3';
+  box.style.color = on ? '#1a7a4a' : '#b3261e';
+  box.innerHTML = on
+    ? '\u2705 ON \u2014 supervisors see a preliminary score on every submitted case'
+      + (rec && rec.updatedAt ? '<div style="font-size:10.5px;font-weight:400;margin-top:3px;opacity:.85">switched on '
+        + _esc(String(rec.updatedAt).slice(0,10)) + (rec.updatedBy ? ' by ' + _esc(rec.updatedBy) : '') + '</div>' : '')
+    : '\u26D4 OFF \u2014 cases are marked entirely by hand, as before';
+  btn.textContent = on ? 'Switch automatic marking OFF' : 'Switch automatic marking ON';
+  btn.style.background = on ? '#b3261e' : '#1a7a4a';
+}
+
+function toggleAutoGrading() {
+  if (!hasStaffToken()) { promptStaffToken(toggleAutoGrading); return; }
+  var on = isAutoGradingOn();
+  if (on && !confirm('Switch automatic marking off?\n\nMarks already finalised are untouched and stay with the students who have them. New cases will be marked by hand only.')) return;
+  if (!on && !confirm('Switch automatic marking on?\n\nSupervisors will see a preliminary documentation score on each submitted case. Nothing reaches a student until a supervisor finalises it.')) return;
+  var prev = getRubricRecord() || {};
+  var rec = JSON.parse(JSON.stringify(prev));
+  rec.type = 'grading_rubric';
+  rec.id = 'grading_rubric_singleton';
+  rec.status = 'active';
+  rec.enabled = !on;
+  rec.version = rec.version || RUBRIC_VERSION;
+  rec.updatedAt = new Date().toISOString();
+  rec.updatedBy = (studentProfile && studentProfile.name) || 'admin';
+  records = records.filter(function (r) { return r.type !== 'grading_rubric'; });
+  records.push(rec);
+  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
+  postToCloud(rec);
+  if (typeof logAudit === 'function') {
+    try { logAudit('grading', 'Automatic marking switched ' + (rec.enabled ? 'ON' : 'OFF')); } catch (e) {}
+  }
+  renderGradingAdmin();
+  showToast(rec.enabled ? '\u2705 Automatic marking is on' : '\u26D4 Automatic marking is off');
+}
+
+/* ---- The scheme, in full, so it can be checked before it is trusted ---- */
+function openRubricReview() {
+  var R = getRubric();
+  var TYPES = { clinic:'Anaesthesia Clinic', intraop:'Intraoperative', pacu:'PACU / Recovery', ward:'Ward / Pain Round' };
+  var h = '<div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">'
+        + 'Every criterion below is checked against the saved record. A criterion can only ask whether a field '
+        + 'is filled, whether it is an allowed value, or whether at least a given number of items were chosen. '
+        + 'That is documentation completeness, not clinical competence.</div>';
+
+  function section(title, list, note) {
+    var sum = list.reduce(function (a, c) { return a + c.points; }, 0);
+    var out = '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;'
+            + 'letter-spacing:.4px;margin:16px 0 6px">' + _esc(title) + ' \u00B7 ' + sum + ' pts</div>';
+    if (note) out += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">' + _esc(note) + '</div>';
+    list.forEach(function (c) {
+      out += '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 10px;background:var(--bg);'
+           + 'border-radius:8px;margin-bottom:4px">'
+           + '<div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#1a1a2e">' + _esc(c.label) + '</div>'
+           + '<div style="font-size:10.5px;color:var(--muted);margin-top:1px">' + _esc(describeRule(c)) + '</div></div>'
+           + '<div style="font-size:12px;font-weight:800;color:var(--primary);white-space:nowrap">' + c.points + '</div></div>';
+    });
+    return out;
+  }
+
+  h += section('Applies to every case', R.universal);
+  Object.keys(R.byType).forEach(function (t) { h += section(TYPES[t] || t, R.byType[t]); });
+  h += section('Clinical judgment \u2014 supervisor only', R.supervisorDomains,
+               'Not automated. The supervisor awards these by hand.');
+  h += '<div style="margin-top:16px;padding:12px;background:#eef3f9;border-radius:10px;font-size:12.5px;'
+     + 'font-weight:700;color:var(--primary)">Documentation ' + R.autoTotal
+     + ' + judgment ' + R.supervisorTotal + ' = ' + (R.autoTotal + R.supervisorTotal) + ' per case</div>';
+  h += '<div style="margin-top:10px;font-size:11px;color:var(--muted);line-height:1.6">'
+     + 'Criterion points are scaled to the documentation total, so the scheme still adds up if a criterion is '
+     + 'changed. Changing the scheme never re-scores a mark that has already been finalised.</div>';
+
+  document.getElementById('rubric-review-body').innerHTML = h;
+  document.getElementById('rubric-review-modal').style.display = 'flex';
+}
+
+function describeRule(c) {
+  switch (c.rule) {
+    case 'present':      return 'passes when ' + c.field + ' is filled in';
+    case 'allPresent':   return 'passes when all of these are filled: ' + c.fields.join(', ');
+    case 'atLeastN':     return 'passes when at least ' + c.n + ' of ' + c.fields.length + ' are filled';
+    case 'countAtLeast': return 'passes when at least ' + c.n + ' items are selected';
+    case 'compound':     return 'needs ' + (c.all || []).join(', ')
+                              + (c.atLeast ? ' plus ' + c.atLeast.n + ' of ' + c.atLeast.fields.length + ' others' : '');
+    case 'validDate':    return 'passes when the date is set and not in the future';
+    case 'airway':       return 'device required; size and grade required only when a tube was used';
+    case 'aldreteSum':   return 'passes when the recorded total equals the sum of the five components';
+    case 'noPlaceholder':return 'fails on text such as test, xxx, n/a, 1111';
+    default:             return c.points + ' marks, awarded by the supervisor';
+  }
+}
+
+function closeRubricReview() {
+  document.getElementById('rubric-review-modal').style.display = 'none';
 }
 </script>
 <!-- ============================================================ -->
@@ -7764,4 +7891,14 @@ function restoreCheckGroup(groupId, value) {
 <button id="review-finalise-btn" onclick="finaliseReview()" style="flex:2;background:#1a7a4a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit">✅ Finalise and release</button>
 </div>
 </div>
+<div id="rubric-review-modal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(10,20,40,.55);align-items:flex-end;justify-content:center">
+<div style="background:#fff;width:100%;max-width:480px;max-height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column">
+<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+<div style="font-size:15px;font-weight:800;color:var(--primary)">Marking scheme</div>
+<button onclick="closeRubricReview()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+</div>
+<div id="rubric-review-body" style="padding:14px 16px;overflow-y:auto;flex:1"></div>
+<div style="padding:12px 16px;border-top:1px solid var(--border)">
+<button onclick="closeRubricReview()" style="width:100%;background:#eef1f5;color:#46586b;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">Close</button>
+</div></div></div>
 </body></html>
