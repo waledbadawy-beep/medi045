@@ -1747,16 +1747,16 @@
 <a class="video-link" href="https://www.youtube.com/watch?v=YoMvREzeFoM" target="_blank" rel="noopener noreferrer">🎥 LMA Insertion Technique Demo</a>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🏥 Anaesthesia Clinic — Preoperative Assessment</div><div class="course-topic-content">
-<div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div>
+<div id="el-links-clinic"><div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div></div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">⚕️ Intraoperative — Practical Skills</div><div class="course-topic-content">
-<div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div>
+<div id="el-links-intraop"><div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div></div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🏥 PACU / Recovery — Assessing the Unwell Patient</div><div class="course-topic-content">
-<div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div>
+<div id="el-links-pacu"><div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div></div>
 </div></div>
 <div class="course-topic"><div class="course-topic-header" onclick="this.nextElementSibling.classList.toggle('open')">🛏️ Ward / Pain Round — Pain History</div><div class="course-topic-content">
-<div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div>
+<div id="el-links-ward"><div style="font-size:12px;color:var(--muted);padding:10px 2px;line-height:1.6">Links are being reviewed and will be added shortly.</div></div>
 </div></div>
 </div>
 </div>
@@ -2041,6 +2041,25 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 </div>
 <button id="ann-post-btn" onclick="postAnnouncement()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px">📢 Post to All Students</button>
 <div id="ann-admin-list" style="margin-top:14px"></div>
+</div>
+<!-- Section: eLearning Links -->
+<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:4px">🎬 eLearning Links</div>
+<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:12px">Add or remove the videos students see. Changes reach every device on the next sync — no app update needed.</div>
+<div class="admin-field">
+<label>Section</label>
+<select id="el-section" style="font-size:16px"></select>
+</div>
+<div class="admin-field">
+<label>Title shown to students</label>
+<input id="el-title" placeholder="e.g. Anaesthetic machine check — full demonstration" type="text"/>
+</div>
+<div class="admin-field">
+<label>Link</label>
+<input id="el-url" placeholder="https://www.youtube.com/watch?v=..." type="url"/>
+</div>
+<button onclick="addElearningLink()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px;font-family:inherit">➕ Add link</button>
+<div id="el-admin-list" style="margin-top:14px"></div>
 </div>
 <!-- Section: Audit Log -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
@@ -3603,7 +3622,8 @@ function renderAnnouncements() {
 }
 
 function syncAnnouncementsFromCloud() {
-  syncFromCloud(function(){ updateAnnBanner(); renderAnnouncements(); renderAdminAnnouncements(); });
+  syncFromCloud(function(){ updateAnnBanner(); renderAnnouncements(); renderAdminAnnouncements();
+    try { renderElearningLinks(); renderAdminElearning(); } catch (e) {} });
 }
 function getSeenAnnouncementIds() {
   try { return JSON.parse(Store.get('medi045_seen_announcements') || '[]'); } catch(e) { return []; }
@@ -5797,6 +5817,7 @@ function _initApp() {
   checkProfileOnLoad(); // must run before stats/records so per-student filtering has the profile ready
   updateHomeBatchBanner();
   syncBatchConfigFromCloud();
+  _safe('elearning', function(){ renderElearningLinks(); renderAdminElearning(); });
   _safe('stats', updateStats);
   _safe('records', renderRecords);
   _safe('dashboard', renderDashboard);
@@ -6459,6 +6480,148 @@ function finaliseReview() {
   showToast('\u2705 Mark finalised: ' + review.total + '/100');
   closeScoreReview();
   if (typeof renderDashboard === 'function') { try { renderDashboard(); } catch (e) {} }
+}
+
+/* ==================================================================
+   eLEARNING LINKS, EDITABLE FROM THE ADMIN PANEL
+   The links used to live in the page, so changing one meant editing
+   the file and pushing it - which needed a GitHub token, and the token
+   was where most of the friction came from. They now live in one
+   record on the server; the app reads it on sync and falls back to
+   whatever is built into the page if the server cannot be reached, so
+   the screen is never empty offline.
+   ================================================================== */
+
+var ELEARNING_SECTIONS = [
+  { key: 'clinic',  label: '\uD83C\uDFE5 Anaesthesia Clinic \u2014 Preoperative Assessment' },
+  { key: 'intraop', label: '\u2695\uFE0F Intraoperative \u2014 Practical Skills' },
+  { key: 'pacu',    label: '\uD83C\uDFE5 PACU / Recovery \u2014 Assessing the Unwell Patient' },
+  { key: 'ward',    label: '\uD83D\uDECF\uFE0F Ward / Pain Round \u2014 Pain History' }
+];
+
+function getElearningLinks() {
+  var rec = records.filter(function (r) {
+    return r.type === 'elearning_links' && r.status !== 'deleted';
+  }).slice(-1)[0];
+  var out = {};
+  ELEARNING_SECTIONS.forEach(function (sec) {
+    var v = rec && rec.sections && rec.sections[sec.key];
+    out[sec.key] = Array.isArray(v) ? v : [];
+  });
+  return out;
+}
+
+/* A link is only accepted if it is http(s). Anything else - a javascript:
+   URL above all - is refused rather than sanitised, because a half-cleaned
+   URL that still runs is worse than one that was never accepted. */
+function _validLinkUrl(u) {
+  u = String(u || '').trim();
+  if (!/^https?:\/\//i.test(u)) return '';
+  try { new URL(u); } catch (e) { return ''; }
+  return u;
+}
+
+function addElearningLink() {
+  if (!hasStaffToken()) { promptStaffToken(addElearningLink); return; }
+  var sec = (document.getElementById('el-section') || {}).value;
+  var title = String((document.getElementById('el-title') || {}).value || '').trim();
+  var url = _validLinkUrl((document.getElementById('el-url') || {}).value);
+  if (!sec) { showToast('\u26A0\uFE0F Choose a section'); return; }
+  if (!title) { showToast('\u26A0\uFE0F Give the link a title'); return; }
+  if (!url) { showToast('\u26A0\uFE0F The link must start with http:// or https://'); return; }
+
+  var all = getElearningLinks();
+  all[sec] = all[sec].concat([{ title: title, url: url, addedAt: new Date().toISOString() }]);
+  _saveElearningLinks(all, 'Added "' + title + '" to ' + sec);
+  document.getElementById('el-title').value = '';
+  document.getElementById('el-url').value = '';
+}
+
+function removeElearningLink(secKey, idx) {
+  if (!hasStaffToken()) { promptStaffToken(function () { removeElearningLink(secKey, idx); }); return; }
+  var all = getElearningLinks();
+  var item = all[secKey][idx];
+  if (!item) return;
+  if (!confirm('Remove this link?\n\n' + item.title)) return;
+  all[secKey] = all[secKey].filter(function (x, i) { return i !== idx; });
+  _saveElearningLinks(all, 'Removed "' + item.title + '" from ' + secKey);
+}
+
+function moveElearningLink(secKey, idx, dir) {
+  var all = getElearningLinks(), list = all[secKey], j = idx + dir;
+  if (!list[idx] || !list[j]) return;
+  var t = list[idx]; list[idx] = list[j]; list[j] = t;
+  _saveElearningLinks(all, 'Reordered links in ' + secKey);
+}
+
+function _saveElearningLinks(all, auditMsg) {
+  var rec = { type: 'elearning_links', id: 'elearning_links_singleton',
+              sections: all, status: 'active', updatedAt: new Date().toISOString() };
+  records = records.filter(function (r) { return r.type !== 'elearning_links'; });
+  records.push(rec);
+  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
+  postToCloud(rec);
+  if (typeof logAudit === 'function') { try { logAudit('elearning_links', auditMsg); } catch (e) {} }
+  renderAdminElearning();
+  renderElearningLinks();
+  showToast('\u2705 Saved \u2014 students see this on their next sync');
+}
+
+function renderAdminElearning() {
+  var sel = document.getElementById('el-section');
+  if (sel && !sel.options.length) {
+    ELEARNING_SECTIONS.forEach(function (sec) {
+      var o = document.createElement('option');
+      o.value = sec.key; o.textContent = sec.label;
+      sel.appendChild(o);
+    });
+  }
+  var el = document.getElementById('el-admin-list');
+  if (!el) return;
+  var all = getElearningLinks(), h = '', any = false;
+  ELEARNING_SECTIONS.forEach(function (sec) {
+    var list = all[sec.key];
+    h += '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;'
+       + 'letter-spacing:.4px;margin:12px 0 6px">' + _esc(sec.label) + ' (' + list.length + ')</div>';
+    if (!list.length) {
+      h += '<div style="font-size:11.5px;color:var(--muted);padding:2px 0 4px">No links yet</div>';
+      return;
+    }
+    any = true;
+    list.forEach(function (it, i) {
+      h += '<div style="background:var(--bg);border-radius:9px;padding:9px 11px;margin-bottom:6px">'
+        + '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
+        + '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#1a3a5c">' + _esc(it.title) + '</div>'
+        + '<div style="font-size:10.5px;color:#2a5298;overflow-wrap:anywhere;margin-top:2px">' + _esc(it.url) + '</div></div>'
+        + '<div style="display:flex;gap:2px;flex-shrink:0">'
+        + '<button onclick="moveElearningLink(\'' + sec.key + '\',' + i + ',-1)" style="background:none;border:none;font-size:15px;cursor:pointer;color:#46586b;padding:2px 4px">\u2191</button>'
+        + '<button onclick="moveElearningLink(\'' + sec.key + '\',' + i + ',1)" style="background:none;border:none;font-size:15px;cursor:pointer;color:#46586b;padding:2px 4px">\u2193</button>'
+        + '<button onclick="removeElearningLink(\'' + sec.key + '\',' + i + ')" style="background:none;border:none;font-size:15px;cursor:pointer;color:#e63946;padding:2px 4px">\uD83D\uDDD1\uFE0F</button>'
+        + '</div></div></div>';
+    });
+  });
+  el.innerHTML = h;
+}
+
+/* Paints the four sections on the student's eLearning screen. Sections the
+   admin has not filled keep whatever is in the page, so nothing looks broken
+   before any link has been added. */
+function renderElearningLinks() {
+  var all = getElearningLinks();
+  ELEARNING_SECTIONS.forEach(function (sec) {
+    var host = document.getElementById('el-links-' + sec.key);
+    if (!host) return;
+    /* Remember what the page shipped with, once, so an empty section can be
+       restored to it. Without this, deleting the last link left the deleted
+       link on screen - the section was skipped rather than cleared. */
+    if (host.dataset.fallback === undefined) host.dataset.fallback = host.innerHTML;
+    var list = all[sec.key];
+    if (!list.length) { host.innerHTML = host.dataset.fallback; return; }
+    host.innerHTML = list.map(function (it) {
+      return '<a class="video-link" href="' + _esc(it.url) + '" target="_blank" rel="noopener noreferrer">\uD83C\uDFA5 '
+           + _esc(it.title) + '</a>';
+    }).join('\n');
+  });
 }
 </script>
 <!-- ============================================================ -->
