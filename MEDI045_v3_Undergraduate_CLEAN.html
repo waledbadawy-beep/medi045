@@ -6593,6 +6593,8 @@ function renderScoreReview(prev) {
   /* The old label, 'Re-open and amend', read as though it merely unlocked the
      mark - so a supervisor who had changed the figures could not tell that
      pressing it was what saved them. It now says what it does. */
+  var saveBtn = document.getElementById('review-save-auto-btn');
+  if (saveBtn) saveBtn.style.display = (_reviewPage === 1) ? 'block' : 'none';
   if (_reviewPage === 1) {
     btn.innerHTML = 'Next \u2014 supervisor marks'
       + '<div style="font-size:10px;font-weight:400;opacity:.9" dir="rtl">\u0627\u0644\u062A\u0627\u0644\u064A \u2014 \u062F\u0631\u062C\u0627\u062A \u0627\u0644\u0645\u0634\u0631\u0641</div>';
@@ -6666,6 +6668,49 @@ function updateReviewTotal() {
     + 'padding-top:8px;border-top:1px solid rgba(255,255,255,.25)"><span>Total</span><span>' + total + ' / 100</span></div>'
     + (missing ? '<div style="font-size:11px;margin-top:7px;opacity:.9">\u26A0\uFE0F Judgment marks incomplete \u2014 total is provisional</div>' : '')
     + '</div>';
+}
+
+/* Saving the automatic score on its own. A supervisor may want the documented
+   score recorded now and the judgment marks added later, or never - and being
+   forced to invent four judgment figures just to keep the automatic result
+   would corrupt the very marks the scheme is meant to protect.
+
+   It is stored as its own type, which the server keeps staff-only, so a
+   preliminary score cannot reach the student. Only a finalised case_review
+   is released. */
+function saveAutoScoreOnly() {
+  if (!_reviewCase) return;
+  if (!hasStaffToken()) { promptStaffToken(saveAutoScoreOnly); return; }
+  var t = _autoTotalNow();
+  var rec = {
+    type: 'case_autoscore', id: 'autoscore_' + _reviewCase.id,
+    caseId: String(_reviewCase.id), caseType: _reviewCase.type,
+    student: _reviewCase.student || '', studentId: _reviewCase.studentId || '',
+    rubricVersion: _reviewScore.rubricVersion,
+    autoScore: t.scaled, autoMax: _reviewScore.autoMax,
+    autoRaw: t.raw, autoRawMax: t.max,
+    overrides: _reviewOverrides,
+    criteria: _reviewScore.criteria.map(function (c) {
+      return { id: c.id, label: c.label, points: c.points,
+               auto: c.earned, awarded: _overrideOf(c.id, c.earned),
+               reason: c.missing && c.missing.length ? c.missing.join(', ') : (c.detail || '') };
+    }),
+    status: 'preliminary',
+    savedBy: (studentProfile && studentProfile.name) || 'staff',
+    savedAt: new Date().toISOString()
+  };
+  records = records.filter(function (r) { return String(r.id) !== String(rec.id); });
+  records.push(rec);
+  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
+  postToCloud(rec);
+  if (typeof logAudit === 'function') {
+    try { logAudit('grading', 'Automatic score ' + rec.autoScore + '/' + rec.autoMax
+      + ' saved for case ' + rec.caseId + ' (not released)'); } catch (e) {}
+  }
+  _reviewProblem('');
+  showToast('\uD83D\uDCBE Score saved: ' + rec.autoScore + '/' + rec.autoMax
+    + ' \u2014 not sent to the student');
+  closeScoreReview();
 }
 
 function finaliseReview() {
@@ -8077,7 +8122,8 @@ function closeRubricReview() {
 <div id="score-review-body" style="padding:14px 16px;overflow-y:auto;flex:1"></div>
 <div id="review-problem" style="display:none;margin:0 16px 8px;padding:10px 12px;background:#fdecec;color:#b3261e;border-radius:9px;font-size:12.5px;font-weight:700;line-height:1.5"></div>
 <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:9px">
-<button onclick="closeScoreReview()" style="flex:1;background:#eef1f5;color:#46586b;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">Close \u00B7 \u0625\u063A\u0644\u0627\u0642</button>
+<button onclick="closeScoreReview()" style="flex:1;background:#eef1f5;color:#46586b;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit">Close · إغلاق</button>
+<button id="review-save-auto-btn" onclick="saveAutoScoreOnly()" style="-webkit-appearance:none;flex:1;background:#2a5298;color:#fff;border:none;border-radius:10px;padding:13px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;display:none">💾 Save score</button>
 <button id="review-finalise-btn" onclick="finaliseReview()" style="flex:2;background:#1a7a4a;color:#fff;border:none;border-radius:10px;padding:13px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit">✅ Finalise and release</button>
 </div>
 </div>

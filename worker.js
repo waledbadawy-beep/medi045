@@ -45,7 +45,10 @@ const PUBLIC_CONFIG = new Set([
 
 // Types a student must never receive, even for their own records. Marks are
 // released by the programme, not read out of the app before moderation.
-const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials', 'backup_log'];
+const STAFF_ONLY_TYPES = ['evaluation', 'audit_log', 'app_credentials', 'backup_log',
+  // A preliminary automatic score is working material for the supervisor.
+  // Only a finalised case_review is released to the student.
+  'case_autoscore'];
 
 // A finalised case mark belongs to the student it was written for: handleGet
 // already scopes reads by student id, so it reaches that student and nobody
