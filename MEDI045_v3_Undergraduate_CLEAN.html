@@ -1873,15 +1873,12 @@
 <div id="dash-list" style="padding:0 16px calc(100px + env(safe-area-inset-bottom))"></div>
 <!-- Section: Automatic Marking -->
 <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
-<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div><div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build b2c5900 · 2026-08-27 23:01 UTC</div>
-<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Scores how completely a case is documented. It does not judge the anaesthetic — that stays with the supervisor and carries its own marks. No score reaches a student until a supervisor finalises it.</div>
-<div id="grading-status" style="border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700"></div>
-<button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
-<button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme</button>
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div>
+<div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build e5d87d3 · 2026-08-27 23:07 UTC</div>
+<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Every submitted case is scored for documentation automatically. You add the judgment marks; the admin releases the result. No score reaches a student before that.<br><span dir="rtl">كل حالة تُقيّم آلياً من حيث التوثيق، وتضيف أنت درجات الحكم، ثم يُطلقها المسؤول.</span></div>
+<button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme · <span dir="rtl">المعايير</span></button>
 </div>
 
-<div style="margin-top:18px;border-top:2px solid var(--border);padding-top:16px">
-<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Go to · <span dir="rtl">الانتقال</span></div>
 <div style="display:flex;gap:9px">
 <button onclick="switchDashTab(1)" style="-webkit-appearance:none;flex:1;background:var(--primary);color:#fff;border:none;border-radius:11px;padding:15px 10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">📋 Result<div style="font-size:10px;font-weight:400;opacity:.85" dir="rtl">النتائج</div></button>
 <button onclick="switchDashTab(2)" style="-webkit-appearance:none;flex:1;background:#7b2d8b;color:#fff;border:none;border-radius:11px;padding:15px 10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">🛡️ Admin<div style="font-size:10px;font-weight:400;opacity:.85" dir="rtl">لوحة المسؤول</div></button>
@@ -5956,7 +5953,6 @@ function _initApp() {
   updateHomeBatchBanner();
   syncBatchConfigFromCloud();
   _safe('elearning', function(){ renderElearningLinks(); renderAdminElearning(); });
-  _safe('grading', renderGradingAdmin);
   _safe('release', renderReleaseQueue);
   _safe('stats', updateStats);
   _safe('records', renderRecords);
@@ -6310,10 +6306,10 @@ function getRubricRecord() {
 /* Automatic marking is OFF until switched on. Nobody should discover a
    scoring scheme running on their students' work because a file was
    deployed. */
-function isAutoGradingOn() {
-  var rec = getRubricRecord();
-  return !!(rec && rec.enabled);
-}
+/* Automatic marking is always on. A switch was itself a second path: with it,
+   a case could be marked one way today and another way tomorrow depending on a
+   setting, which is exactly what having one route is meant to prevent. */
+function isAutoGradingOn() { return true; }
 
 function getRubric() {
   try {
@@ -7043,46 +7039,7 @@ function restoreCheckGroup(groupId, value) {
 }
 
 /* ---- Switching automatic marking on and off ---------------------- */
-function renderGradingAdmin() {
-  var box = document.getElementById('grading-status');
-  var btn = document.getElementById('grading-toggle-btn');
-  if (!box || !btn) return;
-  var on = isAutoGradingOn(), rec = getRubricRecord();
-  box.style.background = on ? '#e8f8f0' : '#fdf3f3';
-  box.style.color = on ? '#1a7a4a' : '#b3261e';
-  box.innerHTML = on
-    ? '\u2705 ON \u2014 supervisors see a preliminary score on every submitted case'
-      + (rec && rec.updatedAt ? '<div style="font-size:10.5px;font-weight:400;margin-top:3px;opacity:.85">switched on '
-        + _esc(String(rec.updatedAt).slice(0,10)) + (rec.updatedBy ? ' by ' + _esc(rec.updatedBy) : '') + '</div>' : '')
-    : '\u26D4 OFF \u2014 cases are marked entirely by hand, as before';
-  btn.textContent = on ? 'Switch automatic marking OFF' : 'Switch automatic marking ON';
-  btn.style.background = on ? '#b3261e' : '#1a7a4a';
-}
 
-function toggleAutoGrading() {
-  if (!hasStaffToken()) { promptStaffToken(toggleAutoGrading); return; }
-  var on = isAutoGradingOn();
-  if (on && !confirm('Switch automatic marking off?\n\nMarks already finalised are untouched and stay with the students who have them. New cases will be marked by hand only.')) return;
-  if (!on && !confirm('Switch automatic marking on?\n\nSupervisors will see a preliminary documentation score on each submitted case. Nothing reaches a student until a supervisor finalises it.')) return;
-  var prev = getRubricRecord() || {};
-  var rec = JSON.parse(JSON.stringify(prev));
-  rec.type = 'grading_rubric';
-  rec.id = 'grading_rubric_singleton';
-  rec.status = 'active';
-  rec.enabled = !on;
-  rec.version = rec.version || RUBRIC_VERSION;
-  rec.updatedAt = new Date().toISOString();
-  rec.updatedBy = (studentProfile && studentProfile.name) || 'admin';
-  records = records.filter(function (r) { return r.type !== 'grading_rubric'; });
-  records.push(rec);
-  try { Store.set('medi045_records', JSON.stringify(records)); } catch (e) {}
-  postToCloud(rec);
-  if (typeof logAudit === 'function') {
-    try { logAudit('grading', 'Automatic marking switched ' + (rec.enabled ? 'ON' : 'OFF')); } catch (e) {}
-  }
-  renderGradingAdmin();
-  showToast(rec.enabled ? '\u2705 Automatic marking is on' : '\u26D4 Automatic marking is off');
-}
 
 /* ---- The scheme, in full, so it can be checked before it is trusted ---- */
 function openRubricReview() {
