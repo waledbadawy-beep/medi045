@@ -1784,10 +1784,11 @@
 <!-- TAB 0: SUPERVISOR DASHBOARD -->
 <div id="dash-panel-0">
 <div class="dash-stats">
-<div class="dash-stat"><div class="ds-num pending" id="dash-pending-count">0</div><div class="ds-lbl">⏳ To mark<div style="font-size:9.5px;font-weight:400;opacity:.8" dir="rtl">بانتظار التقييم</div></div></div>
-<div class="dash-stat"><div class="ds-num done-s" id="dash-evaluated-count">0</div><div class="ds-lbl">✅ Evaluated</div></div>
-<div class="dash-stat"><div class="ds-num draft-s" id="dash-draft-count">0</div><div class="ds-lbl">📝 Drafts</div></div>
+<div class="dash-stat" id="dash-filter-tomark" onclick="setDashFilter('tomark')" style="cursor:pointer"><div class="ds-num pending" id="dash-pending-count">0</div><div class="ds-lbl">⏳ To mark<div style="font-size:9.5px;font-weight:400;opacity:.8" dir="rtl">بانتظار التقييم</div></div></div>
+<div class="dash-stat" id="dash-filter-done" onclick="setDashFilter('done')" style="cursor:pointer"><div class="ds-num done-s" id="dash-evaluated-count">0</div><div class="ds-lbl">✅ Evaluated<div style="font-size:9.5px;font-weight:400;opacity:.8" dir="rtl">مُقيّمة</div></div></div>
+<div class="dash-stat" id="dash-filter-drafts" onclick="setDashFilter('drafts')" style="cursor:pointer"><div class="ds-num draft-s" id="dash-draft-count">0</div><div class="ds-lbl">📝 Drafts<div style="font-size:9.5px;font-weight:400;opacity:.8" dir="rtl">مسودات</div></div></div>
 </div>
+<div id="dash-filter-bar" style="display:none;margin:0 16px 10px;padding:9px 12px;background:#eef3f9;border-radius:9px;font-size:12px;font-weight:700;color:var(--primary);align-items:center;justify-content:space-between;gap:8px"></div>
 <div id="dash-list" style="padding:0 16px calc(100px + env(safe-area-inset-bottom))"></div>
 </div>
 <!-- TAB 1: RESULTS & EXPORT -->
@@ -4162,11 +4163,36 @@ function renderDashboard() {
   var casesAll  = records.filter(function(r){ return TYPES.indexOf(r.type)!==-1 && r.status==='submitted'; });
   var evalsAll  = records.filter(function(r){ return r.type==='evaluation'; });
   var draftsAll = records.filter(function(r){ return TYPES.indexOf(r.type)!==-1 && r.status==='draft'; });
+
+  /* The counters always show the true totals; only the list below is filtered,
+     so tapping a filter never makes the numbers appear to change. */
   document.getElementById('dash-pending-count').textContent   = casesAll.length;
   document.getElementById('dash-evaluated-count').textContent = evalsAll.filter(function(e){ return e.status==='approved'; }).length;
   document.getElementById('dash-draft-count').textContent     = draftsAll.length;
+  try { _paintDashFilter(); } catch (e) {}
+
+  if (_dashFilter === 'tomark') {
+    var markedIds = {};
+    records.forEach(function (r) {
+      if (r.type === 'case_review' || r.type === 'evaluation') markedIds[String(r.caseId)] = true;
+    });
+    casesAll = casesAll.filter(function (c) { return !markedIds[String(c.id)]; });
+  } else if (_dashFilter === 'done') {
+    var doneIds = {};
+    records.forEach(function (r) {
+      if (r.type === 'case_review' || (r.type === 'evaluation' && r.status === 'approved')) doneIds[String(r.caseId)] = true;
+    });
+    casesAll = casesAll.filter(function (c) { return doneIds[String(c.id)]; });
+  } else if (_dashFilter === 'drafts') {
+    casesAll = draftsAll;
+  }
   var container = document.getElementById('dash-list');
-  if (!casesAll.length && !evalsAll.length) {
+  if (!casesAll.length && (_dashFilter !== 'all' || !evalsAll.length)) {
+    if (_dashFilter !== 'all') {
+      container.innerHTML = '<div class="empty-state"><div class="es-icon">\uD83D\uDD0D</div>'
+        + '<h3>Nothing in this group</h3><p>Tap the same number again, or Show all.</p></div>';
+      return;
+    }
     container.innerHTML = '<div class="empty-state"><div class="es-icon">📬</div><h3>No submissions yet</h3><p>Students appear here after submitting cases</p></div>';
     return;
   }
@@ -5935,6 +5961,45 @@ function restoreCheckGroup(groupId, value) {
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
   else run();
 })();
+
+/* ---- Tapping a counter filters the list beneath it -------------------
+   The three numbers reported what was waiting but gave no way to reach it:
+   a supervisor read "4 to mark" and then scrolled the whole list hunting
+   for which four. Each is now a filter. */
+var _dashFilter = 'all';
+
+function setDashFilter(which) {
+  _dashFilter = (_dashFilter === which) ? 'all' : which;   /* tap again to clear */
+  renderDashboard();
+}
+
+function _paintDashFilter() {
+  var labels = {
+    tomark: ['\u23F3 Showing cases waiting to be marked',
+             '\u0639\u0631\u0636 \u0627\u0644\u062D\u0627\u0644\u0627\u062A \u0628\u0627\u0646\u062A\u0638\u0627\u0631 \u0627\u0644\u062A\u0642\u064A\u064A\u0645'],
+    done:   ['\u2705 Showing cases already evaluated',
+             '\u0639\u0631\u0636 \u0627\u0644\u062D\u0627\u0644\u0627\u062A \u0627\u0644\u0645\u064F\u0642\u064A\u0651\u0645\u0629'],
+    drafts: ['\uD83D\uDCDD Showing drafts not yet submitted',
+             '\u0639\u0631\u0636 \u0627\u0644\u0645\u0633\u0648\u062F\u0627\u062A']
+  };
+  ['tomark','done','drafts'].forEach(function (k) {
+    var el = document.getElementById('dash-filter-' + k);
+    if (!el) return;
+    var on = _dashFilter === k;
+    el.style.outline = on ? '2px solid var(--primary)' : 'none';
+    el.style.outlineOffset = '-2px';
+  });
+  var bar = document.getElementById('dash-filter-bar');
+  if (!bar) return;
+  if (_dashFilter === 'all') { bar.style.display = 'none'; return; }
+  var L = labels[_dashFilter] || ['', ''];
+  bar.style.display = 'flex';
+  bar.innerHTML = '<div style="flex:1;min-width:0">' + _esc(L[0])
+    + '<div style="font-size:10.5px;font-weight:400;color:var(--muted)" dir="rtl">' + _esc(L[1]) + '</div></div>'
+    + '<button onclick="setDashFilter(\'all\')" style="background:#fff;border:1px solid var(--border);'
+    + 'border-radius:7px;padding:6px 10px;font-size:11.5px;font-weight:700;color:var(--primary);'
+    + 'cursor:pointer;font-family:inherit;white-space:nowrap">Show all \u00B7 <span dir="rtl">\u0627\u0644\u0643\u0644</span></button>';
+}
 </script>
 <div class="screen" id="screen-pg-clinic"><div class="app-bar" style="background:linear-gradient(135deg,#1a3a5c,#2a5298)">
 <button onclick="goto('screen-home')" style="background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;padding:8px 14px;font-size:20px;cursor:pointer;margin-left:8px">←</button>
