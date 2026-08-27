@@ -2041,10 +2041,15 @@ function markUnsynced(recordId, err) {
   } catch (e) {}
   var refused = err && err.refused;
   if (typeof showToast === 'function') {
-    showToast(refused
-      ? '\u26A0\uFE0F Saved here, but the server refused it: ' + (err.message || 'not authorised')
-      : '\u26A0\uFE0F Saved on this device only \u2014 not yet sent to the server. Stay on this device and try again when you have a connection.');
+    showToast(
+      err && err.staleWorker
+        ? '\u26A0\uFE0F The server is running an older version and does not recognise this record. '
+          + 'It needs worker.js redeployed. Nothing is lost \u2014 this is saved here and will send afterwards.'
+        : refused
+          ? '\u26A0\uFE0F Saved here, but the server refused it: ' + (err.message || 'not authorised')
+          : '\u26A0\uFE0F Saved on this device only \u2014 not yet sent to the server. Stay on this device and try again when you have a connection.');
   }
+  if (err && err.staleWorker) { try { Store.set('medi045_stale_worker', '1'); } catch (e) {} }
   updateSyncBanner();
 
   /* The one refusal a student can actually fix themselves: this browser has
@@ -2077,14 +2082,21 @@ function updateSyncBanner() {
   }
   if (!pend.length) { el.style.display = 'none'; return; }
   el.style.display = 'block';
-  var why = (!getClassCode() && !hasStaffToken())
-    ? ' \u2014 this device has no access code, tap to enter it'
-    : ' \u2014 tap to retry sending';
+  var stale = false;
+  try { stale = Store.get('medi045_stale_worker') === '1'; } catch (e) {}
+  var why = stale
+    ? ' \u2014 the server needs worker.js redeployed'
+    : (!getClassCode() && !hasStaffToken())
+      ? ' \u2014 this device has no access code, tap to enter it'
+      : ' \u2014 tap to retry sending';
   el.textContent = '\u26A0\uFE0F ' + pend.length + ' item' + (pend.length !== 1 ? 's' : '')
     + ' saved on this device only' + why;
 }
 
 function retryUnsynced() {
+  /* A successful retry clears the stale-server flag, so the banner stops
+     blaming a deployment that has since happened. */
+  try { Store.set('medi045_stale_worker', ''); } catch (e) {}
   var pend = [];
   try { pend = JSON.parse(Store.get('medi045_unsynced') || '[]'); } catch (e) {}
   if (!pend.length) return;
@@ -2461,6 +2473,12 @@ function postToCloud(record) {
         var msg = j.error || 'The server refused this record';
         var err = new Error(msg);
         err.needsClassCode = /class access code/i.test(msg);
+        /* 'Not authorised to write this record type' does not mean the user
+           lacks permission - it means the Worker predates the record types the
+           app is sending, so it has no idea what they are. Saying 'not
+           authorised' sends someone hunting for a permissions problem that
+           does not exist. Name the real cause. */
+        err.staleWorker = /record type/i.test(msg);
         err.refused = true;
         throw err;
       });
