@@ -1873,7 +1873,7 @@
 <div id="dash-list" style="padding:0 16px calc(100px + env(safe-area-inset-bottom))"></div>
 <!-- Section: Automatic Marking -->
 <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
-<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div><div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build 4dd5396 · 2026-08-27 22:43 UTC</div>
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div><div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build b2c5900 · 2026-08-27 23:01 UTC</div>
 <div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Scores how completely a case is documented. It does not judge the anaesthetic — that stays with the supervisor and carries its own marks. No score reaches a student until a supervisor finalises it.</div>
 <div id="grading-status" style="border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700"></div>
 <button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
@@ -4310,7 +4310,7 @@ function renderDashboard() {
         html += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">Case #'+_esc(c.caseNo)+' · '+'MRN '+_esc(c.patientMRN||'—')+'</div><div style="font-size:11px;color:#6c757d">'+_esc(c.caseDate||'')+(c.dx?' · '+_esc(c.dx):'')+'</div></div>';
         html += '<div style="display:flex;gap:6px;flex-shrink:0">';
         html += '<button onclick="openCaseDetail('+c.id+')" style="background:#eaf1fa;color:#1a3a5c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">👁</button>';
-        html += '<button onclick="loadCaseForEval('+c.id+')" style="background:'+evBg+';color:white;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">'+evLabel+'</button>';
+        html += '<button onclick="openScoreReview(\''+c.id+'\')" style="background:'+evBg+';color:white;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">'+evLabel+'</button>';
         html += '<button onclick="deleteSingleCase('+c.id+')" title="Delete this case" style="background:#fdecea;color:#a32b1c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\uD83D\uDDD1</button>';
         html += '</div></div>';
       });
@@ -4327,6 +4327,11 @@ function renderDashboard() {
 
 
 function loadCaseForEval(caseId) {
+  /* Retired. Scoring now runs through the automatic engine plus the
+     supervisor's judgment marks - one route, not two. This function is kept
+     only so older links and any residual call still land somewhere sensible
+     rather than throwing. */
+  if (typeof openScoreReview === 'function') { openScoreReview(caseId); return; }
   if(!evalUnlocked){ showPasswordModal(); pendingEvalCaseId=caseId; return; }
   var r=records.find(function(x){ return String(x.id)===String(caseId); });
   if(r){
@@ -5165,6 +5170,7 @@ function switchDashTab(idx) {
       t.style.cssText = `flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:${col};border-bottom:3px solid ${bdr};margin-bottom:-2px;cursor:pointer;-webkit-tap-highlight-color:transparent`;
     }
   });
+  if (idx === 0) { try { showSupWelcome(); } catch (e) {} }
   if (idx === 1) { renderResults(); renderGradeChart(); }
   if (idx === 2) {
     _adminCredsReady = false; _pendingAdminCheck = null;
@@ -7227,6 +7233,25 @@ function releaseAllMarks() {
   q.slice().forEach(function (r) { releaseMark(r.caseId, true); });
   showToast('\u2705 Released ' + q.length + ' marks');
 }
+
+/* Shown once per device when a supervisor first reaches the dashboard. It
+   dismisses itself after three seconds, or on a tap - a blocking overlay a
+   supervisor has to dismiss every time would be worse than no guidance. */
+var _supWelcomeTimer = null;
+function showSupWelcome() {
+  try { if (Store.get('medi045_sup_welcomed') === '1') return; } catch (e) {}
+  var el = document.getElementById('sup-welcome');
+  if (!el) return;
+  el.style.display = 'flex';
+  clearTimeout(_supWelcomeTimer);
+  _supWelcomeTimer = setTimeout(dismissSupWelcome, 3000);
+}
+function dismissSupWelcome() {
+  clearTimeout(_supWelcomeTimer);
+  var el = document.getElementById('sup-welcome');
+  if (el) el.style.display = 'none';
+  try { Store.set('medi045_sup_welcomed', '1'); } catch (e) {}
+}
 </script>
 <!-- ============================================================ -->
 
@@ -8233,6 +8258,22 @@ function releaseAllMarks() {
 </div></div><div style="padding:12px 16px 28px;display:flex;gap:10px;background:white;border-top:1px solid var(--border)"><button onclick="saveDraft_wd()" style="flex:1;background:#6c757d;color:white;border:none;border-radius:10px;padding:16px;font-size:14px;font-weight:700;cursor:pointer">💾 Save Draft</button><button onclick="submit_wd()" style="flex:2;background:#5c3a1a;color:white;border:none;border-radius:10px;padding:16px;font-size:15px;font-weight:800;cursor:pointer">✓ Submit Case</button></div></div>
 <!-- SIGN-OFF -->
 
+<div id="sup-welcome" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(10,20,40,.72);align-items:center;justify-content:center;padding:24px" onclick="dismissSupWelcome()">
+<div style="background:#fff;border-radius:16px;max-width:340px;width:100%;padding:24px 20px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.35)">
+<div style="font-size:15px;font-weight:800;color:#1a3a5c">For Evaluator / Supervisor</div>
+<div style="font-size:13px;font-weight:700;color:#4a2a6d;margin-top:3px" dir="rtl">للمقيّم / المشرف</div>
+<div style="margin-top:14px;font-size:12.5px;color:#5a6b7d;line-height:1.7;text-align:left">
+1 · The Dashboard lists submitted cases.<br>
+2 · Open a case and mark it: the documentation score is automatic, you add the judgment marks.<br>
+3 · Marks go to the admin, who releases them to students.
+</div>
+<div style="margin-top:10px;font-size:12px;color:#5a6b7d;line-height:1.8" dir="rtl">
+١ · الداشبورد تعرض الحالات المُرسلة.<br>
+٢ · افتح الحالة وقيّمها: درجة التوثيق آلية، وتضيف أنت درجات الحكم.<br>
+٣ · الدرجات تذهب للمسؤول ليطلقها للطلاب.
+</div>
+<div style="margin-top:16px;font-size:11px;color:#9aa8b6">Tap to continue · <span dir="rtl">اضغط للمتابعة</span></div>
+</div></div>
 <div id="rubric-review-modal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(10,20,40,.55);align-items:flex-end;justify-content:center">
 <div style="background:#fff;width:100%;max-width:480px;max-height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column">
 <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
