@@ -1784,7 +1784,7 @@
 <!-- TAB 0: SUPERVISOR DASHBOARD -->
 <div id="dash-panel-0">
 <div class="dash-stats">
-<div class="dash-stat"><div class="ds-num pending" id="dash-pending-count">0</div><div class="ds-lbl">⏳ Pending</div></div>
+<div class="dash-stat"><div class="ds-num pending" id="dash-pending-count">0</div><div class="ds-lbl">⏳ To mark<div style="font-size:9.5px;font-weight:400;opacity:.8" dir="rtl">بانتظار التقييم</div></div></div>
 <div class="dash-stat"><div class="ds-num done-s" id="dash-evaluated-count">0</div><div class="ds-lbl">✅ Evaluated</div></div>
 <div class="dash-stat"><div class="ds-num draft-s" id="dash-draft-count">0</div><div class="ds-lbl">📝 Drafts</div></div>
 </div>
@@ -2089,8 +2089,10 @@ function updateSyncBanner() {
     : (!getClassCode() && !hasStaffToken())
       ? ' \u2014 this device has no access code, tap to enter it'
       : ' \u2014 tap to retry sending';
-  el.textContent = '\u26A0\uFE0F ' + pend.length + ' item' + (pend.length !== 1 ? 's' : '')
-    + ' saved on this device only' + why;
+  /* "not yet uploaded" says what this is; "pending" would collide with the
+     dashboard's count of cases waiting to be marked. */
+  el.textContent = '\u26A0\uFE0F ' + pend.length + ' record' + (pend.length !== 1 ? 's' : '')
+    + ' not yet uploaded to the server' + why;
 }
 
 function retryUnsynced() {
