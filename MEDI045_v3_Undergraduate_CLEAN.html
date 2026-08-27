@@ -1861,11 +1861,8 @@
 <div class="screen" id="screen-dashboard">
 <div class="app-bar"><button class="back-btn" onclick="goto('screen-home')">‹</button><div class="app-bar-title"><h1>Supervisor Panel</h1><p>Dashboard · Admin Settings</p></div></div>
 <!-- Sub-section tabs -->
-<div style="display:flex;background:white;border-bottom:2px solid var(--border);position:-webkit-sticky;position:sticky;top:56px;z-index:90;">
-<div id="dash-tab-0" onclick="switchDashTab(0)" style="flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--primary);border-bottom:3px solid var(--primary);margin-bottom:-2px;cursor:pointer;-webkit-tap-highlight-color:transparent">📊 Dashboard</div>
-<div id="dash-tab-1" onclick="switchDashTab(1)" style="flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;-webkit-tap-highlight-color:transparent">📋 Results</div>
-<div id="dash-tab-2" onclick="switchDashTab(2)" style="flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;-webkit-tap-highlight-color:transparent">🛡️ Admin</div>
-</div>
+<!-- three-way tab strip replaced by two buttons at the foot of the Dashboard -->
+
 <!-- TAB 0: SUPERVISOR DASHBOARD -->
 <div id="dash-panel-0">
 <div class="dash-stats">
@@ -1874,9 +1871,26 @@
 <div class="dash-stat"><div class="ds-num draft-s" id="dash-draft-count">0</div><div class="ds-lbl">📝 Drafts</div></div>
 </div>
 <div id="dash-list" style="padding:0 16px calc(100px + env(safe-area-inset-bottom))"></div>
+<!-- Section: Automatic Marking -->
+<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
+<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div><div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build 4dd5396 · 2026-08-27 22:43 UTC</div>
+<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Scores how completely a case is documented. It does not judge the anaesthetic — that stays with the supervisor and carries its own marks. No score reaches a student until a supervisor finalises it.</div>
+<div id="grading-status" style="border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700"></div>
+<button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
+<button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme</button>
+</div>
+
+<div style="margin-top:18px;border-top:2px solid var(--border);padding-top:16px">
+<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Go to · <span dir="rtl">الانتقال</span></div>
+<div style="display:flex;gap:9px">
+<button onclick="switchDashTab(1)" style="-webkit-appearance:none;flex:1;background:var(--primary);color:#fff;border:none;border-radius:11px;padding:15px 10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">📋 Result<div style="font-size:10px;font-weight:400;opacity:.85" dir="rtl">النتائج</div></button>
+<button onclick="switchDashTab(2)" style="-webkit-appearance:none;flex:1;background:#7b2d8b;color:#fff;border:none;border-radius:11px;padding:15px 10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">🛡️ Admin<div style="font-size:10px;font-weight:400;opacity:.85" dir="rtl">لوحة المسؤول</div></button>
+</div></div>
 </div>
 <!-- TAB 1: RESULTS & EXPORT -->
 <div id="dash-panel-1" style="display:none;padding:16px 16px calc(100px + env(safe-area-inset-bottom))">
+<button onclick="switchDashTab(0)" style="-webkit-appearance:none;width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px">‹ Back to Dashboard · <span dir="rtl">الرجوع</span></button>
+
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">📋 Student Results</div>
 <div id="results-table-wrap">
@@ -1903,6 +1917,8 @@
 </div>
 <!-- TAB 2: ADMIN / PROGRAM DIRECTOR SETTINGS -->
 <div id="dash-panel-2" style="display:none;padding:16px 16px calc(100px + env(safe-area-inset-bottom))">
+<button onclick="switchDashTab(0)" style="-webkit-appearance:none;width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px">‹ Back to Dashboard · <span dir="rtl">الرجوع</span></button>
+
 <!-- Admin Results Copy -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📋 Results Summary (Admin Copy)</div>
@@ -1978,7 +1994,10 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="saveAdminSettings()" style="width:100%;background:#7b2d8b;color:white;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">💾 Save All Settings</button>
 <button onclick="promptStaffToken()" style="width:100%;background:#f4f1fa;color:#5b3a8e;border:1.5px solid #ddd3ee;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;-webkit-appearance:none;margin-bottom:10px">🔑 Set / change staff access code</button>
 <button onclick="lockAdminPanel()" style="width:100%;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-appearance:none">🔒 Lock Admin Panel</button>
-</div>
+<!-- The </div> that used to close dash-panel-2 sat here, so every admin
+     section below was a sibling of the pane rather than inside it, and
+     therefore rendered on the Dashboard and Results views too. It now
+     closes after Data Management, where the admin block actually ends. -->
 <!-- Section: Backup -->
 <div style="background:white;border-radius:14px;padding:18px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:14px">
 <div style="font-size:14px;font-weight:800;color:var(--primary);margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">📦 Backup</div>
@@ -2071,14 +2090,6 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="addElearningLink()" style="width:100%;background:#1a5c3c;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:6px;font-family:inherit">➕ Add link</button>
 <div id="el-admin-list" style="margin-top:14px"></div>
 </div>
-<!-- Section: Automatic Marking -->
-<div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
-<div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📋 Automatic Marking</div><div id="build-stamp" style="font-size:10px;color:#9aa8b6;margin-bottom:6px;font-family:monospace">build e47d91f · 2026-08-24 19:10 UTC</div>
-<div style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-bottom:10px">Scores how completely a case is documented. It does not judge the anaesthetic — that stays with the supervisor and carries its own marks. No score reaches a student until a supervisor finalises it.</div>
-<div id="grading-status" style="border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;font-weight:700"></div>
-<button id="grading-toggle-btn" onclick="toggleAutoGrading()" style="width:100%;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;color:#fff;font-family:inherit;margin-bottom:8px"></button>
-<button onclick="openRubricReview()" style="width:100%;background:#eef1f5;color:#1a3a5c;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🔍 Review the marking scheme</button>
-</div>
 <!-- Section: Release Marks -->
 <div style="background:white;border-radius:14px;padding:16px;box-shadow:0 2px 16px rgba(26,58,92,0.10);margin-bottom:16px">
 <div style="font-size:14px;font-weight:800;color:#1a3a5c;margin-bottom:2px">📤 Release Marks to Students</div>
@@ -2103,6 +2114,7 @@ Dr. Sara Al-Mutairi" rows="3" style="font-size:16px"></textarea>
 <button onclick="resetEntireApp()" style="width:100%;background:#1a1a2e;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:800;cursor:pointer">🔴 Reset Entire App (delete everything)</button>
 <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">These actions cannot be undone. Export your data first.</div>
 <div style="font-size:10px;color:#c67a00;margin-top:6px;text-align:center">💡 To reset between student batches, use "Close Batch &amp; Reset" in Batch Management instead — it preserves your Admin password, grading rules, and supervisor list. "Reset Entire App" wipes those too.</div>
+</div>
 </div>
 </div>
 <!-- ===================== EVALUATION DETAIL MODAL ===================== -->
