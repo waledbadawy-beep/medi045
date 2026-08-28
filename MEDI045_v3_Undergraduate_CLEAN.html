@@ -4328,9 +4328,24 @@ function renderDashboard() {
       html += '<div style="border-bottom:2px solid var(--bg)">';
       html += '<div style="background:var(--bg);padding:8px 16px;font-size:12px;font-weight:800;color:'+TYPE_COLOR[type]+'">'+TYPE_ICON[type]+' '+TYPE_LABEL[type]+' ('+cases.length+')</div>';
       cases.forEach(function(c) {
+        /* A case marked by the current engine has a case_review record, not a
+           legacy evaluation. Reading only the latter left such cases badged
+           'Pending' while sitting inside the Evaluated group. */
+        var rev = records.filter(function (r) {
+          return r.type === 'case_review' && String(r.caseId) === String(c.id);
+        }).slice(-1)[0];
         var ev = s.evals.find(function(e){ return String(e.caseId)===String(c.id); });
-        var evBg    = ev ? (ev.status==='approved'?'#1a7a4a':ev.status==='pending_review'?'#c67a00':'#6c757d') : TYPE_COLOR[type];
-        var evLabel = ev ? (ev.status==='approved'?'✅ '+ev.finalMark+'/5':ev.status==='pending_review'?'⏳ Pending':'📝 Draft') : '🎓 Evaluate';
+        var evBg, evLabel;
+        if (rev) {
+          evBg = rev.status === 'released' ? '#1a7a4a' : '#7b2d8b';
+          evLabel = (rev.status === 'released' ? '✅ ' : '📤 ') + rev.total + '/100';
+        } else if (ev) {
+          evBg    = ev.status==='approved' ? '#1a7a4a' : ev.status==='pending_review' ? '#c67a00' : '#6c757d';
+          evLabel = ev.status==='approved' ? '✅ '+ev.finalMark+'/5'
+                  : ev.status==='pending_review' ? '⏳ Not finished' : '📝 Draft';
+        } else {
+          evBg = TYPE_COLOR[type]; evLabel = '🎓 Mark';
+        }
         html += '<div style="padding:10px 16px;border-bottom:1px solid #f0f4f8;display:flex;justify-content:space-between;align-items:center;gap:8px">';
         html += '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">Case #'+_esc(c.caseNo)+' · '+'MRN '+_esc(c.patientMRN||'—')+'</div><div style="font-size:11px;color:#6c757d">'+_esc(c.caseDate||'')+(c.dx?' · '+_esc(c.dx):'')+'</div></div>';
         html += '<div style="display:flex;gap:6px;flex-shrink:0">';
@@ -4339,10 +4354,10 @@ function renderDashboard() {
         html += '<button onclick="deleteSingleCase('+c.id+')" title="Delete this case" style="background:#fdecea;color:#a32b1c;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">\uD83D\uDDD1</button>';
         html += '</div></div>';
       });
-      // Pending approvals for this type
-      s.evals.filter(function(e){ return e.status==='pending_review' && cases.find(function(c){ return String(c.id)===String(e.caseId); }); }).forEach(function(e){
-        html += '<div style="padding:8px 16px;background:#fffbf0"><button onclick="openDetailModal('+e.id+')" style="width:100%;background:#c67a00;color:white;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">⏳ Review & Approve · '+e.c1Score+'/50 → '+e.finalMark+'/5</button></div>';
-      });
+      /* The old 'Review & Approve - x/50 -> y/5' row is gone. It belonged to
+         the retired manual rubric, showed a scale no longer in use, and printed
+         once per stale pending_review record - which is why it appeared twice
+         under one case. Marking happens through the case's own button. */
       html += '</div>';
     });
     html += '</div>';
