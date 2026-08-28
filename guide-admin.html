@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1a3a5c">
+<title>MEDI 045 · Admin Guide · دليل المسؤول</title>
+<style>
+:root{
+  --primary:#1a3a5c; --primary-light:#2a5298; --accent:#e63946; --accent2:#2ec4b6;
+  --bg:#f0f4f8; --card:#ffffff; --text:#1a1a2e; --muted:#6b7a8d; --border:#d0dbe8;
+  --success:#2ecc71; --warning:#f39c12; --section-bg:#e8f0fe;
+  --radius:14px; --shadow:0 2px 16px rgba(26,58,92,.10); --shadow-lg:0 8px 32px rgba(26,58,92,.16);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  line-height:1.6; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 56px}
+header.top{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:#fff;padding:26px 16px 22px;margin-bottom:22px;
+}
+header.top .wrap{padding-bottom:0}
+header.top h1{margin:0 0 4px;font-size:1.35rem;font-weight:800;letter-spacing:-.2px}
+header.top p{margin:0;opacity:.85;font-size:.9rem}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;
+}
+h2{font-size:1.05rem;margin:0 0 12px;color:var(--primary);font-weight:800}
+h3{font-size:.95rem;margin:18px 0 6px;color:var(--primary-light);font-weight:700}
+p,li{font-size:.95rem}
+ol,ul{padding-inline-start:22px;margin:8px 0}
+li{margin-bottom:7px}
+a{color:var(--primary-light)}
+.applink{
+  display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.applink:hover,.applink:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.applink .ico{font-size:1.7rem;line-height:1}
+.applink b{display:block;font-size:1rem}
+.applink span{color:var(--muted);font-size:.85rem}
+.applink .go{margin-inline-start:auto;color:var(--primary-light);font-size:1.3rem}
+.note{background:var(--section-bg);border-inline-start:4px solid var(--primary-light);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+.warn{background:#fff4e5;border-inline-start:4px solid var(--warning);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+.stop{background:#fdecee;border-inline-start:4px solid var(--accent);
+  border-radius:8px;padding:12px 14px;margin:14px 0;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.9rem}
+th,td{border:1px solid var(--border);padding:8px 10px;text-align:start}
+th{background:var(--section-bg);font-weight:700;color:var(--primary)}
+code{background:var(--section-bg);padding:1px 6px;border-radius:5px;font-size:.88em}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:22px 16px 40px}
+.ar{direction:rtl;text-align:right;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,Arial,sans-serif}
+.ar ol,.ar ul{padding-inline-start:22px}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{body{background:#fff}.card{box-shadow:none;break-inside:avoid}header.top{background:var(--primary)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+.qrgrid{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.qrbox{flex:1 1 220px;border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;background:var(--card)}
+.qrbox svg{width:150px;height:150px;display:block;margin:0 auto 10px}
+.qrbox b{display:block;font-size:.95rem;color:var(--primary)}
+.qrbox .u{display:block;font-size:.68rem;color:var(--muted);word-break:break-all;margin-top:6px;line-height:1.35}
+.qrbox a{font-size:.85rem;font-weight:700;text-decoration:none;display:inline-block;margin-top:8px;
+  background:var(--primary-light);color:#fff;padding:7px 16px;border-radius:8px}
+@media print{.qrbox{break-inside:avoid}}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>🛡️ Admin Guide · دليل المسؤول</h1>
+    <p>MEDI 045 Anaesthesia Clinical Log Book · KSUMC</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>1 · Getting in</h2>
+    <ol>
+      <li>Enter as supervisor first: registration screen → press and hold the logo two seconds → PIN <code>1234</code>.</li>
+      <li>On the dashboard, press <strong>Admin</strong>.</li>
+      <li>Enter the admin password: <code style="font-size:16px;font-weight:800">ADMIN2025</code></li>
+    </ol>
+    <p><strong>Change both of these before the course starts.</strong> They are the defaults and they are printed here.</p>
+  </div>
+
+  <div class="card">
+    <h2>2 · Releasing marks — your job alone</h2>
+    <p style="margin-top:0">Supervisors mark cases; they cannot release them. <strong>Release Marks to Students</strong> lists everything waiting, with the student, the case, who marked it and the total.</p>
+    <p>Release one at a time, or all at once. Every release is written to the audit log with your name. A student sees nothing until you do this.</p>
+    <div class="ar"><div dir="rtl">
+      المشرفون يقيّمون، وأنت وحدك تُطلق الدرجة للطالب. وكل إطلاق يُسجّل باسمك.
+    </div></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · The other sections</h2>
+    <ul>
+      <li><strong>Change Password</strong> — admin password and supervisor PIN</li>
+      <li><strong>Program Director</strong> — name shown on reports</li>
+      <li><strong>Backup</strong> — send a CSV now; one is also emailed nightly at midnight Riyadh time</li>
+      <li><strong>Batch Management</strong> — open and close a batch, set the deadline</li>
+      <li><strong>Grading Configuration</strong> — required case counts per activity</li>
+      <li><strong>Post to All Students</strong> — announcements, with an optional attachment</li>
+      <li><strong>eLearning Links</strong> — add or remove videos in any of the nine sections. Students get them on their next sync; no app update needed.</li>
+      <li><strong>Audit Log</strong> — who did what, including every release and deletion</li>
+      <li><strong>Data Management</strong> — export, and the destructive resets</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4 · Access codes</h2>
+    <table>
+      <tr><th>Undergraduate class code</th><td><code>MEDI045-UG-DU1C-KANA-LHBP</code></td></tr>
+      <tr><th>Postgraduate class code</th><td><code>MEDI045-PG-AVGB-WVJ5-UOQV</code></td></tr>
+      <tr><th>Supervisor PIN</th><td><code>1234</code></td></tr>
+      <tr><th>Admin password</th><td><code>ADMIN2025</code></td></tr>
+    </table>
+    <p>The class code is sent to students with the app link. It stops anyone outside the course reaching the data; it does not stop one student from seeing another's records, because there are no individual student accounts.</p>
+    <p>Class codes are held as secrets on the Cloudflare Worker. Changing one means editing the secret there, then telling the batch.</p>
+  </div>
+
+  <div class="card">
+    <h2>5 · What cannot be undone</h2>
+    <div class="callout" style="border-color:#e63946;background:#fdf3f3">
+      <strong>There is no import.</strong> The CSV export is an export only — it cannot put data back. Before any reset:
+      <ul style="margin:8px 0 0">
+        <li>Take a backup from the Backup section and check the email arrived</li>
+        <li>Cloudflare D1 keeps a 30-day history — <code>/bookmark</code> in the D1 console records a point you can return to</li>
+      </ul>
+      Erasing every record requires typing <code>DELETE ALL RECORDS</code> in full. That guard is deliberate.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>6 · If the app says the server refused something</h2>
+    <p style="margin-top:0">A message naming <em>an older version</em> means <code>worker.js</code> needs redeploying: Cloudflare → the Worker → Edit code → paste the current file → Save → <strong>Deployments → Promote version</strong>.</p>
+    <p><strong>Promote is the step people miss.</strong> Saving alone changes nothing.</p>
+    <p>Nothing is lost meanwhile — records wait on the device and upload once the server is current.</p>
+  </div>
+
+  <div class="card" style="background:#fff8e8">
+    <p style="margin:0;font-size:13px"><strong>Keep this document to staff only.</strong> It contains access codes.<br><span class="ar" dir="rtl">هذا المستند للطاقم فقط — يحتوي رموز دخول.</span></p>
+  </div>
+</div>
+</body>
+</html>
