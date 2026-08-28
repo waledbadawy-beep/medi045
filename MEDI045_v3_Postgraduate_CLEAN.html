@@ -4164,26 +4164,26 @@ function renderDashboard() {
   var evalsAll  = records.filter(function(r){ return r.type==='evaluation'; });
   var draftsAll = records.filter(function(r){ return TYPES.indexOf(r.type)!==-1 && r.status==='draft'; });
 
-  /* The counters always show the true totals; only the list below is filtered,
-     so tapping a filter never makes the numbers appear to change. */
-  document.getElementById('dash-pending-count').textContent   = casesAll.length;
-  document.getElementById('dash-evaluated-count').textContent = evalsAll.filter(function(e){ return e.status==='approved'; }).length;
+  /* The counters must count exactly what their filter shows. They did not:
+     'to mark' counted every submitted case including ones already marked, so
+     it read 4 while tapping it produced 'nothing in this group'. A number that
+     disagrees with the list it opens is worse than no number. */
+  var _markedIds = {};
+  records.forEach(function (r) {
+    if (r.type === 'case_review') _markedIds[String(r.caseId)] = true;
+    if (r.type === 'evaluation' && r.status === 'approved') _markedIds[String(r.caseId)] = true;
+  });
+  var _toMark = casesAll.filter(function (c) { return !_markedIds[String(c.id)]; });
+  var _done   = casesAll.filter(function (c) { return  _markedIds[String(c.id)]; });
+
+  document.getElementById('dash-pending-count').textContent   = _toMark.length;
+  document.getElementById('dash-evaluated-count').textContent = _done.length;
   document.getElementById('dash-draft-count').textContent     = draftsAll.length;
   try { _paintDashFilter(); } catch (e) {}
 
-  if (_dashFilter === 'tomark') {
-    var markedIds = {};
-    records.forEach(function (r) {
-      if (r.type === 'case_review' || r.type === 'evaluation') markedIds[String(r.caseId)] = true;
-    });
-    casesAll = casesAll.filter(function (c) { return !markedIds[String(c.id)]; });
-  } else if (_dashFilter === 'done') {
-    var doneIds = {};
-    records.forEach(function (r) {
-      if (r.type === 'case_review' || (r.type === 'evaluation' && r.status === 'approved')) doneIds[String(r.caseId)] = true;
-    });
-    casesAll = casesAll.filter(function (c) { return doneIds[String(c.id)]; });
-  } else if (_dashFilter === 'drafts') {
+  if (_dashFilter === 'tomark')      { casesAll = _toMark; }
+  else if (_dashFilter === 'done')   { casesAll = _done; }
+  else if (_dashFilter === 'drafts') {
     casesAll = draftsAll;
   }
   var container = document.getElementById('dash-list');
