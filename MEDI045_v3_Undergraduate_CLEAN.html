@@ -2789,6 +2789,10 @@ function checkPatientNotRepeated(type, prefix) {
     if (CASE_TYPES.indexOf(r.type) === -1) continue;   // any case type, not just this one
     if (String(r.studentId || '') !== myId) continue;
     if (r.status === 'deleted') continue;
+    /* The draft currently being finished is the same case, not a second one.
+       Without this it clashed with itself - same student, same MRN - so a
+       student who saved a draft could never submit it. */
+    if (_editingDraftId !== null && String(r.id) === String(_editingDraftId)) continue;
 
     var rm = String(r.patientMRN || '').trim();
     if (mrn && rm && rm.toLowerCase() === mrn.toLowerCase()) { clash = { r: r, on: 'Hospital ID' }; break; }
@@ -3891,9 +3895,21 @@ function editProfile() {
 }
 function autoFillProfile() {
   if (!studentProfile) return;
-  var n = document.getElementById('c-student'); if(n) n.value = studentProfile.name;
+  /* This filled only 'c-student', an id that exists on no case form, so every
+     one of the twelve identity fields stayed empty. Cases were therefore saved
+     with no student name, id or group - and because continueDraft checks that
+     a draft belongs to you before reopening it, a student could save a draft
+     and then never get back into it. Each form's own fields are filled now. */
+  ['cl', 'io', 'pacu', 'wd', 'c'].forEach(function (p) {
+    var n = document.getElementById(p + '-student');
+    if (n && !n.value) n.value = studentProfile.name || '';
+    var i = document.getElementById(p + '-id');
+    if (i && !i.value) i.value = studentProfile.universityId || '';
+    var g = document.getElementById(p + '-group');
+    if (g && !g.value) g.value = studentProfile.group || '';
+  });
   var h = document.getElementById('home-student-name');
-  if(h) h.textContent = '👤 ' + studentProfile.name + ' · ' + studentProfile.universityId;
+  if (h) h.textContent = '\uD83D\uDC64 ' + studentProfile.name + ' \u00B7 ' + studentProfile.universityId;
 }
 function checkProfileOnLoad() {
   loadStudentProfile();
@@ -3948,6 +3964,12 @@ function showPasswordModal() {
 // ==================== NAVIGATION ====================
 function _gotoBase(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); var el=document.getElementById(id); if(el) el.classList.add('active'); else console.warn('goto: screen not found:',id); window.scrollTo(0,0); }
 function goto(id) {
+  /* Opening a case form must carry the student's identity onto it; filling it
+     only at registration left every later visit blank. */
+  if (['screen-clinic','screen-intraop','screen-pacu','screen-ward',
+       'screen-pg-clinic','screen-pg-intraop','screen-pg-pacu','screen-pg-ward'].indexOf(id) !== -1) {
+    setTimeout(function () { try { autoFillProfile(); } catch (e) {} }, 60);
+  }
   // A staff screen is never reachable without an unlock, whatever route asks
   // for it. goto() used to relock only when LEAVING a staff screen, so any
   // caller that named one directly walked straight in - which is how the
